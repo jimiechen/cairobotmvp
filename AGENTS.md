@@ -372,3 +372,77 @@ CI 至少包含以下检查：
 
 - Workflow 定义：`.github/workflows/ci.yml`
 - 检查脚本：`scripts/ci/`
+
+## 19. Skill 索引
+
+本项目的工程规范通过 Skill 体系强制执行。详细规范参见 `.trae/skills/`。
+
+### 19.1 Skill 列表
+
+| Skill 名称 | 触发条件 | Priority | Blocking | 对应 Rules |
+|---|---|---|---|---|
+| cairobot-active-gap-filling | 任何开发任务、Issue、PR | highest | true | reporting.md |
+| cairobot-engineering-workflow | 任务启动、Issue、PR | high | true | - |
+| cairobot-tdd-loop | 实现、新增功能、修复 Bug、涉及代码目录 | high | true | tdd.md, testing.md |
+| cairobot-proto-registry-guard | 定义协议、新增接口、涉及 proto/ | high | true | docs.md |
+| cairobot-ci-gatekeeper | 创建 PR、合并 PR | high | true | tdd.md, testing.md |
+| cairobot-coding-standard | 编写代码、涉及代码目录 | medium | false | coding.md |
+| cairobot-daily-report | 提交日报、任务完成 | high | true | reporting.md |
+| cairobot-git-discipline | 创建分支、提交、创建 PR | medium | false | git.md |
+| cairobot-doc-placement | 新增文件、修改目录 | medium | false | docs.md |
+| cairobot-html-distillation | 蒸馏、生成报告 | medium | false | reporting.md |
+
+### 19.2 Skill 与 Rules 关系
+
+| 层级 | 文件 | 作用 |
+|---|---|---|
+| 知识层 | `.trae/rules/*.md` | 详细规范，可读性优先 |
+| 执行层 | `.trae/skills/*/SKILL.md` | 触发条件 + 步骤 + 校验 + 阻断 |
+
+Skill 内部用相对路径引用 Rules，例如：
+
+```markdown
+详细规则参见：[.trae/rules/tdd.md](../../.trae/rules/tdd.md)
+```
+
+### 19.3 Skill 激活顺序
+
+任务启动时的标准激活顺序：
+
+```
+cairobot-active-gap-filling
+    ↓（缺口扫描完成后）
+cairobot-engineering-workflow
+    ↓（根据任务类型激活）
+cairobot-tdd-loop / cairobot-proto-registry-guard / cairobot-coding-standard / ...
+    ↓（任务完成后）
+cairobot-daily-report
+    ↓（PR 创建前）
+cairobot-ci-gatekeeper
+```
+
+### 19.4 Skill 违规阻断
+
+以下 Skill 具有 blocking=true，必须在继续执行前完成：
+
+- cairobot-active-gap-filling
+- cairobot-engineering-workflow
+- cairobot-tdd-loop
+- cairobot-proto-registry-guard
+- cairobot-ci-gatekeeper
+- cairobot-daily-report
+
+### 19.5 本地验证
+
+Skill 可通过以下命令本地验证：
+
+```bash
+# 文档检查
+python3 scripts/ci/check_required_docs.py
+
+# 协议检查
+python3 scripts/ci/check_proto_registry.py
+
+# 报告检查
+python3 scripts/ci/check_reports.py
+```
