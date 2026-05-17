@@ -83,7 +83,7 @@
 - 工具类只放纯函数
 
 ### 4.5 目录与分支
-- 目录必须按 docs/ ai/ firmware/ app/ hardware/ mechanical/ tests/ scripts 分类
+- 目录必须按 docs/ proto/ services/ ai/ web/ app/ hardware/ mechanical/ tests/ scripts 分类
 - 分支名：feature/... fix/... docs/... test/... hardware/...
 - 一个分支只做一类事情
 
@@ -212,16 +212,14 @@ Trae 或其他 AI 编码助手必须：
 
 ## 14. 当前阶段建议
 
-当前项目处于 MVP 早期阶段，优先工作顺序为：
+当前项目处于多系统架构设计阶段，优先工作顺序为：
 
-1. 完成 PRD-00、PRD-01、PRD-02。
-2. 完成 ADR-0001、ADR-0002、ADR-0003。
-3. 建立 Issue 与 PR 模板。
-4. 建立 AI 过滤模块测试框架。
-5. 建立固件状态机 Mock 测试框架。
-6. 建立 App 状态机原型。
-7. 完成设备通信协议草案。
-8. 再回到硬件 EDA 和 PCB 设计。
+1. 完善 PRD-00 到 PRD-06。
+2. 完善 ADR-0001 到 ADR-0007。
+3. 建立 Protobuf 协议定义。
+4. 建立 Issue 与 PR 模板。
+5. 建立各服务测试框架。
+6. 再开始逐个服务实现。
 
 ## 15. 每日汇报、Markdown 蒸馏与 LLM Wiki
 
