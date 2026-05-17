@@ -127,8 +127,44 @@ docs/testing/
 - 验收标准
 - 不通过时如何处理
 
-## 7. 文档同步要求
+## 7. 协议文档同步要求
 
 代码行为变化时，必须同步更新文档。
 
 如果无需更新文档，PR 中必须说明原因。
+
+### 7.1 Protobuf 协议同步要求
+
+- 新增或修改 Protobuf 协议时，必须：
+1. 更新 [协议编号注册表.md](../../docs/api/协议编号注册表.md)
+2. 更新 [openapi-protobuf映射规范.md](../../docs/api/openapi-protobuf映射规范.md)
+3. 确保 max + min 唯一性检查
+4. 更新 LLM Wiki
+5. 更新相关 PRD/ADR
+
+### 7.2 目录与文件存放规范（更新）
+
+| 内容 | 必须存放位置 |
+| --- | --- |
+| PRD | `docs/prd/` |
+| ADR | `docs/adr/` |
+| API/协议 | `docs/api/` |
+| 测试策略 | `docs/testing/` |
+| AI 安全策略文档 | `docs/ai-safety/` |
+| 硬件说明 | `docs/hardware/` |
+| 固件说明 | `docs/firmware/` |
+| App 说明 | `docs/app/` |
+| 协议定义 | `proto/` |
+| 固件代码 | `firmware/` |
+| App 代码 | `app/` |
+| AI 模块代码 | `ai/` |
+| 后端服务代码 | `services/` |
+| 前端代码 | `web/` |
+| EDA 文件 | `hardware/eda/` |
+| BOM | `hardware/bom/` |
+| Datasheet | `hardware/datasheets/` |
+| 手板/结构说明 | `mechanical/` |
+| 测试数据 | `tests/fixtures/` |
+| 安全边界测试用例 | `tests/safety-cases/` |
+| 脚本 | `scripts/` |
+| 草稿文件 | `docs/drafts/` 或 `tmp/` |

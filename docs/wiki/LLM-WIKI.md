@@ -60,6 +60,10 @@ CaiRobot MVP 当前包含以下系统：
 - [x] 建立 Golang 后端目录规范
 - [x] 建立 Python AI 服务目录规范
 - [x] 建立 ReactJS 前端目录规范
+- [x] 建立协议编号注册表
+- [x] 建立 OpenAPI 与 Protobuf 映射规范
+- [x] 更新工程规范文件加入协议变更要求
+- [x] 更新 PR 模板和 Issue 模板加入协议变更检查
 
 ## 6. 未完成事项
 
@@ -67,9 +71,35 @@ CaiRobot MVP 当前包含以下系统：
 - [ ] 完善 ADR-0001 到 ADR-0007 的详细内容
 - [ ] 编写具体的 Protobuf 协议定义
 - [ ] 建立各服务测试框架
+- [ ] 建立协议唯一性测试工具
 - [ ] 开始功能开发
 
-## 7. 关键目录说明
+## 7. Protobuf 协议核心规则
+
+**最高级协议规则**：在 CaiRobot MVP 中，Protobuf 协议编号 `max + min` 是接口报文的唯一身份。任何新增、修改、删除接口报文，都必须同步更新协议编号注册表、OpenAPI 映射、测试用例、测试报告和 LLM Wiki。
+
+### 7.1 协议编号注册表
+
+位置：[docs/api/协议编号注册表.md](../api/协议编号注册表.md)
+
+当前已登记的编号：
+| max | min | Message | 说明 |
+|---:|---:|---|---|
+| 2100 | 2097 | ServiceHealthCheckRequest | 服务健康检查请求 |
+| 2100 | 2098 | ServiceHealthCheckResponse | 服务健康检查响应 |
+
+### 7.2 协议文件
+
+- 网关统一入口：[proto/base/message.proto](../../proto/base/message.proto)
+- 通用返回：[proto/base/result.proto](../../proto/base/result.proto)
+- 健康检查示例：[proto/base/health.proto](../../proto/base/health.proto)
+
+### 7.3 协议规范文档
+
+- [protobuf规范.md](../api/protobuf规范.md)
+- [openapi-protobuf映射规范.md](../api/openapi-protobuf映射规范.md)
+
+## 8. 关键目录说明
 
 | 目录 | 说明 |
 |---|---|
