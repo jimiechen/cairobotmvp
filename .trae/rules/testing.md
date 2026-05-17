@@ -95,3 +95,93 @@ tests/safety-cases/
 
 - 单个测试文件：推荐 ≤ 300 行
 - 超过推荐限制应按场景拆分测试文件
+
+## 8. CI 测试要求
+
+### 8.1 GitHub Actions CI
+
+所有测试必须能够通过 GitHub Actions CI。
+
+CI 测试分层：
+
+| Job | 测试类型 | 触发条件 |
+|---|---|---|
+| `docs-check` | 文档存在性检查 | 所有 PR |
+| `proto-check` | 协议唯一性检查 | proto 文件变更 |
+| `go-test` | Golang 单元/集成测试 | services/ 变更 |
+| `python-test` | Python 单元/集成测试 | ai/ 变更 |
+| `web-test` | ReactJS App 测试 | web/app/ 变更 |
+| `admin-web-test` | AdminWeb 测试 | web/provider-admin/ 变更 |
+| `report-check` | 报告存在性检查 | 所有 PR |
+
+### 8.2 跳过规则
+
+如果某一端暂未实现，CI 必须输出明确的跳过原因，不能静默跳过。
+
+示例输出：
+```text
+跳过 go-test：services/hello-go/go.mod 不存在，当前尚未实现 Golang HelloWorld 骨架。
+```
+
+### 8.3 本地等价命令
+
+如果 CI 无法运行，必须提供本地等价命令：
+
+```bash
+# 文档检查
+python3 scripts/ci/check_required_docs.py
+
+# 协议检查
+python3 scripts/ci/check_proto_registry.py
+
+# Golang 测试
+cd services/[service-name] && go test ./...
+
+# Python 测试
+cd ai/service && python -m pytest
+
+# ReactJS 测试
+cd web/app && npm test -- --runInBand
+
+# 报告检查
+python3 scripts/ci/check_reports.py
+```
+
+### 8.4 CI 阻断规则
+
+以下情况 CI 必须失败，阻断 PR 合并：
+
+1. 关键文档缺失
+2. 协议编号重复
+3. 协议编号未注册
+4. 测试失败
+5. 测试覆盖率低于要求
+
+## 9. 测试报告要求
+
+### 9.1 报告位置
+
+- 测试报告：`docs/reports/testing/`
+- 日报：`docs/reports/daily/`
+- Markdown 蒸馏：`docs/reports/distilled/`
+- Standalone HTML：`docs/reports/html/`
+
+### 9.2 报告内容
+
+测试报告必须包含：
+
+- 测试环境
+- 测试对象
+- 测试用例
+- 测试步骤
+- 测试结果
+- 截图/视频证据
+- Bug 列表
+- 风险说明
+- 结论
+
+## 10. 相关文档
+
+- [tdd.md](tdd.md)
+- [review.md](review.md)
+- [协议编号注册表.md](../../docs/api/协议编号注册表.md)

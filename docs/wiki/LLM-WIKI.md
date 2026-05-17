@@ -64,6 +64,11 @@ CaiRobot MVP 当前包含以下系统：
 - [x] 建立 OpenAPI 与 Protobuf 映射规范
 - [x] 更新工程规范文件加入协议变更要求
 - [x] 更新 PR 模板和 Issue 模板加入协议变更检查
+- [x] 建立工程级 TDD 规范
+- [x] 建立 GitHub Actions CI Workflow
+- [x] 建立 CI 检查脚本骨架
+- [x] 更新 PR 模板和 Issue 模板加入 CI 检查
+- [x] 建立 HelloWorld + HealthCheck 验收规范
 
 ## 6. 未完成事项
 
@@ -71,10 +76,49 @@ CaiRobot MVP 当前包含以下系统：
 - [ ] 完善 ADR-0001 到 ADR-0007 的详细内容
 - [ ] 编写具体的 Protobuf 协议定义
 - [ ] 建立各服务测试框架
-- [ ] 建立协议唯一性测试工具
+- [ ] 实现 HelloWorld + HealthCheck 验收工程
 - [ ] 开始功能开发
 
-## 7. Protobuf 协议核心规则
+## 7. 工程级 TDD 与 CI 规则
+
+### 7.1 核心原则
+
+**用户任务不完整规则**：用户任务描述不一定完整。Trae 必须根据 AGENTS.md、PRD、ADR、TDD、testing.md、review.md、reporting.md 主动补齐工程闭环。
+
+**完成标准**：没有 CI 通过或本地等价测试结果，不得宣称任务完成。
+
+### 7.2 工程级 TDD 流程
+
+1. **需求红**：先明确 PRD 验收标准
+2. **协议红**：先定义 Protobuf / OpenAPI 契约
+3. **测试红**：先写失败测试
+4. **实现绿**：写最小实现
+5. **报告绿**：输出测试报告和证据
+6. **CI 绿**：GitHub Actions 或本地等价命令通过
+7. **重构**：测试与 CI 通过后再优化
+8. **沉淀**：日报、Markdown 蒸馏、LLM Wiki 更新
+
+### 7.3 CI 检查项
+
+| Job | 作用 | 要求 |
+|---|---|---|
+| `docs-check` | 检查关键文档是否存在 | 必须通过 |
+| `proto-check` | 检查协议编号唯一性和注册表同步 | 必须通过 |
+| `go-test` | 运行 Golang 测试 | 通过或说明跳过原因 |
+| `python-test` | 运行 Python 测试 | 通过或说明跳过原因 |
+| `web-test` | 运行 ReactJS App 测试 | 通过或说明跳过原因 |
+| `admin-web-test` | 运行 AdminWeb 测试 | 通过或说明跳过原因 |
+| `report-check` | 检查测试报告、日报、蒸馏、LLM Wiki | 必须通过 |
+
+### 7.4 CI 文件位置
+
+- Workflow 定义：`.github/workflows/ci.yml`
+- 检查脚本：`scripts/ci/`
+  - `check_required_docs.py`
+  - `check_proto_registry.py`
+  - `check_reports.py`
+
+## 8. Protobuf 协议核心规则
 
 **最高级协议规则**：在 CaiRobot MVP 中，Protobuf 协议编号 `max + min` 是接口报文的唯一身份。任何新增、修改、删除接口报文，都必须同步更新协议编号注册表、OpenAPI 映射、测试用例、测试报告和 LLM Wiki。
 
