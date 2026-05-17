@@ -14,19 +14,31 @@
 
 ### 2.1 固定目录约束
 
+#### 必备目录
+
 | 内容 | 必须存放位置 |
 | --- | --- |
 | PRD | `docs/prd/` |
 | ADR | `docs/adr/` |
 | API/协议 | `docs/api/` |
 | 测试策略 | `docs/testing/` |
+| 报告目录 | `docs/reports/` |
+| Wiki | `docs/wiki/` |
+| 协议定义 | `proto/` |
+| 后端服务代码 | `services/` |
+| AI 模块代码 | `ai/` |
+| 前端代码 | `web/` |
+
+#### 可选目录（MVP 阶段按需创建）
+
+| 内容 | 必须存放位置 |
+| --- | --- |
 | AI 安全策略文档 | `docs/ai-safety/` |
 | 硬件说明 | `docs/hardware/` |
 | 固件说明 | `docs/firmware/` |
 | App 说明 | `docs/app/` |
 | 固件代码 | `firmware/` |
 | App 代码 | `app/` |
-| AI 模块代码 | `ai/` |
 | EDA 文件 | `hardware/eda/` |
 | BOM | `hardware/bom/` |
 | Datasheet | `hardware/datasheets/` |
@@ -135,36 +147,10 @@ docs/testing/
 
 ### 7.1 Protobuf 协议同步要求
 
-- 新增或修改 Protobuf 协议时，必须：
-1. 更新 [协议编号注册表.md](../../docs/api/协议编号注册表.md)
-2. 更新 [openapi-protobuf映射规范.md](../../docs/api/openapi-protobuf映射规范.md)
+新增或修改 Protobuf 协议时，必须：
+
+1. 更新 `docs/api/协议编号注册表.md`
+2. 更新 `docs/api/openapi-protobuf映射规范.md`
 3. 确保 max + min 唯一性检查
 4. 更新 LLM Wiki
 5. 更新相关 PRD/ADR
-
-### 7.2 目录与文件存放规范（更新）
-
-| 内容 | 必须存放位置 |
-| --- | --- |
-| PRD | `docs/prd/` |
-| ADR | `docs/adr/` |
-| API/协议 | `docs/api/` |
-| 测试策略 | `docs/testing/` |
-| AI 安全策略文档 | `docs/ai-safety/` |
-| 硬件说明 | `docs/hardware/` |
-| 固件说明 | `docs/firmware/` |
-| App 说明 | `docs/app/` |
-| 协议定义 | `proto/` |
-| 固件代码 | `firmware/` |
-| App 代码 | `app/` |
-| AI 模块代码 | `ai/` |
-| 后端服务代码 | `services/` |
-| 前端代码 | `web/` |
-| EDA 文件 | `hardware/eda/` |
-| BOM | `hardware/bom/` |
-| Datasheet | `hardware/datasheets/` |
-| 手板/结构说明 | `mechanical/` |
-| 测试数据 | `tests/fixtures/` |
-| 安全边界测试用例 | `tests/safety-cases/` |
-| 脚本 | `scripts/` |
-| 草稿文件 | `docs/drafts/` 或 `tmp/` |

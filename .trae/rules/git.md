@@ -4,12 +4,15 @@
 
 推荐分支：
 
-- `main`：稳定分支。
-- `dev`：集成分支。
+- `main`：稳定分支，只允许合并通过评审的代码。
+- `dev`：集成分支，日常开发合并目标。
 - `feature/*`：功能分支。
 - `fix/*`：修复分支。
 - `docs/*`：文档分支。
 - `test/*`：测试相关分支。
+- `refactor/*`：重构分支。
+- `chore/*`：杂务分支（依赖更新、配置调整等）。
+- `ci/*`：CI/CD 配置分支。
 - `hardware/*`：硬件相关分支。
 
 所有功能开发应从 `dev` 创建分支。
@@ -72,17 +75,19 @@ fix(app): 修复设备断连状态判断
 refactor(firmware): 简化锁仓状态机
 ```
 
-允许的 type：
+允许的 type（全部小写）：
 
-- `docs`
-- `test`
-- `feat`
-- `fix`
-- `refactor`
-- `chore`
-- `ci`
-- `build`
-- `hardware`
+- `docs`：文档变更
+- `test`：测试变更
+- `feat`：功能实现
+- `fix`：缺陷修复
+- `refactor`：代码重构
+- `chore`：杂务（依赖更新、配置等）
+- `ci`：CI/CD 配置变更
+- `build`：构建系统变更
+- `hardware`：硬件相关变更
+
+> **注意**：Commit message 格式必须严格遵守 `type(scope): 中文说明`，不得随意编写。
 
 ## 4. PR 规则
 
