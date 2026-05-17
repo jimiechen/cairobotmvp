@@ -10,7 +10,57 @@
 4. 测试文档：定义如何验证。
 5. README：定义目录用途和快速开始。
 
-## 2. PRD 规则
+## 2. 目录与文件存放规范
+
+### 2.1 固定目录约束
+
+| 内容 | 必须存放位置 |
+| --- | --- |
+| PRD | `docs/prd/` |
+| ADR | `docs/adr/` |
+| API/协议 | `docs/api/` |
+| 测试策略 | `docs/testing/` |
+| AI 安全策略文档 | `docs/ai-safety/` |
+| 硬件说明 | `docs/hardware/` |
+| 固件说明 | `docs/firmware/` |
+| App 说明 | `docs/app/` |
+| 固件代码 | `firmware/` |
+| App 代码 | `app/` |
+| AI 模块代码 | `ai/` |
+| EDA 文件 | `hardware/eda/` |
+| BOM | `hardware/bom/` |
+| Datasheet | `hardware/datasheets/` |
+| 手板/结构说明 | `mechanical/` |
+| 测试数据 | `tests/fixtures/` |
+| 安全边界测试用例 | `tests/safety-cases/` |
+| 脚本 | `scripts/` |
+| 草稿文件 | `docs/drafts/` 或 `tmp/` |
+
+### 2.2 禁止行为
+
+- 不允许在仓库根目录随意新增 md、tmp、draft、new、final2 之类文件
+- 不允许临时脚本散落在根目录
+- 不允许把 PRD 放在聊天导出文件夹
+- 不允许把测试数据塞到 src 目录
+- 不允许随意新增顶层目录
+
+### 2.3 临时文件处理
+
+如果必须放草稿，统一放在：
+
+```text
+docs/drafts/
+```
+
+或：
+
+```text
+tmp/
+```
+
+并在 `.gitignore` 中说明是否忽略。
+
+## 3. PRD 规则
 
 PRD 放在：
 
@@ -29,7 +79,7 @@ PRD 必须包含：
 - 验收标准
 - 风险
 
-## 3. ADR 规则
+## 4. ADR 规则
 
 ADR 放在：
 
@@ -45,7 +95,7 @@ ADR 必须包含：
 - 后果
 - 替代方案
 
-## 4. API 文档规则
+## 5. API 文档规则
 
 API 和通信协议放在：
 
@@ -61,7 +111,7 @@ docs/api/
 - 错误码
 - 兼容性说明
 
-## 5. 测试文档规则
+## 6. 测试文档规则
 
 测试策略放在：
 
@@ -77,7 +127,7 @@ docs/testing/
 - 验收标准
 - 不通过时如何处理
 
-## 6. 文档同步要求
+## 7. 文档同步要求
 
 代码行为变化时，必须同步更新文档。
 

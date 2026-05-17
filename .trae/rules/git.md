@@ -14,11 +14,49 @@
 
 所有功能开发应从 `dev` 创建分支。
 
-## 2. 提交规则
+## 2. 分支命名规范
 
-提交必须小粒度。
+### 2.1 命名格式
 
-提交信息格式：
+```text
+type/module-short-description
+```
+
+### 2.2 示例
+
+```text
+feature/ai-intent-classifier
+feature/app-learning-mode
+fix/firmware-lock-timeout
+docs/prd-00-mvp-overview
+test/ai-forbidden-intents
+hardware/mvp-baseboard-v1
+refactor/app-device-state
+```
+
+### 2.3 约束
+
+- 一个分支只做一类事情
+- 文档不要和功能混在同一个分支
+- 测试补充不要和硬件设计混在同一个分支
+- 超过 3 天没合并的分支要重新同步 dev
+
+## 3. 提交规则
+
+### 3.1 提交粒度
+
+每次提交应该只表达一个清晰明确的动作：
+
+- 加一个测试
+- 修一个 bug
+- 重构一个类
+- 补一份文档
+
+不要一个提交里同时：
+
+- 改 PRD + 改固件 + 改 App + 改测试 + 改目录结构
+
+### 3.2 提交信息格式
 
 ```text
 type(scope): 中文说明
@@ -46,7 +84,9 @@ refactor(firmware): 简化锁仓状态机
 - `build`
 - `hardware`
 
-## 3. PR 规则
+## 4. PR 规则
+
+### 4.1 基本要求
 
 每个 PR 必须：
 
@@ -57,7 +97,25 @@ refactor(firmware): 简化锁仓状态机
 - 控制变更范围。
 - 不混入无关格式化。
 
-## 4. 合并规则
+### 4.2 PR 粒度
+
+一个 PR 最好只做：
+
+- 一个 Issue
+- 或一组强相关的小 Issue
+
+PR 里不要混：
+
+- 功能 + 大重构 + 格式化 + 文档整理
+
+### 4.3 PR 改动规模建议
+
+- 单个 PR 改动文件数：推荐 ≤ 10 个
+- 单个 PR 代码行数：推荐 ≤ 300 行
+
+超过以上限制需在 PR 中说明原因。
+
+## 5. 合并规则
 
 以下情况不得合并：
 
@@ -65,5 +123,5 @@ refactor(firmware): 简化锁仓状态机
 - 没有关联 Issue。
 - 没有说明测试结果。
 - 涉及行为变化但未更新文档。
-- PR 范围过大。
+- PR 范围过大且无合理说明。
 - 存在未解释的新增依赖。
