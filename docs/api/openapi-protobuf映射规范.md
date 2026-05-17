@@ -1,0 +1,58 @@
+# OpenAPI 与 Protobuf 映射规范
+
+## 1. 基本原则
+
+本项目同时使用 OpenAPI 和 Protobuf。
+
+- Protobuf 是内部服务、网关报文和跨语言协议的事实来源。
+- OpenAPI 是对外 HTTP/JSON 接口的说明文档。
+- 每个 OpenAPI 接口必须映射到对应的 Protobuf Request 和 Response。
+- 每个 Protobuf Request 和 Response 必须拥有唯一的 `max + min` 编号。
+
+## 2. 映射表字段
+
+| OpenAPI Path | Method | Request Message | Request max | Request min | Response Message | Response max | Response min |
+|---|---|---|---:|---:|---|---:|---:|
+| `/health/check` | POST | `ServiceHealthCheckRequest` | 2100 | 2097 | `ServiceHealthCheckResponse` | 2100 | 2098 |
+
+## 3. 规则
+
+1. 不允许存在没有 Protobuf 映射的 OpenAPI 接口。
+2. 不允许存在没有登记编号的 Protobuf 接口。
+3. OpenAPI 的请求字段必须与 Protobuf Request 对齐。
+4. OpenAPI 的响应字段必须与 Protobuf Response 对齐。
+5. 如果 Protobuf 字段变更，必须同步更新 OpenAPI。
+6. 如果 OpenAPI 变更，必须同步更新 Protobuf、协议注册表和测试用例。
+
+## 4. 映射关系
+
+### OpenAPI 接口 → Protobuf
+
+每个 OpenAPI 接口的：
+- Request Body 对应 Protobuf Request Message
+- Response Body 对应 Protobuf Response Message
+
+### Protobuf → OpenAPI
+
+每个 Protobuf 接口对：
+- Request Message 对应 OpenAPI Request Body Schema
+- Response Message 对应 OpenAPI Response Body Schema
+- 可以通过 grpc-gateway 或手动方式生成 OpenAPI
+
+## 5. 报文路由
+
+网关通过 MessagePacket 中的 `maxType + minType` 定位到具体的业务协议：
+1. 解析 MessagePacket
+2. 提取 maxType 和 minType
+3. 根据 max + min 找到对应的业务协议
+4. 解析 data 字段为对应的业务 Protobuf Message
+
+## 6. 变更流程
+
+协议变更必须按以下流程进行：
+1. 更新 Protobuf 文件
+2. 更新协议编号注册表
+3. 更新 OpenAPI 映射
+4. 更新测试用例
+5. 更新相关文档
+6. 提交 PR 评审
