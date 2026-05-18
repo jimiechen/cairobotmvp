@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option objc_class_prefix = "PROTO";
+
+import "base/result.proto";
+
+package com.mineplanet.pojo.hello;
+
+option java_outer_classname = "HelloProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+
+// HelloWorld 请求
+message HelloWorldRequest {
+  enum Type {
+    none = 0;
+    max = 2100;
+    min = 2101;
+  }
+
+  string name = 1;  // 可选的问候名称
+}
+
+// HelloWorld 响应
+message HelloWorldResponse {
+  enum Type {
+    none = 0;
+    max = 2100;
+    min = 2102;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;
+  string message = 2;  // 问候消息
+  int64 timestamp = 3;
+}
