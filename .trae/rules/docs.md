@@ -47,6 +47,8 @@
 | 安全边界测试用例 | `tests/safety-cases/` |
 | 脚本 | `scripts/` |
 | 草稿文件 | `docs/drafts/` 或 `tmp/` |
+| Tabbit / TabAI 导出收件箱 | `docs/tabbit/` |
+| TRAE 任务执行导出收件箱 | `docs/trae-export/` |
 
 ### 2.2 禁止行为
 

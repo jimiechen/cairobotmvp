@@ -61,7 +61,18 @@
 - 版本管理策略
 - 向后兼容保证策略
 
-## 9. 相关文档
+## 9. ADR-0008 后续修订说明
+
+Protobuf 仍然是 CaiRobot MVP 的业务消息契约与协议编号来源。内部 RPC 框架调整为 TarsCloud/TarsGo 后，Tars 方法中的 `vector<byte> request` 和 `vector<byte> response` 分别承载 Protobuf Request / Response 序列化后的 bytes。Tars IDL 只定义内部方法签名，不定义业务字段结构。
+
+具体调整：
+- Protobuf 不等于内部 RPC 框架。Protobuf 定义业务字段和协议编号，TarsGo 定义内部服务调用方式。
+- `Type.max + Type.min` 仍然是接口报文唯一身份，由 Protobuf message 内部 enum Type 声明。
+- Tars IDL 不重复定义业务字段，所有业务结构以 Protobuf message 为准。
+- Gateway 负责 MessagePacket 解析、Protobuf marshal/unmarshal、Tars 调用和响应封装。
+
+## 10. 相关文档
 
 - [ADR-0001-总体系统架构.md](ADR-0001-总体系统架构.md)
+- [ADR-0008-use-tarscloud-routing-layer.md](ADR-0008-use-tarscloud-routing-layer.md)
 - [PRD-03-开放平台API.md](../prd/PRD-03-开放平台API.md)

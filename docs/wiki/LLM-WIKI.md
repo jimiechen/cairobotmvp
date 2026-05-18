@@ -229,7 +229,43 @@ CaiRobot MVP 当前包含以下系统：
 
 （暂无内容）
 
-## 15. 后续 AI 助手必须遵守的规则
+## 15. Tabbit / TRAE 任务归档索引
+
+从 `docs/tabbit/inbox/`（Tabbit/TabAI 导出）和 `docs/trae-export/inbox/`（TRAE 导出）通过 `/tabbit-task` 归档的结构化任务文档。
+
+**核心原则：一个任务，一个 Canonical Task ID，一组关联文件。ID 可外部传入，但必须由 `/tabbit-task` 保证存在。**
+
+决策依据：[ADR-0009 v3](../adr/ADR-0009-tabbit-task-archive-flow.md)
+
+归档命令：`/tabbit-task`（v3：自动建档版，支持四种输入模式）
+
+蒸馏 Skill：`tabbit-task-distillation`
+
+Task ID 格式：`TB-{YYYYMMDD}-{HHMMSS}-{topic-slug}`
+
+| Canonical Task ID | 任务 | 时间 | 来源 | 蒸馏状态 | 摘要 |
+|---|---|---|---|---|---|
+| `TB-20260518-181000` | [Tabbit 任务归档流程设计与落地](./tasks/2026/05/TB-20260518-181000-tabbit-task-archive-flow-design.archive.md) | 18:10 | Tabbit + TRAE | ⏳ pending | 设计并落地了从 Tabbit/TRAE 原始导出到 docs/wiki/tasks 的归档流程，含 ADR-0009 和 /tabbit-task Command |
+| `TB-20260518-182000` | [TRAE 评审 TabAI 会话导出方案](./tasks/2026/05/TB-20260518-182000-trae-tabbage-archive-review.archive.md) | 18:20 | TRAE | ⏳ pending | 对原始方案七维工程评审，发现 4 个必须修改项，核心结论是不应新建 docs/llm-wiki/ |
+| `TB-20260518-190000` | [Tabbit 归档方案升级为 Task ID 驱动架构](./tasks/2026/05/TB-20260518-190000-tabbage-task-id-upgrade.archive.md) | 19:00 | Tabbit + 架构师 + TRAE | ⏳ pending | v1→v2：语义化文件名升级为 Task ID 驱动资产链，新增 manifest 和蒸馏 Skill |
+| `TB-20260518-194000` | [Tabbit 归档方案 v3：Canonical Task ID 自动生成](./tasks/2026/05/TB-20260518-194000-tabbage-canonical-auto-id.archive.md) | 19:40 | Tabbit + 架构师 + TRAE | ⏳ pending | v2→v3：解除对上游 Tabbit 的依赖，Canonical Task ID 由 /tabbit-task 兜底自动生成，支持四种输入模式 |
+| `TB-20260518-200000` | [CaiRobot MVP 单网关架构设计](./tasks/2026/05/TB-20260518-200000-cairobot-single-gateway.archive.md) | 20:00 | Tabbit | ⏳ pending | CaiRobot 单网关 MessagePacket + TarsCloud/TarsGo 统一架构方案（初稿 + 评审修订版） |
+| `TB-20260518-201000` | [手动占位空文件归档](./tasks/2026/05/TB-20260518-201000-manual-placeholder-note.archive.md) | 20:01 | 手动创建 | ⏳ ⚠️ 需人工确认 | 早期空占位文件 1.md 的归档记录，无可蒸馏内容 |
+
+### Manifest 蒸馏队列
+
+以下任务的 manifest 蒸馏状态为 `pending`，可由 `tabbit-task-distillation` Skill 处理：
+
+| Canonical Task ID | manifest 路径 | 蒸馏优先级 |
+|---|---|---|
+| TB-20260518-181000 | [manifest](./tasks/2026/05/TB-20260518-181000-tabbage-task-archive-flow-design.manifest.md) | normal |
+| TB-20260518-182000 | [manifest](./tasks/2026/05/TB-20260518-182000-trae-tabbage-archive-review.manifest.md) | normal |
+| TB-20260518-190000 | [manifest](./tasks/2026/05/TB-20260518-190000-tabbage-task-id-upgrade.manifest.md) | high |
+| TB-20260518-194000 | [manifest](./tasks/2026/05/TB-20260518-194000-tabbage-canonical-auto-id.manifest.md) | high |
+| TB-20260518-200000 | [manifest](./tasks/2026/05/TB-20260518-200000-cairobot-single-gateway.manifest.md) | normal |
+| TB-20260518-201000 | [manifest](./tasks/2026/05/TB-20260518-201000-manual-placeholder-note.manifest.md) | low (⚠️ needs_human_review) |
+
+## 16. 后续 AI 助手必须遵守的规则
 
 AI 助手开始工作前，必须：
 

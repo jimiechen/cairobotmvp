@@ -1,8 +1,10 @@
 # gRPC 接口规范
 
+> 状态说明：根据 ADR-0008，CaiRobot MVP 内部核心服务调用主链路已调整为 TarsCloud/TarsGo。本文件保留为历史设计与兼容参考，不再作为内部核心服务调用的主规范。新的内部 RPC 标准见 [docs/api/tars规范.md](tars规范.md)。
+
 ## 1. 服务定义
 
-- 所有内部服务间通信使用 gRPC
+- 历史规划中内部服务间通信使用 gRPC；根据 ADR-0008，当前内部核心服务主链路调整为 TarsCloud/TarsGo。
 - 服务定义放在 proto/[service]/v1/ 目录下
 - 使用 proto3 语法
 

@@ -99,9 +99,18 @@ Result 字段含义：
 - `message`：错误消息
 - `code`：错误码
 
-## 5. MessagePacket 网关统一入口
+## 5. MessagePacket 单网关统一入口
 
-网关统一入口报文使用 `MessagePacket`，位于 `proto/base/message.proto`。
+MessagePacket 是 CaiRobot MVP 对外单网关唯一业务入口报文，位于 `proto/base/message.proto`。
+
+### 5.1 入口规范
+
+- 外部业务入口只有 `POST /api/hello`
+- 请求体是 `MessagePacket` 序列化后的二进制内容
+- `maxType/minType` 来自业务 Request message 的 `Type.max/Type.min`
+- `data` 是业务 Request message 序列化后的 bytes
+
+### 5.2 MessagePacket 定义
 
 ```proto
 message MessagePacket {
@@ -113,11 +122,51 @@ message MessagePacket {
 }
 ```
 
-路由规则：
-1. 解析 MessagePacket
+字段说明：
+- `maxType`：必填，对应业务 Protobuf Request message 内部 `enum Type.max`
+- `minType`：必填，对应业务 Protobuf Request message 内部 `enum Type.min`
+- `extend`：上下文透传字段，用于 trace、鉴权、调用方、租户、语言、调试等信息
+- `platform`：平台类型，用于区分 ANDROID、IOS、WEB、PC、OTHER 等调用来源
+- `data`：业务 Protobuf Request message 序列化后的 bytes
+
+### 5.3 响应规范
+
+响应同样使用 `MessagePacket`：
+- `maxType`：响应 Protobuf Response message 的 `Type.max`
+- `minType`：响应 Protobuf Response message 的 `Type.min`
+- `extend`：回传 traceId、requestId、code、message 等上下文信息
+- `data`：业务 Protobuf Response message 序列化后的 bytes
+
+成功码建议写入 `extend.code = 10200`，或由业务 `Response.Result.code` 表达。
+
+### 5.4 路由规则
+
+1. Gateway 解析 MessagePacket
 2. 提取 maxType 和 minType
-3. 根据 max + min 找到对应的业务协议
-4. 解析 data 字段为对应的业务 Protobuf Message
+3. 使用 `maxType:minType` 作为 route_key 查询 routes.yaml
+4. 校验协议编号是否已登记到协议编号注册表
+5. 根据 request_proto 解析 data 字段为对应的业务 Protobuf Message
+6. 调用内部 TarsGo servant
+7. 根据 response_proto 解析响应 bytes
+8. 使用 response_max/response_min 封装响应 MessagePacket
+9. 返回客户端
+
+### 5.5 Platform 枚举
+
+当前 `proto/base/message.proto` 中 Platform 枚举值为：
+
+```proto
+enum Platform {
+  UNKNOWN = 0;
+  WEB = 1;
+  PC = 2;
+  ANDROID = 3;
+  IOS = 4;
+  OTHER = 5;
+}
+```
+
+文档和代码中应使用现有枚举值（ANDROID、IOS、WEB、PC、OTHER），不得使用不存在的枚举值（如 PLATFORM_APP）。如需新增枚举值，必须通过协议变更流程。
 
 ## 6. 字段编号规范
 
@@ -183,8 +232,10 @@ proto/
 ## 11. 相关文档
 
 - [ADR-0003-服务协议使用Protobuf.md](../adr/ADR-0003-服务协议使用Protobuf.md)
+- [ADR-0008-use-tarscloud-routing-layer.md](../adr/ADR-0008-use-tarscloud-routing-layer.md)
 - [协议编号注册表.md](./协议编号注册表.md)
 - [openapi-protobuf映射规范.md](./openapi-protobuf映射规范.md)
 - [gRPC接口规范.md](./gRPC接口规范.md)
 - [HTTP-gateway规范.md](./HTTP-gateway规范.md)
 - [OpenAPI规范.md](./OpenAPI规范.md)
+- [tars规范.md](./tars规范.md)
