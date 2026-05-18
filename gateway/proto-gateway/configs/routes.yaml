@@ -1,0 +1,137 @@
+# Protobuf 到 TarsGo 路由配置
+
+## 概述
+
+本文件定义了 Protobuf 请求到内部 TarsGo 服务的路由映射关系。
+
+## 路由配置示例
+
+### 规则说明：
+- `proto_package`: Protobuf 包名
+- `proto_service`: Protobuf 服务名
+- `proto_method`: Protobuf 方法名
+- `tars_app`: Tars 应用名
+- `tars_server`: Tars 服务名
+- `tars_servant`: Tars Servant 名
+- `tars_method`: Tars 方法名
+- `timeout_ms`: 超时时间（毫秒）
+- `auth_required`: 是否需要鉴权
+- `audit_required`: 是否需要审计
+
+```yaml
+routes:
+  # 用户中心服务
+  - proto_package: cairobot.user.v1
+    proto_service: UserCenterService
+    proto_method: BindDevice
+    tars_app: CaiRobot
+    tars_server: UserCenterServer
+    tars_servant: UserCenterObj
+    tars_method: BindDevice
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: true
+
+  - proto_package: cairobot.user.v1
+    proto_service: UserCenterService
+    proto_method: GetUserProfile
+    tars_app: CaiRobot
+    tars_server: UserCenterServer
+    tars_servant: UserCenterObj
+    tars_method: GetUserProfile
+    timeout_ms: 2000
+    auth_required: true
+    audit_required: false
+
+  # 服务商后台服务
+  - proto_package: cairobot.provider.v1
+    proto_service: ProviderAdminService
+    proto_method: CreateDeviceBatch
+    tars_app: CaiRobot
+    tars_server: ProviderAdminServer
+    tars_servant: ProviderAdminObj
+    tars_method: CreateDeviceBatch
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: true
+
+  # 开放平台服务
+  - proto_package: cairobot.open.v1
+    proto_service: OpenPlatformService
+    proto_method: CreateWebhook
+    tars_app: CaiRobot
+    tars_server: OpenPlatformServer
+    tars_servant: OpenPlatformObj
+    tars_method: CreateWebhook
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: true
+
+  # 设备网关服务
+  - proto_package: cairobot.device.v1
+    proto_service: DeviceGatewayService
+    proto_method: SendCommand
+    tars_app: CaiRobot
+    tars_server: DeviceGatewayServer
+    tars_servant: DeviceGatewayObj
+    tars_method: SendCommand
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: true
+
+  - proto_package: cairobot.device.v1
+    proto_service: DeviceGatewayService
+    proto_method: ReportStatus
+    tars_app: CaiRobot
+    tars_server: DeviceGatewayServer
+    tars_servant: DeviceGatewayObj
+    tars_method: ReportStatus
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
+  # AI桥接服务
+  - proto_package: cairobot.ai.v1
+    proto_service: AIService
+    proto_method: ClassifyIntent
+    tars_app: CaiRobot
+    tars_server: AiBridgeServer
+    tars_servant: AiBridgeObj
+    tars_method: ClassifyIntent
+    timeout_ms: 10000
+    auth_required: true
+    audit_required: true
+
+  - proto_package: cairobot.ai.v1
+    proto_service: AIService
+    proto_method: RewritePrompt
+    tars_app: CaiRobot
+    tars_server: AiBridgeServer
+    tars_servant: AiBridgeObj
+    tars_method: RewritePrompt
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: true
+
+  - proto_package: cairobot.ai.v1
+    proto_service: AIService
+    proto_method: ReviewAnswer
+    tars_app: CaiRobot
+    tars_server: AiBridgeServer
+    tars_servant: AiBridgeObj
+    tars_method: ReviewAnswer
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: true
+
+  # 基础服务
+  - proto_package: cairobot.base.v1
+    proto_service: HealthService
+    proto_method: CheckHealth
+    tars_app: CaiRobot
+    tars_server: UserCenterServer
+    tars_servant: UserCenterObj
+    tars_method: CheckHealth
+    timeout_ms: 1000
+    auth_required: false
+    audit_required: false

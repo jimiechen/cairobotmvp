@@ -1,0 +1,57 @@
+# Auth Server
+
+## 概述
+
+Auth Server 是 CaiRobot MVP 项目中的认证服务，负责登录、鉴权、Token校验、权限上下文管理等功能。
+
+## 职责
+
+- 登录认证
+- Token 生成与验证
+- OAuth 认证
+- 会话管理
+- 权限管理
+- 权限上下文透传
+
+## Tars 信息
+
+| 配置项 | 值 |
+|--------|-----|
+| App | CaiRobot |
+| Server | AuthServer |
+| Servant | AuthObj |
+
+## 目录结构
+
+```
+tars/go/auth/
+├── README.md                    # 本文档
+├── tars/                       # Tars 定义文件
+│   └── Auth.tars              # Tars 接口定义
+├── go/                        # Tars 生成代码
+│   └── AuthObj/
+├── cmd/
+│   └── server/
+│       └── main.go            # 服务启动入口
+├── internal/
+│   ├── domain/                # 领域层
+│   ├── application/          # 应用层
+│   ├── infrastructure/       # 基础设施层
+│   └── interfaces/           # 接口层
+│       └── servant/          # Tars Servant 实现
+├── configs/
+│   └── config.conf           # Tars 服务配置
+└── tests/                    # 测试文件
+```
+
+## 当前状态
+
+- ✅ 目录结构已建立
+- ⏳ 需要创建 Tars 接口定义文件
+- ⏳ 需要实现业务逻辑
+- ⏳ 需要编写单元测试
+
+## 相关文档
+
+- [Code Wiki](../../../docs/wiki/CODE-WIKI.md)
+- [ADR-0008](../../../docs/adr/ADR-0008-use-tarscloud-routing-layer.md)
