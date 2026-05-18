@@ -73,7 +73,7 @@ jobs:
           if [ -f web/app/package.json ]; then
             cd web/app
             npm ci
-            npm test -- --runInBand
+            npm run test:run
           else
             echo "跳过 web-test：web/app/package.json 不存在，当前尚未实现 ReactJS App 骨架。"
           fi
