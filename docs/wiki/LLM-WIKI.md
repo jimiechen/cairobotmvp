@@ -69,6 +69,10 @@ CaiRobot MVP 当前包含以下系统：
 - [x] 建立 CI 检查脚本骨架
 - [x] 更新 PR 模板和 Issue 模板加入 CI 检查
 - [x] 建立 HelloWorld + HealthCheck 验收规范
+- [x] 实现 HelloWorld 最小验收工程（Golang + Python + React）
+- [x] 新增 proto/base/hello.proto，登记协议编号 2100:2101 和 2100:2102
+- [x] 完成 TDD 红绿循环（test(hello) + feat(hello) 两次独立提交）
+- [x] 更新 Skill 文档缺陷改进（添加测试证据和 CI URL 硬校验）
 
 ## 6. 未完成事项
 
@@ -131,6 +135,8 @@ CaiRobot MVP 当前包含以下系统：
 |---:|---:|---|---|
 | 2100 | 2097 | ServiceHealthCheckRequest | 服务健康检查请求 |
 | 2100 | 2098 | ServiceHealthCheckResponse | 服务健康检查响应 |
+| 2100 | 2101 | HelloWorldRequest | HelloWorld 请求 |
+| 2100 | 2102 | HelloWorldResponse | HelloWorld 响应 |
 
 ### 7.2 协议文件
 
