@@ -1,0 +1,61 @@
+name: Daily Knowledge Distillation
+
+on:
+  schedule:
+    # 每天 UTC 时间 14:00 运行（对应北京时间 22:00）
+    - cron: '0 14 * * *'
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  daily-distillation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if there are changes today
+        id: check-changes
+        run: |
+          # 检查今天是否有提交（使用 UTC 时间）
+          TODAY=$(date -u +"%Y-%m-%d")
+          if git log --since="$TODAY 00:00:00" --until="$TODAY 23:59:59" --oneline | grep -q .; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run daily distillation workflow
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          echo "开始执行每日知识蒸馏流程..."
+          python3 scripts/daily-knowledge-distillation.py
+
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          git add docs/reports/daily/ || true
+          if git diff --staged --quiet; then
+            echo "没有需要提交的更改"
+          else
+            git commit -m "ci: 每日知识蒸馏自动提交"
+            git push
+          fi
+
+      - name: No changes today
+        if: steps.check-changes.outputs.has_changes == 'false'
+        run: |
+          echo "今天没有代码变更，跳过知识蒸馏流程"

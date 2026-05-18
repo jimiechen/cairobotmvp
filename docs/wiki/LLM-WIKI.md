@@ -122,6 +122,16 @@ CaiRobot MVP 当前包含以下系统：
   - `check_proto_registry.py`
   - `check_reports.py`
 
+### 7.5 每日知识蒸馏定时任务
+
+- **触发时间**：每天 UTC 14:00（对应北京时间 22:00）
+- **Workflow 文件**：`.github/workflows/daily-knowledge-distillation.yml`
+- **执行脚本**：`scripts/daily-knowledge-distillation.py`
+- **功能**：自动执行日报生成、Markdown 蒸馏、LLM Wiki 更新
+- **ADR**：[ADR-0010](../adr/ADR-0010-daily-knowledge-distillation.md)
+- **日志位置**：`docs/reports/daily/distillation-YYYY-MM-DD.log`
+- **支持手动触发**：在 GitHub Actions 页面可手动运行
+
 ## 8. Protobuf 协议核心规则
 
 **最高级协议规则**：在 CaiRobot MVP 中，Protobuf 协议编号 `max + min` 是接口报文的唯一身份。任何新增、修改、删除接口报文，都必须同步更新协议编号注册表、OpenAPI 映射、测试用例、测试报告和 LLM Wiki。
@@ -208,6 +218,9 @@ CaiRobot MVP 当前包含以下系统：
 | ADR-0005/App 前端使用 ReactJS | 草稿 | |
 | ADR-0006/开放平台 API 边界 | 草稿 | |
 | ADR-0007/服务商后台与用户中台边界 | 草稿 | |
+| ADR-0008/use-tarscloud-routing-layer | 草稿 | |
+| ADR-0009/tabbit-task-archive-flow | 已采纳 | |
+| ADR-0010/daily-knowledge-distillation | 已采纳 | 每日知识蒸馏定时任务 |
 
 ## 11. 测试索引
 
