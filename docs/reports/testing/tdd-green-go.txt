@@ -1,0 +1,4 @@
+=== RUN   TestHelloWorldEndpoint
+--- PASS: TestHelloWorldEndpoint (0.00s)
+PASS
+ok  	github.com/jimiechen/mineplanet/services/hello-service	0.002s

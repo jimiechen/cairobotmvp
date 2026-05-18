@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-7.4.3, pluggy-1.6.0 -- /root/.pyenv/versions/3.14.4/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace/ai/service/hello
+plugins: anyio-3.7.1
+collecting ... collected 1 item
+
+test_hello_service.py::test_hello_endpoint PASSED                        [100%]
+
+=============================== warnings summary ===============================
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17
+  /root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:17: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    return asyncio.iscoroutinefunction(obj) or (
+
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/fastapi/routing.py:211
+  /root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/fastapi/routing.py:211: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    is_coroutine = asyncio.iscoroutinefunction(dependant.call)
+
+../../../../root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:18
+  /root/.pyenv/versions/3.14.4/lib/python3.14/site-packages/starlette/_utils.py:18: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    callable(obj) and asyncio.iscoroutinefunction(obj.__call__)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 1 passed, 8 warnings in 0.31s =========================

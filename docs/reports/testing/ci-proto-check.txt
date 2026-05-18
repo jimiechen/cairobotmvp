@@ -1,0 +1,24 @@
+=== 协议编号检查 ===
+
+扫描到 4 个 proto 文件
+
+  发现：ServiceHealthCheckRequest (max=2100, min=2097) in proto/base/health.proto
+  发现：ServiceHealthCheckResponse (max=2100, min=2098) in proto/base/health.proto
+  发现：HelloWorldRequest (max=2100, min=2101) in proto/base/hello.proto
+  发现：HelloWorldResponse (max=2100, min=2102) in proto/base/hello.proto
+
+共发现 4 个协议编号
+
+成功：没有重复的协议编号
+
+注册表中有 4 个编号
+
+成功：所有协议编号都已登记
+
+=== 已检查的协议编号 ===
+  2100:2097 -> ServiceHealthCheckRequest
+  2100:2098 -> ServiceHealthCheckResponse
+  2100:2101 -> HelloWorldRequest
+  2100:2102 -> HelloWorldResponse
+
+成功：协议编号检查通过，共 4 个编号

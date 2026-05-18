@@ -1,0 +1,3 @@
+# github.com/jimiechen/mineplanet/services/hello-service [github.com/jimiechen/mineplanet/services/hello-service.test]
+./hello_service_test.go:19:30: undefined: helloHandler
+FAIL	github.com/jimiechen/mineplanet/services/hello-service [build failed]
