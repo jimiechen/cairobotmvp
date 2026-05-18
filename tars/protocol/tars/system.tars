@@ -1,0 +1,19 @@
+module CaiRobotSystemApp
+{
+    interface SystemObj
+    {
+        // 基础接口：轻量健康探测
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        // 基础接口：完整健康检查
+        // Request: ServiceHealthCheckRequest，当前注册编号 2100/2097
+        // Response: ServiceHealthCheckResponse，当前注册编号 2100/2098
+        // return: 10200 成功，10500 失败，10401 无权限
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        // 示例接口：HelloWorld
+        // Request: HelloWorldRequest，当前注册编号 2100/2101，状态以协议编号注册表为准
+        // Response: HelloWorldResponse，当前注册编号 2100/2102，状态以协议编号注册表为准
+        int HelloWorld(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

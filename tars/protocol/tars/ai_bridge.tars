@@ -1,0 +1,12 @@
+module CaiRobotAiBridgeApp
+{
+    interface AiBridgeObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int ClassifyIntent(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int RewritePrompt(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int ReviewAnswer(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

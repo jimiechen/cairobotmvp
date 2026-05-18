@@ -1,0 +1,13 @@
+module CaiRobotAuthApp
+{
+    interface AuthObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int Login(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int VerifyToken(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int RefreshToken(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int Logout(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

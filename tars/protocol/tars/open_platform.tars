@@ -1,0 +1,13 @@
+module CaiRobotOpenPlatformApp
+{
+    interface OpenPlatformObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int CreateApiKey(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int VerifyApiKey(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int CreateWebhook(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int GetQuota(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

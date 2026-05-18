@@ -1,0 +1,13 @@
+module CaiRobotUserCenterApp
+{
+    interface UserCenterObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int BindDevice(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int UnbindDevice(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int ListFamilyDevices(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int ListLearningRecords(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

@@ -1,0 +1,13 @@
+module CaiRobotDeviceGatewayApp
+{
+    interface DeviceGatewayObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int SendCommand(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int GetDeviceStatus(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int ReportHeartbeat(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int ReportDeviceEvent(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

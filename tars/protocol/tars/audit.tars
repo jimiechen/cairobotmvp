@@ -1,0 +1,11 @@
+module CaiRobotAuditApp
+{
+    interface AuditObj
+    {
+        int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+
+        int WriteAuditLog(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int QueryAuditLog(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};
