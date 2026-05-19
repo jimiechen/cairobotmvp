@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 安装基础依赖
         run: |
@@ -61,10 +63,8 @@ jobs:
     needs: [ci-full]
     steps:
       - uses: actions/checkout@v4
-      - name: 检查协议编号注册表
+      - name: 检查协议编号和生成代码
         run: python3 scripts/ci/check_proto_registry.py
-      - name: 检查生成代码是否已提交
-        run: bash scripts/proto/check-generated-clean.sh || echo "跳过：首次提交或无生成代码"
 
   report-check:
     name: 报告检查

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap proto lint test unit integration coverage build package \
+.PHONY: help bootstrap proto proto-check lint test unit integration coverage build package \
         docs rules testcase-check comment-check ci clean
 
 PROJECT_ROOT := $(shell pwd)
@@ -45,6 +45,11 @@ proto: ## 生成所有语言的 Protobuf 代码（Go/TS/Python/TarsGo），工�
 	@bash scripts/proto/generate-python.sh || echo "[skip] grpcio-tools 未安装"
 	@bash scripts/proto/generate-tarsgo.sh || echo "[skip] tars2go 未安装"
 	@echo "==> Protobuf 代码生成完成"
+
+proto-check: ## 校验 Protobuf 生成代码是否存在且注册表一致（CI 用，不需要 protoc）
+	@echo "==> 校验 Protobuf 生成代码..."
+	@python3 scripts/ci/check_proto_registry.py
+	@echo "==> Protobuf 校验完成"
 
 lint: ## 运行所有语言的 Lint 检查
 	@echo "==> 运行 Lint 检查..."
@@ -126,7 +131,7 @@ ci: ## 完整 CI 检查（本地等价于 GitHub Actions）
 	@echo ""
 	$(MAKE) docs
 	$(MAKE) rules
-	$(MAKE) proto
+	$(MAKE) proto-check
 	$(MAKE) lint
 	$(MAKE) unit
 	$(MAKE) integration
