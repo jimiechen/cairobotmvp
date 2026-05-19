@@ -9,28 +9,39 @@ option java_outer_classname = "ResultProto";
 option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
 option optimize_for = LITE_RUNTIME;
 
-// 通用返回结果
+// 通用返回结果，所有业务响应必须内嵌此 message
+// code 为唯一状态判断依据，message 仅作人类可读补充说明
 message Result {
-  int32 code = 1;         // 响应码，成功建议使用 10200
-  string message = 2;     // 响应消息
+  // code 表示响应码，成功建议使用 10200，错误码定义见协议编号注册表
+  int32 code = 1;
+  // message 表示人类可读的响应消息，不可用于程序逻辑判断
+  string message = 2;
 }
 
-// 分页信息
+// 分页信息，用于列表类接口的分页查询和翻页
 message PageInfo {
-  int32 pageSize = 1;     // 每页大小
-  int32 pageToken = 2;    // 分页令牌
-  int32 totalCount = 3;   // 总数
-  string nextPageToken = 4; // 下一页令牌
+  // pageSize 表示每页返回的最大条数，由客户端指定上限
+  int32 pageSize = 1;
+  // pageToken 表示当前页的分页令牌，首页传空或 0
+  int32 pageToken = 2;
+  // totalCount 表示满足条件的总记录数，-1 表示未知
+  int32 totalCount = 3;
+  // nextPageToken 表示下一页的分页令牌，为空表示无更多数据
+  string nextPageToken = 4;
 }
 
-// 错误详情
+// 错误详情，用于参数校验失败等场景的多错误返回
 message ErrorDetail {
-  string field = 1;       // 字段名
-  string message = 2;     // 错误消息
-  string code = 3;        // 错误码
+  // field 表示校验失败的字段路径，如 "user.name"
+  string field = 1;
+  // message 表示该字段的错误描述文本
+  string message = 2;
+  // code 表示该字段错误的业务错误码
+  string code = 3;
 }
 
-// 参数校验结果
+// 参数校验结果，聚合多个 ErrorDetail 用于批量返回校验错误
 message ValidationResult {
-  repeated ErrorDetail errors = 1; // 错误列表
+  // errors 表示所有校验错误详情列表，为空表示校验通过
+  repeated ErrorDetail errors = 1;
 }

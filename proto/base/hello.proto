@@ -8,8 +8,10 @@ package com.mineplanet.pojo.hello;
 
 option java_outer_classname = "HelloProto";
 option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option optimize_for = LITE_RUNTIME;
 
-// HelloWorld 请求
+// HelloWorld 请求，用于验证端到端链路连通性
+// 作为 MVP 阶段的第一个业务协议，确认 Gateway → TarsGo 全链路可达
 message HelloWorldRequest {
   enum Type {
     none = 0;
@@ -17,10 +19,12 @@ message HelloWorldRequest {
     min = 2101;
   }
 
-  string name = 1; // 可选的问候名称
+  // name 表示可选的问候名称，为空时返回默认问候语
+  string name = 1;
 }
 
-// HelloWorld 响应
+// HelloWorld 响应，携带服务端生成的问候消息
+// 用于验证 Protobuf 序列化/反序列化和 Tars bytes 透传正确性
 message HelloWorldResponse {
   enum Type {
     none = 0;
@@ -28,7 +32,10 @@ message HelloWorldResponse {
     min = 2102;
   }
 
+  // result 统一返回结果码
   com.mineplanet.pojo.pb.Result result = 1;
-  string message = 2; // 问候消息
+  // message 表示服务端生成的问候消息文本
+  string message = 2;
+  // timestamp 表示服务端响应时间戳（Unix 秒）
   int64 timestamp = 3;
 }

@@ -60,4 +60,4 @@ config_path: /data/configs/cairobot/user-center
 
 - [tars/protocol/tars/user_center.tars](../../../tars/protocol/tars/user_center.tars)
 - [docs/api/协议编号注册表.md](../../../docs/api/协议编号注册表.md)
-- [gateway/proto-gateway/configs/routes.yaml](../../../gateway/proto-gateway/configs/routes.yaml)
+- [go/gateway/proto-gateway/configs/routes.yaml](../../../go/gateway/proto-gateway/configs/routes.yaml)

@@ -304,6 +304,8 @@ tars/go/
 
 ## 15. Gateway 调用 Tars 完整流程
 
+### 15.1 微服务模式流程
+
 1. 客户端请求 `POST /api/hello`
 2. 请求体是 `MessagePacket` bytes
 3. Gateway 反序列化 MessagePacket
@@ -332,7 +334,63 @@ CaiRobot.SystemServer.SystemObj.HealthCheck
 21. Gateway 在响应 MessagePacket.extend 写入 code/message/traceId/requestId
 22. 返回客户端
 
-## 16. 启动校验要求
+### 15.2 单体模式流程
+
+单体模式（`GATEWAY_INVOKER_MODE=local`）不走真实 TarsCloud，流程差异：
+
+1-11 步与微服务模式相同
+12. Gateway 通过 `LocalInvoker` 查找本地注册的 handler
+13. Local handler 接收 request bytes 和 extend
+14. Local handler 反序列化 request bytes 为 Protobuf Request
+15. Local handler 调用本地 SystemService 执行业务逻辑
+16. Local handler 构造 Protobuf Response
+17. Local handler 序列化 Response 为 response bytes
+18. Local handler 返回 return code 和 response bytes 给 Gateway
+19-22 步与微服务模式相同
+
+单体模式下，System 模块通过 `localhandler` 包对外暴露 bytes 接口，内部调用 `internal/service` 业务逻辑。
+
+## 16. Gateway 运行模式
+
+Gateway 支持通过环境变量切换运行模式：
+
+### 16.1 单体模式（默认）
+
+```bash
+GATEWAY_INVOKER_MODE=local
+```
+
+- 本地开发、测试、演示使用
+- 不依赖真实 TarsCloud
+- 通过 `LocalInvoker` 调用本地业务模块 handler
+- 仍然严格走 routes.yaml
+- System 模块通过 `localhandler` 包暴露 bytes 接口
+
+### 16.2 微服务模式
+
+```bash
+GATEWAY_INVOKER_MODE=tars
+```
+
+- 正式部署或集成环境使用
+- 通过 `TarsGoInvoker` 调用 TarsCloud 服务
+- 当前尚未实现，启动会报错
+
+### 16.3 TarsInvoker 接口
+
+统一调用接口：
+
+```go
+type TarsInvoker interface {
+    Invoke(ctx context.Context, target Target, request []byte, extend map[string]string) (returnCode int, response []byte, err error)
+}
+```
+
+实现：
+- `LocalInvoker`：单体模式，本地 handler 注册表
+- `TarsGoInvoker`：微服务模式，调用 TarsCloud（未实现）
+
+## 17. 启动校验要求
 
 Gateway 启动时必须校验：
 
@@ -349,7 +407,9 @@ Gateway 启动时必须校验：
 11. tars_method 必须存在于对应 .tars 文件 interface 中
 12. 未登记协议编号不得启动成功
 
-## 17. 测试要求
+## 18. 测试要求
+
+### 18.1 Gateway 测试
 
 | 测试项 | 要求 |
 |---|---|
@@ -362,12 +422,39 @@ Gateway 启动时必须校验：
 | Tars bytes 调用测试 | request bytes / response bytes 完整透传 |
 | Tars return 映射测试 | 10200/10401/10500/10504 正确映射 |
 | extend 透传测试 | traceId/requestId/userId/tenantId 正确传递 |
+| LocalInvoker 注册测试 | handler 正确注册和调用 |
+| TarsGoInvoker 未实现测试 | 微服务模式启动应报错 |
 
-## 18. 与 ADR-0008 的关系
+### 18.2 System 模块测试
+
+| 测试项 | 要求 |
+|---|---|
+| SystemService 业务逻辑测试 | HealthCheck / HelloWorld 返回正确 |
+| LocalHandler bytes 适配测试 | 请求 bytes 正确反序列化，响应正确序列化 |
+| LocalHandler 错误处理测试 | 非法 bytes / 未知 maxType/minType 返回错误 |
+
+## 19. 与 ADR-0008 的关系
 
 本规范是 ADR-0008 的技术实现细则。ADR-0008 决策了 TarsCloud/TarsGo 作为内部 RPC 与服务治理层，本规范定义了具体的命名、接口、流程和校验规则。
 
-## 19. 相关文档
+## 20. Module Path 规范
+
+所有 Go module 使用统一 path 前缀：
+
+```text
+github.com/jimiechen/mineplanet/go/...
+```
+
+当前模块：
+
+| 模块 | Path |
+|---|---|
+| gateway/proto-gateway | github.com/jimiechen/mineplanet/go/gateway/proto-gateway |
+| tars/system | github.com/jimiechen/mineplanet/go/tars/system |
+
+Go Workspace 位于 `go/go.work`，执行 Go 命令前需 `cd go/`。
+
+## 21. 相关文档
 
 - [ADR-0008-use-tarscloud-routing-layer.md](../adr/ADR-0008-use-tarscloud-routing-layer.md)
 - [protobuf规范.md](protobuf规范.md)

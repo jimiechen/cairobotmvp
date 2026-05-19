@@ -185,6 +185,8 @@ int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte
 
 ## 13. 目录结构说明
 
+### 13.1 文档目录
+
 ```text
 docs/
   api/
@@ -200,20 +202,89 @@ docs/
     ADR-0008-use-tarscloud-routing-layer.md
   wiki/
     CODE-WIKI.md
+```
 
-gateway/
-  proto-gateway/
+### 13.2 Go 语言资产
+
+```text
+go/
+  go.work
+  gateway/
+    proto-gateway/
+      README.md
+      go.mod
+      cmd/
+        server/
+          main.go
+      configs/
+        routes.yaml
+      internal/
+        config/
+          routes.go
+          routes_test.go
+        router/
+          router.go
+          router_test.go
+        adapter/
+          message_packet.go
+          message_packet_test.go
+        tarsclient/
+          invoker.go
+          invoker_test.go
+        server/
+          http_server.go
+          http_server_test.go
+  tars/
+    system/
+      go.mod
+      cmd/
+        main.go
+      internal/
+        service/
+          system_service.go
+          system_service_test.go
+      localhandler/
+        local_handler.go
+        local_handler_test.go
+    auth/
+    audit/
+    ...
+  shared/
+    audit/
+    config/
+    result/
+    protoadapter/
+  third_party/
+    TarsGo/
+```
+
+### 13.3 Python 语言资产
+
+```text
+python/
+  ai/
+    service/
     README.md
-    configs/
-      routes.yaml
-    internal/
-      router/
-        README.md
-      adapter/
-        README.md
-      tarsclient/
-        README.md
+  tools/
+    README.md
+```
 
+### 13.4 TypeScript 语言资产
+
+```text
+typescript/
+  web/
+    src/
+    package.json
+  admin-web/
+  app-h5/
+  packages/
+  README.md
+```
+
+### 13.5 Tars 协议目录
+
+```text
 tars/
   protocol/
     tars/
@@ -225,16 +296,11 @@ tars/
       ai_bridge.tars
       device_gateway.tars
       audit.tars
-  go/
-    system/
-    auth/
-    provider-admin/
-    user-center/
-    open-platform/
-    ai-bridge/
-    device-gateway/
-    audit/
+```
 
+### 13.6 部署目录
+
+```text
 deploy/
   tarscloud/
     README.md
@@ -242,7 +308,22 @@ deploy/
     templates/
 ```
 
-## 14. 依赖关系
+## 14. Go Workspace 管理
+
+Go Workspace 位于 `go/go.work`，只管理 Go 子模块：
+
+```text
+go/go.work
+├── gateway/proto-gateway     (github.com/jimiechen/mineplanet/go/gateway/proto-gateway)
+└── tars/system               (github.com/jimiechen/mineplanet/go/tars/system)
+```
+
+- 每个服务独立 Go module，独立版本管理
+- 公共 proto 通过生成代码拷贝或独立 module 引用
+- Workspace 统一构建和测试入口
+- 执行 Go 命令前需 `cd go/`
+
+## 15. 依赖关系
 
 - Protobuf 定义协议身份和业务字段
 - MessagePacket 定义单网关入口
@@ -251,11 +332,52 @@ deploy/
 - TarsCloud 负责服务治理
 - TarsGo 服务负责业务逻辑
 
-## 15. 开发与运行方式
+## 16. Gateway 运行模式
+
+Gateway 支持两种运行模式：
+
+### 16.1 单体模式（默认）
+
+```bash
+GATEWAY_INVOKER_MODE=local
+```
+
+- 本地开发、测试、演示使用
+- 不依赖真实 TarsCloud
+- 通过 LocalInvoker 调用本地业务模块 handler
+- 仍然严格走 routes.yaml
+
+### 16.2 微服务模式
+
+```bash
+GATEWAY_INVOKER_MODE=tars
+```
+
+- 正式部署或集成环境使用
+- 通过 TarsGoInvoker 调用 TarsCloud 服务
+- 当前尚未实现，启动会报错
+
+## 17. TarsInvoker 接口
+
+统一调用接口：
+
+```go
+type TarsInvoker interface {
+    Invoke(ctx context.Context, target Target, request []byte, extend map[string]string) (returnCode int, response []byte, err error)
+}
+```
+
+实现：
+- `LocalInvoker`：单体模式，本地 handler 注册表
+- `TarsGoInvoker`：微服务模式，调用 TarsCloud（未实现）
+
+## 18. 开发与运行方式
 
 当前为 S0 阶段，重点是文档、规范、目录骨架、配置示例和架构决策，不实现复杂业务逻辑。
 
-## 16. 测试与校验要求
+## 19. 测试与校验要求
+
+### 19.1 Gateway 测试
 
 | 测试项 | 要求 |
 |---|---|
@@ -269,7 +391,30 @@ deploy/
 | Tars return 映射测试 | 10200/10401/10500/10504 正确映射 |
 | extend 透传测试 | traceId/requestId/userId/tenantId 正确传递 |
 
-## 17. 相关文档索引
+### 19.2 System 模块测试
+
+| 测试项 | 要求 |
+|---|---|
+| SystemService 业务逻辑测试 | HealthCheck / HelloWorld 返回正确 |
+| LocalHandler bytes 适配测试 | 请求 bytes 正确反序列化，响应正确序列化 |
+| LocalHandler 错误处理测试 | 非法 bytes / 未知 maxType/minType 返回错误 |
+
+## 20. Module Path 规范
+
+所有 Go module 使用统一 path 前缀：
+
+```text
+github.com/jimiechen/mineplanet/go/...
+```
+
+当前模块：
+
+| 模块 | Path |
+|---|---|
+| gateway/proto-gateway | github.com/jimiechen/mineplanet/go/gateway/proto-gateway |
+| tars/system | github.com/jimiechen/mineplanet/go/tars/system |
+
+## 21. 相关文档索引
 
 - [protobuf规范.md](../api/protobuf规范.md)
 - [tars规范.md](../api/tars规范.md)
@@ -281,8 +426,45 @@ deploy/
 - [ADR-0003-服务协议使用Protobuf.md](../adr/ADR-0003-服务协议使用Protobuf.md)
 - [ADR-0008-use-tarscloud-routing-layer.md](../adr/ADR-0008-use-tarscloud-routing-layer.md)
 
-## 18. 变更日志
+## 22. 变更日志
 
 | 日期 | 变更内容 |
 |---|---|
 | 2026-05-18 | 根据 ADR-0008，内部核心服务主链路从 gRPC 调整为 TarsCloud/TarsGo；外部入口收敛为单网关 POST /api/hello；MessagePacket 成为唯一入口报文 |
+| 2026-05-19 | 实现 Gateway 单体/微服务双模式骨架；System 模块独立存在；建立 Go Workspace；统一 TarsInvoker 接口；module path 标准化 |
+| 2026-05-19 | 按 ADR-0012 重构多语言 monorepo 目录布局：Go 进 go/、Python 进 python/、TypeScript 进 typescript/；删除根目录 Makefile；go.work 移至 go/ |
+| 2026-05-19 | 恢复根目录 Makefile，采用三层结构（总控 + 子 Makefile + scripts）；新增 16 个 target；新增 CI 规范检查脚本；建立测试用例注册表；新增中文注释规范 |
+
+## 23. Makefile 工程入口
+
+### 23.1 三层架构
+
+```
+Makefile（根目录总控）
+├── go/Makefile
+├── typescript/Makefile
+├── python/Makefile
+└── scripts/
+    ├── ci/          # check_*.py / check_*.sh
+    ├── proto/       # generate-*.sh
+    └── coverage/    # *_coverage.sh
+```
+
+### 23.2 常用命令
+
+```bash
+make help        # 显示帮助
+make bootstrap   # 初始化环境
+make proto       # 生成 Protobuf 代码
+make lint        # Lint 检查
+make test        # 全部测试
+make unit        # 单元测试
+make ci          # 完整 CI 检查
+make rules       # 规范检查
+make clean       # 清理产物
+```
+
+### 23.3 相关文档
+
+- [ADR-0013](../adr/ADR-0013-makefile-engineering-entrypoint-and-rule-enforcement.md)
+- [.trae/rules/makefile.md](../../.trae/rules/makefile.md)
