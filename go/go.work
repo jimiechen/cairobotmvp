@@ -1,7 +1,7 @@
 go 1.23
 
 use (
-	../proto/generated/go/proto/base
+	../proto/generated/go/base
 	./gateway/proto-gateway
 	./tars/system
 )
