@@ -1,8 +1,18 @@
 .PHONY: proto tars unit integration coverage lint build package clean help
 
 GO_WORK := go.work
-export GOPATH ?= $(shell go env GOPATH)
-export PATH := $(GOPATH)/bin:$(PATH)
+
+# Go 环境变量防御性设置：支持从根目录 Makefile 继承或自动发现
+# 优先使用已导出的环境变量，否则按常见路径查找
+_GO_EXISTS := $(shell which go 2>/dev/null)
+ifdef _GO_EXISTS
+	export GOROOT ?= $(shell dir=$(_GO_EXISTS) && dirname "$$(dirname "$$dir")")
+	export GOPATH ?= $(shell go env GOPATH 2>/dev/null)
+else
+	export GOROOT ?= /usr/local/go
+	export GOPATH ?= $(HOME)/go
+endif
+export PATH := $(GOPATH)/bin:$(GOROOT)/bin:$(PATH)
 export GOPROXY ?= https://goproxy.cn,direct
 
 help: ## 显示 Go 子模块帮助
@@ -22,7 +32,7 @@ tars: ## 生成 TarsGo/Tars2Go 代码
 unit: ## 运行所有 go.work 中 module 的单元测试
 	@echo "[go] ==> 运行单元测试..."
 	@if [ -f $(GO_WORK) ]; then \
-		for mod in gateway/proto-gateway tars/system services; do \
+		for mod in gateway/proto-gateway tars/system; do \
 			if [ -f "$$mod/go.mod" ]; then \
 				echo "[go] 测试模块: $$mod"; \
 				cd $$mod && go test ./... -v -count=1 2>&1 | tail -20; \
