@@ -73,6 +73,28 @@ CaiRobot MVP 当前包含以下系统：
 - [x] 新增 proto/base/hello.proto，登记协议编号 2100:2101 和 2100:2102
 - [x] 完成 TDD 红绿循环（test(hello) + feat(hello) 两次独立提交）
 - [x] 更新 Skill 文档缺陷改进（添加测试证据和 CI URL 硬校验）
+- [x] 实现 Gateway 单体/微服务双模式骨架
+- [x] 建立 Go Workspace 管理多模块
+- [x] System 模块独立存在，支持独立测试
+- [x] 统一 TarsInvoker 接口命名
+- [x] module path 标准化
+- [x] 编写 Gateway 核心代码和测试（routes、router、adapter、invoker、server）
+- [x] 编写 System 模块核心代码和测试（service、localhandler）
+- [x] 按 ADR-0012 重构多语言 monorepo 目录布局
+- [x] Go 代码迁移到 go/，Python 迁移到 python/，TypeScript 迁移到 typescript/
+- [x] 删除根目录 Makefile，构建逻辑迁移到 scripts/
+- [x] go.work 从根目录移至 go/
+- [x] 更新 CI workflow 多语言 working-directory
+- [x] 恢复根目录 Makefile（三层架构：总控 + 子 Makefile + scripts）
+- [x] 新增 16 个工程 target（help/bootstrap/proto/lint/test/unit/integration/coverage/build/package/docs/rules/testcase-check/comment-check/ci/clean）
+- [x] 新增 go/typescript/python 子 Makefile
+- [x] 新增 protoc 生成脚本（generate-go/ts/python/tarsgo）
+- [x] 新增测试用例注册表（docs/testing/测试用例注册表.md）
+- [x] 新增覆盖率收集脚本（scripts/coverage/）
+- [x] 新增中文注释规范（.trae/rules/commenting.md）
+- [x] 新增 5 个 CI 检查脚本（directory_layout/make_targets/module_paths/chinese_comments/testcase_registry）
+- [x] 更新 CI workflow 为 make ci 编排模式
+- [x] 新增 ADR-0013：Makefile 工程入口与规则强制执行
 
 ## 6. 未完成事项
 
@@ -81,6 +103,8 @@ CaiRobot MVP 当前包含以下系统：
 - [ ] 编写具体的 Protobuf 协议定义
 - [ ] 建立各服务测试框架
 - [ ] 实现 HelloWorld + HealthCheck 验收工程
+- [ ] 生成 Protobuf Go 代码（makefile proto 目标）
+- [ ] 实现 TarsGoInvoker（微服务模式）
 - [ ] 开始功能开发
 
 ## 7. 工程级 TDD 与 CI 规则
@@ -161,11 +185,12 @@ CaiRobot MVP 当前包含以下系统：
 | docs/wiki/ | LLM Wiki（本文件） |
 | .trae/rules/ | Trae 规则 |
 | .github/ | GitHub 模板 |
-| proto/ | Protobuf 协议定义 |
-| services/ | Golang 后端服务 |
-| ai/ | AI 模块代码 |
-| web/ | ReactJS 前端代码 |
-| app/ | App 代码 |
+| proto/ | Protobuf 协议定义（跨语言契约） |
+| go/ | Go 语言资产（gateway、tars、shared） |
+| python/ | Python 语言资产（ai、tools） |
+| typescript/ | TypeScript 语言资产（web、admin-web、app-h5） |
+| tars/protocol/ | Tars IDL 协议定义 |
+| services/ | Golang 后端服务（遗留，逐步迁移到 go/） |
 | hardware/ | 硬件相关 |
 | tests/ | 测试代码 |
 

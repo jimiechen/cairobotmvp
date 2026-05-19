@@ -8,8 +8,10 @@ package com.mineplanet.pojo.health;
 
 option java_outer_classname = "HealthProto";
 option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option optimize_for = LITE_RUNTIME;
 
-// 服务健康检查请求
+// 服务健康检查请求，用于服务间心跳检测
+// 不携带业务数据，仅用于确认目标服务存活状态
 message ServiceHealthCheckRequest {
   enum Type {
     none = 0;
@@ -17,10 +19,12 @@ message ServiceHealthCheckRequest {
     min = 2097;
   }
 
+  // service_name 表示请求方服务名称，用于日志追踪和调用链定位
   string service_name = 1;
 }
 
-// 服务健康检查响应
+// 服务健康检查响应，返回目标服务的运行状态
+// 网关和 TarsCloud 调度层依赖此响应判断是否路由流量到该节点
 message ServiceHealthCheckResponse {
   enum Type {
     none = 0;
@@ -28,7 +32,10 @@ message ServiceHealthCheckResponse {
     min = 2098;
   }
 
+  // result 统一返回结果码，10200 表示健康
   com.mineplanet.pojo.pb.Result result = 1;
-  string status = 2;      // "OK", "Unhealthy"
+  // status 表示服务状态字符串："OK" 或 "Unhealthy"
+  string status = 2;
+  // timestamp 表示服务端响应时间戳（Unix 秒），用于计算延迟
   int64 timestamp = 3;
 }

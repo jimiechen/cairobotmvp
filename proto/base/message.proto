@@ -9,23 +9,29 @@ option java_outer_classname = "MessageProto";
 option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
 option optimize_for = LITE_RUNTIME;
 
-// 平台类型
+// 平台类型枚举，标识客户端来源平台
+// 用于网关层做平台特定的适配和限流策略
 enum Platform {
-  UNKNOWN = 0; // 未知
-  WEB = 1;     // 网页
-  PC = 2;      // 电脑
-  ANDROID = 3; // 安卓
-  IOS = 4;     // 苹果
-  OTHER = 5;   // 其他
+  UNKNOWN = 0; // 未知平台，默认值
+  WEB = 1;     // 网页浏览器
+  PC = 2;      // 桌面客户端
+  ANDROID = 3; // 安卓移动设备
+  IOS = 4;     // 苹果移动设备
+  OTHER = 5;   // 其他平台（IoT 设备、第三方接入等）
 }
 
-// 网关统一入口报文头。
-// maxType + minType 用于唯一定位业务协议。
-// data 承载序列化后的业务 Protobuf 报文。
+// 网关统一入口报文头，所有外部请求必须封装为此格式
+// maxType + minType 用于唯一定位业务协议，由 routes.yaml 路由到目标 Tars 服务
+// data 承载序列化后的业务 Protobuf 报文，网关不解析业务字段
 message MessagePacket {
-  int32 maxType = 1;             // 必填，协议大类
-  int32 minType = 2;             // 必填，协议小类
-  map<string, string> extend = 3; // 非必填，通用透传上下文
-  Platform platform = 4;         // 非必填，平台类型
-  bytes data = 5;                // 必填，业务协议包
+  // maxType 表示协议大类编号，对应协议编号注册表中的范围分组
+  int32 maxType = 1;
+  // minType 表示协议小类编号，与 maxType 组合唯一确定一个接口
+  int32 minType = 2;
+  // extend 表示通用透传上下文字典，携带 traceId/requestId/token 等跨服务传递信息
+  map<string, string> extend = 3;
+  // platform 表示请求来源平台类型，用于适配层选择
+  Platform platform = 4;
+  // data 表示业务协议包的序列化 bytes，由 request_proto 对应的 Protobuf message 序列化而来
+  bytes data = 5;
 }

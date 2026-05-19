@@ -12,93 +12,66 @@ on:
       - "test/**"
 
 jobs:
-  docs-check:
+  ci-full:
+    name: 完整 CI 检查（通过 make ci 编排）
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check required docs
-        run: python3 scripts/ci/check_required_docs.py
 
-  proto-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check proto registry
-        run: python3 scripts/ci/check_proto_registry.py
+      - name: 安装基础依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make python3 bash
 
-  go-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Go
+      - name: 安装 Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
-      - name: Run Go tests
-        run: |
-          if [ -f services/hello-go/go.mod ]; then
-            cd services/hello-go
-            go test ./...
-          else
-            echo "跳过 go-test：services/hello-go/go.mod 不存在，当前尚未实现 Golang HelloWorld 骨架。"
-          fi
 
-  python-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Run Python tests
-        run: |
-          if [ -f ai/service/pyproject.toml ] || [ -f ai/service/requirements.txt ]; then
-            cd ai/service
-            python -m pytest
-          else
-            echo "跳过 python-test：ai/service 暂无 pyproject.toml 或 requirements.txt。"
-          fi
 
-  web-test:
+      - name: 执行完整 CI 检查
+        run: make ci
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docs-check:
+    name: 文档检查
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [ci-full]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Run Web App tests
-        run: |
-          if [ -f web/app/package.json ]; then
-            cd web/app
-            npm ci
-            npm test -- --runInBand
-          else
-            echo "跳过 web-test：web/app/package.json 不存在，当前尚未实现 ReactJS App 骨架。"
-          fi
+      - name: 检查文档完整性
+        run: python3 scripts/ci/check_required_docs.py
 
-  admin-web-test:
+  proto-check:
+    name: 协议检查
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [ci-full]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Run Admin Web tests
-        run: |
-          if [ -f web/provider-admin/package.json ]; then
-            cd web/provider-admin
-            npm ci
-            npm test -- --runInBand
-          else
-            echo "跳过 admin-web-test：web/provider-admin/package.json 不存在，当前尚未实现 AdminWeb 骨架。"
-          fi
+      - name: 检查协议编号注册表
+        run: python3 scripts/ci/check_proto_registry.py
+      - name: 检查生成代码是否已提交
+        run: bash scripts/proto/check-generated-clean.sh || echo "跳过：首次提交或无生成代码"
 
   report-check:
+    name: 报告检查
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [ci-full]
     steps:
       - uses: actions/checkout@v4
-      - name: Check reports
+      - name: 检查报告完整性
         run: python3 scripts/ci/check_reports.py
