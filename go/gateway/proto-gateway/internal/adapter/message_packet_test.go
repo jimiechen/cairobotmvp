@@ -13,7 +13,7 @@ func TestBuildErrorPacket(t *testing.T) {
 			MaxType:  2100,
 			MinType:  2097,
 			Extend:   map[string]string{"traceId": "abc"},
-			Platform: int32(pb.Platform_ANDROID),
+			Platform: pb.Platform_ANDROID,
 		}
 		resp := BuildErrorPacket(req, 10404, "not found")
 		if resp.MaxType != 2100 {
@@ -52,7 +52,7 @@ func TestBuildResponsePacket(t *testing.T) {
 		MaxType:  2100,
 		MinType:  2097,
 		Extend:   map[string]string{"traceId": "abc", "requestId": "def"},
-		Platform: int32(pb.Platform_WEB),
+		Platform: pb.Platform_WEB,
 	}
 	resp := BuildResponsePacket(req, 2100, 2098, []byte("ok"), 10200)
 	if resp.MaxType != 2100 {
@@ -118,7 +118,7 @@ func TestBuildTarsExtend(t *testing.T) {
 	req := &MessagePacket{
 		MaxType:  2100,
 		MinType:  2097,
-		Platform: int32(pb.Platform_ANDROID),
+		Platform: pb.Platform_ANDROID,
 		Extend:   map[string]string{"traceId": "abc", "requestId": "def"},
 	}
 	extend := BuildTarsExtend(req, "2100:2097", "proto.Req", "proto.Resp", true, false)
@@ -159,7 +159,7 @@ func TestSerializeDeserializeMessagePacket(t *testing.T) {
 		original := &MessagePacket{
 			MaxType:  2100,
 			MinType:  2097,
-			Platform: int32(pb.Platform_ANDROID),
+			Platform: pb.Platform_ANDROID,
 			Extend:   map[string]string{"traceId": "abc", "requestId": "def"},
 			Data:     []byte("hello world"),
 		}

@@ -35,8 +35,7 @@ unit: ## 运行所有 go.work 中 module 的单元测试
 		for mod in gateway/proto-gateway tars/system; do \
 			if [ -f "$$mod/go.mod" ]; then \
 				echo "[go] 测试模块: $$mod"; \
-				cd $$mod && go test ./... -v -count=1 2>&1 | tail -20; \
-				cd ..; \
+				(cd $$mod && go test ./... -v -count=1 2>&1 | tail -20); \
 			fi; \
 		done; \
 	else \

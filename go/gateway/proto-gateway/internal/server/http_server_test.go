@@ -153,10 +153,19 @@ func TestGatewayServer_E2E_HealthCheck(t *testing.T) {
 	reqPacket := &adapter.MessagePacket{
 		MaxType:  2100,
 		MinType:  2097,
-		Platform: 1,
+		Platform: pb.Platform_WEB,
 		Extend:   map[string]string{"traceId": "e2e-abc"},
-		Data:     []byte{},
 	}
+
+	healthReq := &pb.ServiceHealthCheckRequest{
+		ServiceName: "gateway-e2e-test",
+	}
+	reqData, err := proto.Marshal(healthReq)
+	if err != nil {
+		t.Fatalf("marshal health check request failed: %v", err)
+	}
+	reqPacket.Data = reqData
+
 	body, err := adapter.SerializeMessagePacket(reqPacket)
 	if err != nil {
 		t.Fatalf("serialize request failed: %v", err)
