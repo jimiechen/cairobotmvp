@@ -1,6 +1,13 @@
 ---
-name: cairobot-active-gap-filling
-description: 当用户布置任务时，主动对照 AGENTS.md 和 .trae/rules/ 检查工程闭环是否完整。如有缺口必须补齐或显式说明不适用原因，禁止机械执行。
+name: 主动补齐工程缺口
+slug: active-gap-filling
+summary: 当用户布置任务时，主动对照 AGENTS.md 和 .trae/rules/ 检查工程闭环是否完整，如有缺口必须补齐或显式说明不适用原因。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - gap-filling
+  - engineering-workflow
+  - task-start
 trigger:
   - 任何来自用户的开发任务
   - 任何 Issue 启动

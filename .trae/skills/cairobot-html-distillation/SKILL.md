@@ -1,6 +1,13 @@
 ---
-name: cairobot-html-distillation
-description: CaiRobot MVP 每日 22:00 HTML 蒸馏 Skill。将测试报告、日报蒸馏为 Markdown 并更新 LLM Wiki。
+name: HTML 蒸馏与报告生成
+slug: html-distillation
+summary: 将测试报告和日报蒸馏为 Markdown 并更新 LLM Wiki，生成 Standalone HTML 报告。蒸馏或生成报告时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - distillation
+  - html-report
+  - llm-wiki
 trigger:
   - "蒸馏"
   - "生成报告"

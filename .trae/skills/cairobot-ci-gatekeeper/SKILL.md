@@ -1,6 +1,13 @@
 ---
-name: cairobot-ci-gatekeeper
-description: CaiRobot MVP CI 阻断合并守卫 Skill。PR 创建或合并前必须激活，确保所有 CI 检查通过。
+name: CI 阻断合并守卫
+slug: ci-gatekeeper
+summary: CI 阻断合并守卫，确保所有 CI 检查通过后才允许合并 PR。创建 PR 或合并前必须激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - ci
+  - pr
+  - gatekeeper
 trigger:
   - "创建 PR"
   - "合并 PR"

@@ -1,6 +1,13 @@
 ---
-name: cairobot-doc-placement
-description: CaiRobot MVP 目录与文件存放守卫 Skill。当用户新增文件、修改目录结构，或涉及 docs/ 目录变更时激活。
+name: 文档归档位置规范
+slug: doc-placement
+summary: 目录与文件存放守卫，确保文件放在正确位置。新增文件、修改目录结构或涉及 docs/ 变更时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - doc-placement
+  - directory-layout
+  - file-organization
 trigger:
   - "新增文件"
   - "修改目录"

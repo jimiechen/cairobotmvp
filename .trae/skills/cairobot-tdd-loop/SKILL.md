@@ -1,6 +1,13 @@
 ---
-name: cairobot-tdd-loop
-description: CaiRobot MVP 工程级 TDD 闭环 Skill。当用户要求实现功能、修复 Bug、补充测试，或涉及 services/、ai/、web/、proto/ 目录代码变更时激活。
+name: TDD 红绿重构循环
+slug: tdd-loop
+summary: 工程级 TDD 闭环，强制红-绿-重构流程。当用户要求实现功能、修复 Bug、补充测试，或涉及代码目录变更时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - tdd
+  - testing
+  - code-development
 trigger:
   - "实现"
   - "新增功能"

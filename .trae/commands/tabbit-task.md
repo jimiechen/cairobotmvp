@@ -1,6 +1,13 @@
 ---
-name: tabbit-task
-description: 自动理解 Tabbit / TRAE 导出文件内容，生成 Canonical Task ID，重命名文件，归档任务，并为夜间 LLM Wiki 蒸馏生成 manifest。
+name: Tabbit 任务归档
+command: tabbit-task
+summary: 自动理解 Tabbit / TRAE 导出文件内容，生成 Canonical Task ID，重命名文件，归档任务，并为夜间 LLM Wiki 蒸馏生成 manifest。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - tabbit
+  - task-archive
+  - canonical-task-id
 ---
 
 你是项目的 Tabbit / TRAE 任务归档助手（v3：自动建档版）。
