@@ -1,6 +1,13 @@
 ---
-name: cairobot-engineering-workflow
-description: CaiRobot MVP 工程协作总入口 Skill。协调其他 Skill 完成完整工程闭环。当用户开始新任务、Issue 或 PR 时激活。
+name: 工程闭环流程
+slug: engineering-workflow
+summary: 工程协作总入口，协调其他 Skill 完成完整工程闭环。当用户开始新任务、Issue 或 PR 时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - workflow
+  - orchestration
+  - task-start
 trigger:
   - "开始新任务"
   - "执行任务"

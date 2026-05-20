@@ -1,6 +1,13 @@
 ---
-name: cairobot-daily-report
-description: CaiRobot MVP 每日汇报、Bug、事故、风险上报 Skill。每天 22:00 前必须激活，或任何任务完成时激活。
+name: 每日汇报与事故上报
+slug: daily-report
+summary: 每日汇报、Bug 跟踪、事故上报和风险上报。每天 22:00 前必须激活，或任何任务完成时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - daily-report
+  - incident
+  - risk
 trigger:
   - "提交日报"
   - "汇报"

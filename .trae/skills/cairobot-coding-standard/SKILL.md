@@ -1,6 +1,13 @@
 ---
-name: cairobot-coding-standard
-description: CaiRobot MVP 编码规范强制执行 Skill。当用户要求实现功能、编写代码，或涉及 services/、ai/、web/、app/、firmware/ 目录时激活。
+name: 编码规范强制执行
+slug: coding-standard
+summary: 编码规范强制执行，检查命名规范、文件规模、注释规范和类职责。编写代码或涉及代码目录时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - coding-standard
+  - naming
+  - code-quality
 trigger:
   - "实现"
   - "编写代码"

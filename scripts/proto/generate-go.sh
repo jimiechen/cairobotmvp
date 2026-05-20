@@ -14,7 +14,9 @@ if [ -z "$PROTO_FILES" ]; then
     exit 0
 fi
 
-GO_MODULE_PREFIX="github.com/cairobotmvp/proto/generated/go"
+# module 路径前缀：与 proto/generated/go/go.mod 中的 module 声明一致
+# 新增子包时只需在 proto/ 下新增 .proto 文件，无需修改此变量
+GO_MODULE_PREFIX="github.com/jimiechen/mineplanet/protocols/generated/go"
 
 protoc \
   --go_out=proto/generated/go \

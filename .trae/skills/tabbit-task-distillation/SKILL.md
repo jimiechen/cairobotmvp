@@ -1,6 +1,13 @@
 ---
-name: cairobot-tabbit-task-distillation
-description: 按 manifest pending 状态扫描 Tabbit 归档任务，按 Canonical Task ID 聚合 raw/exec/archive 材料蒸馏为 LLM Wiki 稳定知识。
+name: Tabbit 任务蒸馏
+slug: tabbit-task-distillation
+summary: 按 manifest pending 状态扫描 Tabbit 归档任务，按 Canonical Task ID 聚合材料蒸馏为 LLM Wiki 稳定知识。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - tabbit
+  - task-distillation
+  - canonical-task-id
 trigger:
   - "蒸馏"
   - "distill"

@@ -7,8 +7,46 @@ export PROJECT_ROOT
 # GOPROXY 设置：解决中国大陆网络访问 Go module 代理问题
 export GOPROXY ?= https://goproxy.cn,direct
 
-# PATH 扩展：确保 protoc / protoc-gen-* / tars2go 等工具可被找到
-export PATH := $(shell dirname $$(which protoc 2>/dev/null || echo /usr/local/bin)):$$(go env GOPATH 2>/dev/null)/bin:$(shell npm root -g 2>/dev/null)/.bin:$(PATH)
+# Go 环境自动发现：按优先级查找 go 二进制路径
+# 1. 已在 PATH 中的 go
+# 2. GOROOT/bin（官方安装）
+# 3. Homebrew 安装（macOS）
+# 4. ~/go/bin（用户本地安装）
+# 5. /usr/local/go/bin（Linux 默认）
+_GO_BIN := $(shell which go 2>/dev/null)
+ifeq ($(_GO_BIN),)
+	_GO_BIN := $(shell ls $(GOROOT)/bin/go 2>/dev/null)
+endif
+ifeq ($(_GO_BIN),)
+	_GO_BIN := $(shell ls /usr/local/opt/go/bin/go 2>/dev/null)
+endif
+ifeq ($(_GO_BIN),)
+	_GO_BIN := $(shell ls $(HOME)/go/bin/go 2>/dev/null)
+endif
+ifeq ($(_GO_BIN),)
+	_GO_BIN := $(shell ls /usr/local/go/bin/go 2>/dev/null)
+endif
+
+# 如果找到了 go，提取 GOROOT 和 GOPATH 并扩展 PATH
+ifneq ($(_GO_BIN),)
+	_GOROOT := $(shell dir=$(_GO_BIN) && dirname "$$(dirname "$$dir")")
+	_GOPATH := $(shell $(_GO_BIN) env GOPATH 2>/dev/null)
+	export GOROOT := $(_GOROOT)
+	export GOPATH := $(_GOPATH)
+	export PATH := $(_GOPATH)/bin:$(GOROOT)/bin:$(PATH)
+else
+	export GOROOT ?= /usr/local/go
+	export GOPATH ?= $(HOME)/go
+	export PATH := $(GOPATH)/bin:$(GOROOT)/bin:$(PATH)
+endif
+
+# 继续扩展 PATH：protoc / protoc-gen-* / npm 全局包
+_PROTOC_BIN := $(shell which protoc 2>/dev/null)
+ifdef _PROTOC_BIN
+	_PROTOC_DIR := $(shell dirname $(_PROTOC_BIN))
+endif
+_NPM_ROOT := $(shell npm root -g 2>/dev/null)
+export PATH := $(or $(_PROTOC_DIR),/usr/local/bin):$(if $(_NPM_ROOT),$(_NPM_ROOT)/.bin):$(PATH)
 
 help: ## 显示帮助信息
 	@echo "CaiRobot MVP 工程入口 Makefile"

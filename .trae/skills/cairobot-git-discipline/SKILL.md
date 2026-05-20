@@ -1,6 +1,13 @@
 ---
-name: cairobot-git-discipline
-description: CaiRobot MVP Git 分支命名、提交、PR 粒度 Skill。当用户创建分支、提交代码、创建 PR 时激活。
+name: Git 提交纪律
+slug: git-discipline
+summary: Git 分支命名、提交信息格式和 PR 粒度规范。创建分支、提交代码或创建 PR 时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - git
+  - commit
+  - pr
 trigger:
   - "创建分支"
   - "git commit"

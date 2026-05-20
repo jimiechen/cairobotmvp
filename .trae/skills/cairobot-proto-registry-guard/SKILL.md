@@ -1,6 +1,13 @@
 ---
-name: cairobot-proto-registry-guard
-description: CaiRobot MVP Protobuf 协议编号唯一性守卫 Skill。当用户要求定义协议、新增接口，或涉及 proto/ 目录变更时激活。
+name: 协议编号注册表守卫
+slug: proto-registry-guard
+summary: Protobuf 协议编号唯一性守卫，确保 max+min 编号无重复且已登记到注册表。定义协议、新增接口或涉及 proto/ 时激活。
+scope: CaiRobot MVP
+tags:
+  - cairobotmvp
+  - protobuf
+  - protocol
+  - registry
 trigger:
   - "定义协议"
   - "新增接口"

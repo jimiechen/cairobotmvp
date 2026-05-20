@@ -25,6 +25,8 @@ REGISTRY_FILE = os.path.join(PROJECT_ROOT, "docs", "api", "协议编号注册表
 # 各语言生成代码的预期路径（相对于 PROJECT_ROOT）
 EXPECTED_GENERATED = {
     "go": [
+        "proto/generated/go/go.mod",
+        "proto/generated/go/go.sum",
         "proto/generated/go/base/health.pb.go",
         "proto/generated/go/base/hello.pb.go",
         "proto/generated/go/base/message.pb.go",

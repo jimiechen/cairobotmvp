@@ -1,0 +1,48 @@
+routes:
+  - request_max: 2100
+    request_min: 2097
+    route_key: "2100:2097"
+    command_name: ServiceHealthCheck
+    description: 系统完整健康检查
+
+    request_proto: com.mineplanet.pojo.health.ServiceHealthCheckRequest
+    response_max: 2100
+    response_min: 2098
+    response_proto: com.mineplanet.pojo.health.ServiceHealthCheckResponse
+
+    tars_app: CaiRobot
+    tars_server: SystemServer
+    tars_servant: SystemObj
+    tars_module: CaiRobotSystemApp
+    tars_interface: SystemObj
+    tars_method: HealthCheck
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: false
+    audit_required: false
+
+  - request_max: 2100
+    request_min: 2101
+    route_key: "2100:2101"
+    command_name: HelloWorld
+    description: HelloWorld 草案接口
+
+    request_proto: com.mineplanet.pojo.hello.HelloWorldRequest
+    response_max: 2100
+    response_min: 2102
+    response_proto: com.mineplanet.pojo.hello.HelloWorldResponse
+
+    tars_app: CaiRobot
+    tars_server: SystemServer
+    tars_servant: SystemObj
+    tars_module: CaiRobotSystemApp
+    tars_interface: SystemObj
+    tars_method: HelloWorld
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: false
+    audit_required: false

@@ -379,18 +379,22 @@ CI 至少包含以下检查：
 
 ### 19.1 Skill 列表
 
-| Skill 名称 | 触发条件 | Priority | Blocking | 对应 Rules |
-|---|---|---|---|---|
-| cairobot-active-gap-filling | 任何开发任务、Issue、PR | highest | true | reporting.md |
-| cairobot-engineering-workflow | 任务启动、Issue、PR | high | true | - |
-| cairobot-tdd-loop | 实现、新增功能、修复 Bug、涉及代码目录 | high | true | tdd.md, testing.md |
-| cairobot-proto-registry-guard | 定义协议、新增接口、涉及 proto/ | high | true | docs.md |
-| cairobot-ci-gatekeeper | 创建 PR、合并 PR | high | true | tdd.md, testing.md |
-| cairobot-coding-standard | 编写代码、涉及代码目录 | medium | false | coding.md |
-| cairobot-daily-report | 提交日报、任务完成 | high | true | reporting.md |
-| cairobot-git-discipline | 创建分支、提交、创建 PR | medium | false | git.md |
-| cairobot-doc-placement | 新增文件、修改目录 | medium | false | docs.md |
-| cairobot-html-distillation | 蒸馏、生成报告 | medium | false | reporting.md |
+| 展示名 | Slug | 实际路径 | 适用场景 | Priority | Blocking | 关键词 |
+|---|---|---|---|---|---|---|
+| 主动补齐工程缺口 | active-gap-filling | `.trae/skills/cairobot-active-gap-filling/SKILL.md` | 任何开发任务、Issue、PR 启动时先做缺口扫描 | highest | true | gap-filling, 缺口扫描, 任务启动 |
+| 工程闭环流程 | engineering-workflow | `.trae/skills/cairobot-engineering-workflow/SKILL.md` | 任务启动、Issue、PR 的总入口协调 | high | true | workflow, 编排, 协调 |
+| TDD 红绿重构循环 | tdd-loop | `.trae/skills/cairobot-tdd-loop/SKILL.md` | 实现、新增功能、修复 Bug、涉及代码目录 | high | true | tdd, 测试驱动, 红绿重构 |
+| 协议编号注册表守卫 | proto-registry-guard | `.trae/skills/cairobot-proto-registry-guard/SKILL.md` | 定义协议、新增接口、涉及 proto/ | high | true | protobuf, 编号唯一性 |
+| CI 阻断合并守卫 | ci-gatekeeper | `.trae/skills/cairobot-ci-gatekeeper/SKILL.md` | 创建 PR、合并 PR 前 | high | true | ci, 阻断合并 |
+| 编码规范强制执行 | coding-standard | `.trae/skills/cairobot-coding-standard/SKILL.md` | 编写代码、涉及代码目录 | medium | false | naming, 注释, 文件规模 |
+| 每日汇报与事故上报 | daily-report | `.trae/skills/cairobot-daily-report/SKILL.md` | 提交日报、任务完成、Bug/事故发现 | high | true | 日报, 事故, 风险 |
+| Git 提交纪律 | git-discipline | `.trae/skills/cairobot-git-discipline/SKILL.md` | 创建分支、提交代码、创建 PR | medium | false | git, commit, 分支命名 |
+| 文档归档位置规范 | doc-placement | `.trae/skills/cairobot-doc-placement/SKILL.md` | 新增文件、修改目录结构 | medium | false | 目录规范, 文件存放 |
+| HTML 蒸馏与报告生成 | html-distillation | `.trae/skills/cairobot-html-distillation/SKILL.md` | 蒸馏、生成报告、每日 22:00 | medium | false | 蒸馏, html-report |
+| 任务 Raw 归档 | task-raw-archive | `.trae/skills/cairobot-task-raw-archive/SKILL.md` | Trae 任务完成、任务归档 | high | true | raw-archive, src-id, 归档 |
+| LLM Wiki 知识蒸馏 | llm-wiki-distillation | `.trae/skills/cairobot-llm-wiki-distillation/SKILL.md` | LLM Wiki 蒸馏、知识库更新 | medium | false | wiki, 蒸馏, source-map |
+| 定时知识蒸馏 | scheduled-knowledge-distillation | `.trae/skills/cairobot-scheduled-knowledge-distillation/SKILL.md` | SOLO Web 定时任务、手动补跑蒸馏 | high | true | scheduled, solo-web, src-id |
+| Tabbit 任务蒸馏 | tabbit-task-distillation | `.trae/skills/tabbit-task-distillation/SKILL.md` | Tabbit 任务归档蒸馏 | medium | false | tabbit, manifest, 蒸馏 |
 
 ### 19.2 Skill 与 Rules 关系
 
@@ -410,27 +414,29 @@ Skill 内部用相对路径引用 Rules，例如：
 任务启动时的标准激活顺序：
 
 ```
-cairobot-active-gap-filling
+主动补齐工程缺口（active-gap-filling）
     ↓（缺口扫描完成后）
-cairobot-engineering-workflow
+工程闭环流程（engineering-workflow）
     ↓（根据任务类型激活）
-cairobot-tdd-loop / cairobot-proto-registry-guard / cairobot-coding-standard / ...
+TDD 红绿重构循环（tdd-loop）/ 协议编号注册表守卫（proto-registry-guard）/ 编码规范强制执行（coding-standard）/ ...
     ↓（任务完成后）
-cairobot-daily-report
+每日汇报与事故上报（daily-report）
     ↓（PR 创建前）
-cairobot-ci-gatekeeper
+CI 阻断合并守卫（ci-gatekeeper）
 ```
 
 ### 19.4 Skill 违规阻断
 
 以下 Skill 具有 blocking=true，必须在继续执行前完成：
 
-- cairobot-active-gap-filling
-- cairobot-engineering-workflow
-- cairobot-tdd-loop
-- cairobot-proto-registry-guard
-- cairobot-ci-gatekeeper
-- cairobot-daily-report
+- 主动补齐工程缺口（active-gap-filling）
+- 工程闭环流程（engineering-workflow）
+- TDD 红绿重构循环（tdd-loop）
+- 协议编号注册表守卫（proto-registry-guard）
+- CI 阻断合并守卫（ci-gatekeeper）
+- 每日汇报与事故上报（daily-report）
+- 定时知识蒸馏（scheduled-knowledge-distillation）
+- 任务 Raw 归档（task-raw-archive）
 
 ### 19.5 本地验证
 
