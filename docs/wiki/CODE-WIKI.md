@@ -212,11 +212,13 @@ go/
   gateway/
     proto-gateway/
       README.md
-      go.mod
+      go.mod                          # 引入 github.com/TarsCloud/TarsGo v1.4.6
       cmd/
         server/
-          main.go
+          main.go                     # TarsGo 入口：TarsHttpMux + AddHttpServant + Run
       configs/
+        gateway/
+          gateway.local.conf          # TarsGo 单体部署本地配置（locator 为空）
         routes.yaml
       internal/
         config/
@@ -229,7 +231,7 @@ go/
           message_packet.go
           message_packet_test.go
         tarsclient/
-          invoker.go
+          invoker.go                  # TarsInvoker 接口 + LocalInvoker + TarsGoInvoker
           invoker_test.go
         server/
           http_server.go
@@ -256,6 +258,8 @@ go/
     protoadapter/
   third_party/
     TarsGo/
+      README.md                       # TarsGo v1.4.6 依赖基线说明
+      TarsGo-1.4.6/                   # TarsCloud/TarsGo v1.4.6 源码（replace 指向）
 ```
 
 ### 13.3 Python 语言资产
@@ -334,30 +338,35 @@ go/go.work
 
 ## 16. Gateway 运行模式
 
-Gateway 支持两种运行模式：
+Gateway 基于 TarsCloud/TarsGo v1.4.6 技术基线，支持两种**部署拓扑**：
 
-### 16.1 单体模式（默认）
+### 16.1 单体部署模式（默认）
 
 ```bash
 GATEWAY_INVOKER_MODE=local
 ```
 
 - 本地开发、测试、演示使用
-- 不依赖真实 TarsCloud
-- 通过 LocalInvoker 调用本地业务模块 handler
+- **使用 TarsGo 框架运行**（TarsHttpMux / AddHttpServant / Run）
+- **不连接远程 TarsCloud 注册中心**（locator 为空），但不是不依赖 TarsGo
+- 通过 **LocalInvoker**（本进程 TarsGo servant adapter）调用同部署单元内的业务 servant
+- 所有 TarsGo servant 在同一进程或同一部署单元中
 - 仍然严格走 routes.yaml
+- 严格遵守 Tars bytes 契约：request/response 均为 Protobuf bytes
 
-### 16.2 微服务模式
+### 16.2 微服务部署模式
 
 ```bash
 GATEWAY_INVOKER_MODE=tars
 ```
 
 - 正式部署或集成环境使用
-- 通过 TarsGoInvoker 调用 TarsCloud 服务
-- 当前尚未实现，启动会报错
+- **使用 TarsGo 框架运行**（与单体模式相同的技术基线）
+- 连接远程 TarsCloud 注册中心，通过 **TarsGoInvoker**（远程 TarsGo client）调用独立部署的 TarsCloud servant
+- GatewayServer、SystemServer 等独立部署为不同进程
+- 当前 **TarsGoInvoker 远程调用尚未实现**，启动会报错（S1 阶段）
 
-## 17. TarsInvoker 接口
+### 16.3 TarsInvoker 接口
 
 统一调用接口：
 
@@ -368,8 +377,8 @@ type TarsInvoker interface {
 ```
 
 实现：
-- `LocalInvoker`：单体模式，本地 handler 注册表
-- `TarsGoInvoker`：微服务模式，调用 TarsCloud（未实现）
+- **LocalInvoker**：单体部署模式下的本进程 TarsGo servant adapter。不绕过 Tars 框架，而是在同部署单元内通过进程内调用转发到 TarsGo servant。严格遵守 Tars bytes 契约。
+- **TarsGoInvoker**：微服务部署模式下的远程 TarsGo client invoker。通过 TarsGo client 远程调用独立部署的 TarsCloud servant。与 LocalInvoker 共享同一接口和 Tars bytes 契约。S1 未实现。
 
 ## 18. 开发与运行方式
 
@@ -434,6 +443,7 @@ github.com/jimiechen/mineplanet/go/...
 | 2026-05-19 | 实现 Gateway 单体/微服务双模式骨架；System 模块独立存在；建立 Go Workspace；统一 TarsInvoker 接口；module path 标准化 |
 | 2026-05-19 | 按 ADR-0012 重构多语言 monorepo 目录布局：Go 进 go/、Python 进 python/、TypeScript 进 typescript/；删除根目录 Makefile；go.work 移至 go/ |
 | 2026-05-19 | 恢复根目录 Makefile，采用三层结构（总控 + 子 Makefile + scripts）；新增 16 个 target；新增 CI 规范检查脚本；建立测试用例注册表；新增中文注释规范 |
+| 2026-05-20 | **架构口径修正**：local 模式不是"不使用 Tars"，而是 TarsGo 单体部署模式（monolith）；LocalInvoker 是本进程 TarsGo servant adapter，非绕过 Tars 的普通 Go 调用；proto-gateway 改造为基于 TarsGo HTTP 模块（TarsHttpMux / AddHttpServant / Run）的 TarsGo HTTP Servant；引入 TarsCloud/TarsGo v1.4.6 技术基线到 go/third_party/TarsGo/ |
 
 ## 23. Makefile 工程入口
 

@@ -46,7 +46,7 @@ func TestGatewayServer_ServeHTTP(t *testing.T) {
 			},
 		},
 	}
-	r := router.NewRouter(cfg)
+	r := router.NewRouteTable(cfg)
 
 	t.Run("GET returns 405", func(t *testing.T) {
 		invoker := &mockInvoker{returnCode: 10200, response: []byte("ok")}
@@ -143,7 +143,7 @@ func TestGatewayServer_E2E_HealthCheck(t *testing.T) {
 			},
 		},
 	}
-	r := router.NewRouter(cfg)
+	r := router.NewRouteTable(cfg)
 
 	invoker := tarsclient.NewLocalInvoker()
 	tarsclient.RegisterSystemHandlers(invoker)

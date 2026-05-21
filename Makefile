@@ -1,5 +1,6 @@
 .PHONY: help bootstrap proto proto-check lint test unit integration coverage build package \
-        docs rules testcase-check comment-check ci clean
+        docs rules testcase-check comment-check ci clean \
+        gateway-build gateway-start gateway-stop gateway-test gateway-smoke gateway-verify
 
 PROJECT_ROOT := $(shell pwd)
 export PROJECT_ROOT
@@ -186,3 +187,25 @@ clean: ## 清理构建产物和临时文件
 	@if [ -f python/Makefile ]; then $(MAKE) -C python clean || true; fi
 	@rm -rf docs/reports/coverage/
 	@echo "==> 清理完成"
+
+# ============================================================
+# proto-gateway 专项命令（透传到 go/Makefile）
+# ============================================================
+
+gateway-build: ## 编译 proto-gateway（含 TarsGo v1.4.6）
+	@$(MAKE) -C go gateway-build
+
+gateway-start: ## 启动 proto-gateway（local 模式，TarsGo HTTP on :8080）
+	@$(MAKE) -C go gateway-start
+
+gateway-stop: ## 停止 proto-gateway
+	@$(MAKE) -C go gateway-stop
+
+gateway-test: ## 运行 proto-gateway 全部测试
+	@$(MAKE) -C go gateway-test
+
+gateway-smoke: ## 冒烟测试：编译 + 启动 + 验证 /api/hello + 停止
+	@$(MAKE) -C go gateway-smoke
+
+gateway-verify: ## 完整验证：编译 + 测试 + TarsGo 依赖检查
+	@$(MAKE) -C go gateway-verify

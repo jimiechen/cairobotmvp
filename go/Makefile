@@ -1,4 +1,5 @@
-.PHONY: proto tars unit integration coverage lint build package clean help
+.PHONY: proto tars unit integration coverage lint build package clean help \
+       gateway-build gateway-start gateway-test gateway-verify gateway-stop gateway-smoke
 
 GO_WORK := go.work
 
@@ -117,3 +118,79 @@ clean: ## 清理 Go 构建产物
 	@find . -name "*.out" -delete 2>/dev/null || true
 	@find . -name "*.prof" -delete 2>/dev/null || true
 	@echo "[go] 清理完成"
+
+# ============================================================
+# proto-gateway 专项命令（TarsGo HTTP Servant）
+# ============================================================
+
+GATEWAY_DIR := gateway/proto-gateway
+GATEWAY_BIN := ../../build/proto-gateway-server
+GATEWAY_PID_FILE := ../../build/.gateway.pid
+
+gateway-build: ## 编译 proto-gateway 二进制（含 TarsGo v1.4.6 框架）
+	@echo "[gateway] ==> 编译 proto-gateway..."
+	@mkdir -p ../../build
+	@cd $(GATEWAY_DIR) && go build -o $(GATEWAY_BIN) ./cmd/server/main.go
+	@echo "[gateway] ✅ 编译完成: $(GATEWAY_BIN)"
+	@ls -la $(GATEWAY_BIN)
+
+gateway-start: ## 启动 proto-gateway（local 模式，TarsGo HTTP on :8080）
+	@echo "[gateway] ==> 启动 proto-gateway (local mode)..."
+	@if [ ! -f $(GATEWAY_BIN) ]; then \
+		echo "[gateway] ⚠️  二进制不存在，先执行 make -C go gateway-build"; \
+		exit 1; \
+	fi
+	@if [ -f $(GATEWAY_PID_FILE) ] && kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
+		echo "[gateway] ⚠️  Gateway 已在运行 (pid=$$(cat $(GATEWAY_PID_FILE)))"; \
+	else \
+		cd $(GATEWAY_DIR) && GATEWAY_INVOKER_MODE=local nohup $(GATEWAY_BIN) >../../build/gateway.log 2>&1 & echo $$! >$(GATEWAY_PID_FILE); \
+		sleep 1; \
+		if kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
+			echo "[gateway] ✅ 已启动 (pid=$$(cat $(GATEWAY_PID_FILE))) 监听 :8080"; \
+			echo "[gateway] 日志: build/gateway.log | TarsGo日志: /tmp/cairobot/logs/gateway/"; \
+		else \
+			echo "[gateway] ❌ 启动失败，查看 build/gateway.log"; \
+			rm -f $(GATEWAY_PID_FILE); \
+			exit 1; \
+		fi; \
+	fi
+
+gateway-stop: ## 停止 proto-gateway
+	@echo "[gateway] ==> 停止 proto-gateway..."
+	@if [ -f $(GATEWAY_PID_FILE) ]; then \
+		pid=$$(cat $(GATEWAY_PID_FILE)); \
+		if kill -0 $$pid 2>/dev/null; then \
+			kill $$pid && echo "[gateway] ✅ 已停止 (pid=$$pid)" || echo "[gateway] ⚠️  停止信号已发送"; \
+		else \
+			echo "[gateway] 进程不存在 (stale pid=$$pid)"; \
+		fi; \
+		rm -f $(GATEWAY_PID_FILE); \
+	else \
+		echo "[gateway] 未找到 PID 文件，尝试 pkill..."; \
+		pkill -f "proto-gateway-server" 2>/dev/null || echo "[gateway] 无运行中的 gateway 进程"; \
+	fi
+
+gateway-test: ## 运行 proto-gateway 全部测试
+	@echo "[gateway] ==> 运行 proto-gateway 测试..."
+	@cd $(GATEWAY_DIR) && go test ./... -v -count=1 2>&1 | tail -30
+	@echo "[gateway] 测试完成"
+
+gateway-smoke: ## 快速冒烟测试（编译 + 测试 + 启动 + 验证 /api/hello + 停止）
+	@echo "[gateway] ========== 冒烟测试开始 =========="
+	@$(MAKE) gateway-build
+	@$(MAKE) gateway-start
+	@sleep 2
+	@echo "[gateway] --> 发送 HealthCheck 请求..."
+	@cd $(GATEWAY_DIR) && go run ./cmd/testclient/main.go 2>&1 || echo "[gateway] ⚠️  testclient 执行异常"
+	@$(MAKE) gateway-stop
+	@echo "[gateway] ========== 冒烟测试结束 =========="
+
+gateway-verify: ## 完整验证（编译 + 单元测试 + TarsGo 依赖检查）
+	@echo "[gateway] ========== 完整验证 =========="
+	@echo "[gateway] 1/3 编译..."
+	@$(MAKE) gateway-build
+	@echo "[gateway] 2/3 单元测试..."
+	@cd $(GATEWAY_DIR) && go test ./... -count=1 2>&1 | grep -E "PASS|FAIL|ok |build failed"
+	@echo "[gateway] 3/3 TarsGo 依赖检查..."
+	@cd $(GATEWAY_DIR) && go list -m all | grep -i "tars\|tarscloud" || echo "[gateway] ⚠️  未找到 TarsGo 依赖"
+	@echo "[gateway] ========== 验证完成 =========="

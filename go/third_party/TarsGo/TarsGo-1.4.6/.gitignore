@@ -1,0 +1,7 @@
+.vscode
+.idea
+*.tar.gz
+*.tgz
+tars-protocol
+examples/*/go.sum
+.DS_Store

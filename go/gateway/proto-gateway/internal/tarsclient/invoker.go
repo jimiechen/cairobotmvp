@@ -50,7 +50,9 @@ type LocalHandler interface {
 	Invoke(ctx context.Context, request []byte, extend map[string]string) (returnCode int, response []byte, err error)
 }
 
-// LocalInvoker 单体模式下的本地调用实现
+// LocalInvoker 单体部署（monolith）模式下的本进程 TarsGo servant adapter
+// 不绕过 Tars 框架，而是在同一部署单元内通过进程内调用转发到 TarsGo servant
+// 严格遵守 Tars bytes 契约：request/response 均为 Protobuf bytes
 type LocalInvoker struct {
 	handlers map[string]LocalHandler
 }
@@ -77,8 +79,8 @@ func (li *LocalInvoker) Invoke(ctx context.Context, target Target, request []byt
 	return handler.Invoke(ctx, request, extend)
 }
 
-// RegisterSystemHandlers 注册 System 模块的本地 handler
-// Gateway local 模式启动时必须调用，注册 HealthCheck 和 HelloWorld
+// RegisterSystemHandlers 注册 System 模块的本地 TarsGo servant handler
+// Gateway 单体部署模式启动时必须调用，注册 HealthCheck 和 HelloWorld
 func RegisterSystemHandlers(invoker *LocalInvoker) {
 	sysHandler := localhandler.NewHandler()
 
@@ -97,7 +99,10 @@ func RegisterSystemHandlers(invoker *LocalInvoker) {
 	}, sysHandler)
 }
 
-// TarsGoInvoker 微服务模式下的 TarsGo 调用实现（当前未实现）
+// TarsGoInvoker 微服务部署（microservice）模式下的远程 TarsGo client invoker
+// 通过 TarsGo client 远程调用独立部署的 TarsCloud servant
+// 与 LocalInvoker 共享同一 TarsInvoker 接口，严格遵守 Tars bytes 契约
+// S1 阶段未实现，当前调用返回 10500 错误
 type TarsGoInvoker struct{}
 
 // NewTarsGoInvoker 创建 TarsGoInvoker
@@ -105,7 +110,7 @@ func NewTarsGoInvoker() *TarsGoInvoker {
 	return &TarsGoInvoker{}
 }
 
-// Invoke 执行 TarsGo 调用（当前未实现）
+// Invoke 执行远程 TarsGo 调用（S1 未实现）
 func (ti *TarsGoInvoker) Invoke(ctx context.Context, target Target, request []byte, extend map[string]string) (int, []byte, error) {
 	return 10500, nil, errors.New("tars invoker is not implemented yet")
 }

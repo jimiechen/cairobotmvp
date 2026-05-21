@@ -334,10 +334,9 @@ CaiRobot.SystemServer.SystemObj.HealthCheck
 21. Gateway 在响应 MessagePacket.extend 写入 code/message/traceId/requestId
 22. 返回客户端
 
-### 15.2 单体模式流程
+### 15.2 单体部署模式流程
 
-单体模式（`GATEWAY_INVOKER_MODE=local`）不走真实 TarsCloud，流程差异：
-
+单体部署模式（`GATEWAY_INVOKER_MODE=local`）使用 TarsGo 框架运行，不连接远程 TarsCloud 注册中心，但通过 LocalInvoker（本进程 TarsGo servant adapter）在同部署单元内调用业务 servant。与微服务模式的差异：
 1-11 步与微服务模式相同
 12. Gateway 通过 `LocalInvoker` 查找本地注册的 handler
 13. Local handler 接收 request bytes 和 extend
@@ -352,29 +351,33 @@ CaiRobot.SystemServer.SystemObj.HealthCheck
 
 ## 16. Gateway 运行模式
 
-Gateway 支持通过环境变量切换运行模式：
+Gateway 基于 TarsCloud/TarsGo v1.4.6 技术基线，支持两种**部署拓扑**：
 
-### 16.1 单体模式（默认）
+### 16.1 单体部署模式（默认）
 
 ```bash
 GATEWAY_INVOKER_MODE=local
 ```
 
 - 本地开发、测试、演示使用
-- 不依赖真实 TarsCloud
-- 通过 `LocalInvoker` 调用本地业务模块 handler
+- **使用 TarsGo 框架运行**（TarsHttpMux / AddHttpServant / Run）
+- **不连接远程 TarsCloud 注册中心**（locator 为空），但不是不依赖 TarsGo
+- 通过 **LocalInvoker**（本进程 TarsGo servant adapter）调用同部署单元内的业务 servant
+- 所有 TarsGo servant 在同一进程或同一部署单元中
 - 仍然严格走 routes.yaml
-- System 模块通过 `localhandler` 包暴露 bytes 接口
+- 严格遵守 Tars bytes 契约：request/response 均为 Protobuf bytes
 
-### 16.2 微服务模式
+### 16.2 微服务部署模式
 
 ```bash
 GATEWAY_INVOKER_MODE=tars
 ```
 
 - 正式部署或集成环境使用
-- 通过 `TarsGoInvoker` 调用 TarsCloud 服务
-- 当前尚未实现，启动会报错
+- **使用 TarsGo 框架运行**（与单体模式相同的技术基线）
+- 连接远程 TarsCloud 注册中心，通过 **TarsGoInvoker**（远程 TarsGo client）调用独立部署的 TarsCloud servant
+- GatewayServer、SystemServer 等独立部署为不同进程
+- 当前 **TarsGoInvoker 远程调用尚未实现**，启动会报错（S1 阶段）
 
 ### 16.3 TarsInvoker 接口
 
@@ -387,8 +390,10 @@ type TarsInvoker interface {
 ```
 
 实现：
-- `LocalInvoker`：单体模式，本地 handler 注册表
-- `TarsGoInvoker`：微服务模式，调用 TarsCloud（未实现）
+- **LocalInvoker**：单体部署模式下的本进程 TarsGo servant adapter。不绕过 Tars 框架，而是在同部署单元内通过进程内调用转发到 TarsGo servant。严格遵守 Tars bytes 契约。
+- **TarsGoInvoker**：微服务部署模式下的远程 TarsGo client invoker。通过 TarsGo client 远程调用独立部署的 TarsCloud servant。与 LocalInvoker 共享同一接口和 Tars bytes 契约。S1 未实现。
+
+无论哪种模式，都必须遵守 Tars bytes 统一方法签名、MessagePacket 入口、maxType:minType 路由、Protobuf bytes data。区别仅在于**部署拓扑**：servant 在同进程 vs 跨进程远程调用。
 
 ## 17. 启动校验要求
 
@@ -423,7 +428,7 @@ Gateway 启动时必须校验：
 | Tars return 映射测试 | 10200/10401/10500/10504 正确映射 |
 | extend 透传测试 | traceId/requestId/userId/tenantId 正确传递 |
 | LocalInvoker 注册测试 | handler 正确注册和调用 |
-| TarsGoInvoker 未实现测试 | 微服务模式启动应报错 |
+| TarsGoInvoker 未实现测试 | 微服务模式启动应报错，TarsGoInvoker 远程调用返回 10500（S1 未实现） |
 
 ### 18.2 System 模块测试
 
