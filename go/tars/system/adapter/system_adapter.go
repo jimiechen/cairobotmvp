@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/jimiechen/mineplanet/go/common-lib"
-	"github.com/jimiechen/mineplanet/go/modules/hello"
-	"github.com/jimiechen/mineplanet/go/modules/health"
+	"github.com/jimiechen/mineplanet/go/services/hello"
+	"github.com/jimiechen/mineplanet/go/services/health"
 )
 
 // SystemAdapter Tars 调用适配器

@@ -34,7 +34,7 @@ tars: ## 生成 TarsGo/Tars2Go 代码
 unit: ## 运行所有 go.work 中 module 的单元测试
 	@echo "[go] ==> 运行单元测试..."
 	@if [ -f $(GO_WORK) ]; then \
-		for mod in common-lib modules/hello modules/health tars/system gateway/proto-gateway; do \
+		for mod in common-lib services/hello services/health tars/system gateway/proto-gateway; do \
 			if [ -f "$$mod/go.mod" ]; then \
 				echo "[go] 测试模块: $$mod"; \
 				(cd $$mod && go test ./... -v -count=1 2>&1 | tail -20); \
@@ -58,7 +58,7 @@ common-lib-test: ## 测试 common-lib 公共库（错误码 + 类型定义）
 
 modules-test: ## 测试所有业务模块（hello + health）
 	@echo "[go] ==> 测试业务模块..."
-	@for mod in modules/hello modules/health; do \
+	@for mod in services/hello services/health; do \
 		if [ -f "$$mod/go.mod" ]; then \
 			echo "[go] 测试模块: $$mod"; \
 			(cd $$mod && go test ./... -v -count=1 2>&1); \

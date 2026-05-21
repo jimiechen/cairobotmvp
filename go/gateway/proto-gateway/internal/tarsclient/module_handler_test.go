@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/base"
-	"github.com/jimiechen/mineplanet/go/modules/hello"
+	"github.com/jimiechen/mineplanet/go/services/hello"
 )
 
 func TestRegisterModuleHandlers(t *testing.T) {

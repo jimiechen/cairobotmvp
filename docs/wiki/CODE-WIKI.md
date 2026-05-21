@@ -216,6 +216,8 @@ go/
       cmd/
         server/
           main.go                     # TarsGo 入口：TarsHttpMux + AddHttpServant + Run
+        testclient/
+          main.go                     # 快速验证客户端
       configs/
         gateway/
           gateway.local.conf          # TarsGo 单体部署本地配置（locator 为空）
@@ -225,17 +227,27 @@ go/
           routes.go
           routes_test.go
         router/
-          router.go
-          router_test.go
+          route_table.go
+          route_table_test.go
         adapter/
           message_packet.go
           message_packet_test.go
         tarsclient/
           invoker.go                  # TarsInvoker 接口 + LocalInvoker + TarsGoInvoker
           invoker_test.go
+          module_handler_test.go
         server/
           http_server.go
           http_server_test.go
+  services/
+    hello/
+      go.mod
+      service.go
+      service_test.go
+    health/
+      go.mod
+      service.go
+      service_test.go
   tars/
     system/
       go.mod
@@ -245,17 +257,20 @@ go/
         service/
           system_service.go
           system_service_test.go
+      adapter/
+        system_adapter.go
+        system_adapter_test.go
       localhandler/
         local_handler.go
         local_handler_test.go
     auth/
     audit/
     ...
-  shared/
-    audit/
-    config/
-    result/
-    protoadapter/
+  common-lib/
+    go.mod
+    codes.go
+    codes_test.go
+    types.go
   third_party/
     TarsGo/
       README.md                       # TarsGo v1.4.6 依赖基线说明
@@ -318,6 +333,9 @@ Go Workspace 位于 `go/go.work`，只管理 Go 子模块：
 
 ```text
 go/go.work
+├── common-lib                (github.com/jimiechen/mineplanet/go/common-lib)
+├── services/hello            (github.com/jimiechen/mineplanet/go/services/hello)
+├── services/health           (github.com/jimiechen/mineplanet/go/services/health)
 ├── gateway/proto-gateway     (github.com/jimiechen/mineplanet/go/gateway/proto-gateway)
 └── tars/system               (github.com/jimiechen/mineplanet/go/tars/system)
 ```
@@ -420,6 +438,9 @@ github.com/jimiechen/mineplanet/go/...
 
 | 模块 | Path |
 |---|---|
+| common-lib | github.com/jimiechen/mineplanet/go/common-lib |
+| services/hello | github.com/jimiechen/mineplanet/go/services/hello |
+| services/health | github.com/jimiechen/mineplanet/go/services/health |
 | gateway/proto-gateway | github.com/jimiechen/mineplanet/go/gateway/proto-gateway |
 | tars/system | github.com/jimiechen/mineplanet/go/tars/system |
 

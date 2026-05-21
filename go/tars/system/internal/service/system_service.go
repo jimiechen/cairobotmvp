@@ -1,8 +1,8 @@
 // Package service 提供 System 模块的旧版单体服务实现
 //
 // Deprecated: 此包已废弃，请使用模块化替代方案：
-//   - HealthCheck 功能已迁移至 go/modules/health
-//   - HelloWorld 功能已迁移至 go/modules/hello
+//   - HealthCheck 功能已迁移至 go/services/health
+//   - HelloWorld 功能已迁移至 go/services/hello
 //   - Tars 调用适配层已迁移至 adapter.SystemAdapter
 //
 // 保留原因：向后兼容，给过渡期。新代码请勿使用此包。

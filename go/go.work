@@ -3,8 +3,8 @@ go 1.23
 use (
 	../proto/generated/go
 	./common-lib
-	./modules/hello
-	./modules/health
 	./gateway/proto-gateway
+	./services/health
+	./services/hello
 	./tars/system
 )
