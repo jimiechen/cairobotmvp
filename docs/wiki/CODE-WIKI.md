@@ -208,34 +208,48 @@ docs/
 
 ```text
 go/
-  go.work
+  go.work                                    # Workspace 总控
+  common-lib/                                # 公共库（错误码、类型定义）
+    codes.go
+    codes_test.go
+    types.go
+  modules/                                   # 业务模块（独立 go.mod）
+    hello/                                    # Hello 模块
+      service.go
+      service_test.go
+      go.mod
+    health/                                   # Health 模块
+      service.go
+      service_test.go
+      go.mod
+    (users/auth/groups/topics/readonly 预留)
   gateway/
     proto-gateway/
       README.md
       go.mod                          # 引入 github.com/TarsCloud/TarsGo v1.4.6
       cmd/
         server/
-          main.go                     # TarsGo 入口：TarsHttpMux + AddHttpServant + Run
+          main.go                         # TarsGo 入口：TarsHttpMux + AddHttpServant + Run
+        testclient/
+          main.go                         # E2E 测试客户端（参考实现）
       configs/
         gateway/
-          gateway.local.conf          # TarsGo 单体部署本地配置（locator 为空）
-        routes.yaml
+          gateway.local.conf               # TarsGo 单体部署本地配置（locator 为空）
       internal/
         config/
           routes.go
           routes_test.go
-        router/
-          router.go
-          router_test.go
-        adapter/
-          message_packet.go
-          message_packet_test.go
-        tarsclient/
-          invoker.go                  # TarsInvoker 接口 + LocalInvoker + TarsGoInvoker
-          invoker_test.go
         server/
           http_server.go
           http_server_test.go
+          e2e_modules_test.go             # E2E 全链路测试（Gateway → Modules）
+        tarsclient/
+          invoker.go                     # TarsInvoker 接口 + LocalInvoker + TarsGoInvoker + ModuleHandler
+          invoker_test.go
+          module_handler_test.go         # 模块注册测试
+        adapter/
+          message_packet.go
+          message_packet_test.go
   tars/
     system/
       go.mod
@@ -243,13 +257,16 @@ go/
         main.go
       internal/
         service/
-          system_service.go
+          system_service.go              # @deprecated 标记废弃，保留兼容
           system_service_test.go
-      localhandler/
-        local_handler.go
-        local_handler_test.go
-    auth/
-    audit/
+      adapter/                            # Adapter 层（替代旧 localhandler）
+        system_adapter.go                # LocalHandler 接口适配器
+        system_adapter_test.go
+        deprecated/                       # 废弃代码归档
+          local_handler.go               # 旧 LocalHandler 实现
+          local_handler_test.go
+    auth/                                 # 预留
+    audit/                                # 预留
     ...
   shared/
     audit/
@@ -258,9 +275,19 @@ go/
     protoadapter/
   third_party/
     TarsGo/
-      README.md                       # TarsGo v1.4.6 依赖基线说明
-      TarsGo-1.4.6/                   # TarsCloud/TarsGo v1.4.6 源码（replace 指向）
+      README.md                           # TarsGo v1.4.6 依赖基线说明
+      TarsGo-1.4.6/                       # TarsCloud/TarsGo v1.4.6 源码（replace 指向）
 ```
+
+**架构分层**：
+
+| 层级 | 目录 | 职责 |
+|------|------|------|
+| 公共库 | `common-lib/` | 错误码、类型定义、常量 |
+| 业务模块 | `modules/*` | 独立 go.mod，可单独构建测试 |
+| Gateway | `gateway/proto-gateway/` | HTTP 入口、路由、调用分发 |
+| Tars 适配层 | `tars/system/adapter/` | LocalHandler → ModuleInvokeFunc 适配 |
+| Tars 服务 | `tars/system/internal/service/` | 具体业务逻辑（标记 @deprecated） |
 
 ### 13.3 Python 语言资产
 
