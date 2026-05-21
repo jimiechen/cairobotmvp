@@ -32,13 +32,13 @@ lint: ## 运行 TypeScript ESLint/Prettier 检查
 	fi
 	@echo "[ts] Lint 检查完成"
 
-unit: ## 运行 TypeScript 单元测试
+unit: ## 运行 TypeScript 单元测试（使用 Vitest）
 	@echo "[ts] ==> 运行单元测试..."
 	@if [ -f web/package.json ]; then \
-		cd web && npx jest --passWithNoTests --runInBand || echo "[ts] 跳过 web test"; \
+		cd web && npx vitest run --passWithNoTests --reporter=verbose 2>&1 || echo "[ts] ⚠️  web 测试失败或跳过"; \
 	fi
 	@if [ -f admin-web/package.json ]; then \
-		cd admin-web && npx jest --passWithNoTests --runInBand || echo "[ts] 跳过 admin-web test"; \
+		cd admin-web && npx vitest run --passWithNoTests --reporter=verbose 2>&1 || echo "[ts] ⚠️  admin-web 测试失败或跳过"; \
 	fi
 	@echo "[ts] 单元测试完成"
 
@@ -46,10 +46,10 @@ coverage: ## 生成 TypeScript 覆盖率报告
 	@echo "[ts] ==> 生成覆盖率报告..."
 	@mkdir -p ../../docs/reports/coverage/typescript
 	@if [ -f web/package.json ]; then \
-		cd web && npx jest --coverage --coverageDirectory=../../docs/reports/coverage/typescript/web --passWithNoTests || echo "[ts] 跳过 web coverage"; \
+		cd web && npx vitest run --coverage --coverageDirectory=../../docs/reports/coverage/typescript/web --passWithNoTests 2>&1 || echo "[ts] ⚠️  跳过 web coverage"; \
 	fi
 	@if [ -f admin-web/package.json ]; then \
-		cd admin-web && npx jest --coverage --coverageDirectory=../../docs/reports/coverage/typescript/admin-web --passWithNoTests || echo "[ts] 跳过 admin-web coverage"; \
+		cd admin-web && npx vitest run --coverage --coverageDirectory=../../docs/reports/coverage/typescript/admin-web --passWithNoTests 2>&1 || echo "[ts] ⚠️  跳过 admin-web coverage"; \
 	fi
 	@echo "[ts] 覆盖率报告已生成"
 

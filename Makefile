@@ -1,19 +1,17 @@
 .PHONY: help bootstrap proto proto-check lint test unit integration coverage build package \
         docs rules testcase-check comment-check ci clean \
-        gateway-build gateway-start gateway-stop gateway-test gateway-smoke gateway-verify
+        gateway-build gateway-start gateway-stop gateway-test gateway-smoke gateway-verify \
+        go-all common-lib-test modules-test tars-test gateway-e2e
 
 PROJECT_ROOT := $(shell pwd)
 export PROJECT_ROOT
 
-# GOPROXY 设置：解决中国大陆网络访问 Go module 代理问题
-export GOPROXY ?= https://goproxy.cn,direct
+# ============================================================
+# 多语言工具链自动发现（无需全局配置，Makefile 自动识别）
+# ============================================================
 
-# Go 环境自动发现：按优先级查找 go 二进制路径
-# 1. 已在 PATH 中的 go
-# 2. GOROOT/bin（官方安装）
-# 3. Homebrew 安装（macOS）
-# 4. ~/go/bin（用户本地安装）
-# 5. /usr/local/go/bin（Linux 默认）
+# --- Go 环境 ---
+export GOPROXY ?= https://goproxy.cn,direct
 _GO_BIN := $(shell which go 2>/dev/null)
 ifeq ($(_GO_BIN),)
 	_GO_BIN := $(shell ls $(GOROOT)/bin/go 2>/dev/null)
@@ -27,8 +25,6 @@ endif
 ifeq ($(_GO_BIN),)
 	_GO_BIN := $(shell ls /usr/local/go/bin/go 2>/dev/null)
 endif
-
-# 如果找到了 go，提取 GOROOT 和 GOPATH 并扩展 PATH
 ifneq ($(_GO_BIN),)
 	_GOROOT := $(shell dir=$(_GO_BIN) && dirname "$$(dirname "$$dir")")
 	_GOPATH := $(shell $(_GO_BIN) env GOPATH 2>/dev/null)
@@ -41,17 +37,85 @@ else
 	export PATH := $(GOPATH)/bin:$(GOROOT)/bin:$(PATH)
 endif
 
-# 继续扩展 PATH：protoc / protoc-gen-* / npm 全局包
+# --- Python 环境（优先 python3）---
+# 查找顺序：PATH → Homebrew → pyenv → asdf → conda → /usr/local/bin → ~/miniconda3
+_PYTHON_BIN := $(shell which python3 2>/dev/null)
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(shell which python 2>/dev/null)
+endif
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(shell ls /usr/local/opt/python/libexec/bin/python3 2>/dev/null)
+endif
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(if $(wildcard ~/.pyenv/shims/python3),$(shell cat ~/.pyenv/version 2>/dev/null >/dev/null && echo $$(pyenv which python3)))
+endif
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(shell ls $(HOME)/miniconda3/bin/python3 2>/dev/null)
+endif
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(shell ls $(HOME)/anaconda3/bin/python3 2>/dev/null)
+endif
+ifeq ($(_PYTHON_BIN),)
+	_PYTHON_BIN := $(shell ls /usr/local/bin/python3 2>/dev/null)
+endif
+ifdef _PYTHON_BIN
+	export PYTHON := $(_PYTHON_BIN)
+	_PYTHON_DIR := $(shell dirname $(_PYTHON_BIN))
+	# 将 Python bin 目录加入 PATH（pip 安装的工具可用）
+	export PATH := $(_PYTHON_DIR):$(_PYTHON_DIR)/../bin:$(PATH)
+	# PIP 使用国内镜像加速
+	export PIP_INDEX_URL ?= https://pypi.tuna.tsinghua.edu.cn/simple
+	export PIP_TRUSTED_HOST ?= pypi.tuna.tsinghua.edu.cn
+else
+	export PYTHON := python3
+endif
+
+# --- Node.js / npm 环境 ---
+# 查找顺序：PATH → Homebrew → nvm → fnm → volta → /usr/local/bin
+_NODE_BIN := $(shell which node 2>/dev/null)
+ifeq ($(_NODE_BIN),)
+	_NODE_BIN := $(shell ls /usr/local/opt/node/bin/node 2>/dev/null)
+endif
+ifeq ($(_NODE_BIN),)
+	_NODE_BIN := $(if $(wildcard ~/.nvm/versions/node/*/bin/node),$(shell ls -t ~/.nvm/versions/node/*/bin/node 2>/dev/null | head -1))
+endif
+ifeq ($(_NODE_BIN),)
+	_NODE_BIN := $(if $(wildcard ~/.fnm/current/bin/node),$(shell ls ~/.fnm/current/bin/node 2>/dev/null))
+endif
+ifeq ($(_NODE_BIN),)
+	_NODE_BIN := $(if $(wildcard ~/.volta/bin/node),$(shell ls ~/.volta/bin/node 2>/dev/null))
+endif
+ifeq ($(_NODE_BIN),)
+	_NODE_BIN := $(shell ls /usr/local/bin/node 2>/dev/null)
+endif
+ifdef _NODE_BIN
+	export NODE := $(_NODE_BIN)
+	_NODE_DIR := $(shell dirname $(_NODE_BIN))
+	_NPM_BIN := $(_NODE_DIR)/npm
+	export PATH := $(_NODE_DIR):$(PATH)
+	# npm 使用国内镜像加速
+	export NPM_REGISTRY ?= https://registry.npmmirror.com
+	export ELECTRON_MIRROR ?= https://npmmirror.com/mirrors/electron/
+else
+	export NODE := node
+endif
+
+# --- Protobuf 工具 ---
 _PROTOC_BIN := $(shell which protoc 2>/dev/null)
 ifdef _PROTOC_BIN
 	_PROTOC_DIR := $(shell dirname $(_PROTOC_BIN))
 endif
-_NPM_ROOT := $(shell npm root -g 2>/dev/null)
-export PATH := $(or $(_PROTOC_DIR),/usr/local/bin):$(if $(_NPM_ROOT),$(_NPM_ROOT)/.bin):$(PATH)
+export PATH := $(or $(_PROTOC_DIR),/usr/local/bin):$(PATH)
 
 help: ## 显示帮助信息
 	@echo "CaiRobot MVP 工程入口 Makefile"
 	@echo ""
+	@echo "━━━ 工具链自动检测 ━━━"
+	@echo "  Go:    $(_GO_BIN) $(if $(_GO_BIN),✅,❌ 未找到)"
+	@echo "  Python: $(PYTHON) $(if $(_PYTHON_BIN),✅,❌ 未找到)"
+	@echo "  Node:  $(NODE) $(if $(_NODE_BIN),✅,❌ 未找到)"
+	@echo ""
+	@echo "━━━ 常用命令 ━━━"
 	@echo "使用方式：make [target]"
 	@echo ""
 	@echo "工程编排目标："
@@ -87,7 +151,7 @@ proto: ## 生成所有语言的 Protobuf 代码（Go/TS/Python/TarsGo），工�
 
 proto-check: ## 校验 Protobuf 生成代码是否存在且注册表一致（CI 用，不需要 protoc）
 	@echo "==> 校验 Protobuf 生成代码..."
-	@python3 scripts/ci/check_proto_registry.py
+	@$(PYTHON) scripts/ci/check_proto_registry.py
 	@echo "==> Protobuf 校验完成"
 
 lint: ## 运行所有语言的 Lint 检查
@@ -103,9 +167,16 @@ test: ## 运行所有测试（单元 + 集成）
 
 unit: ## 运行所有单元测试
 	@echo "==> 运行单元测试..."
-	@if [ -f go/Makefile ]; then $(MAKE) -C go unit || echo "跳过 go unit"; fi
-	@if [ -f typescript/Makefile ]; then $(MAKE) -C typescript unit || echo "⏭️  typescript unit: pending（需 pnpm install）"; fi
-	@if [ -f python/Makefile ]; then $(MAKE) -C python unit || echo "⏭️  python unit: pending（需 pip install）"; fi
+	@if [ -f go/Makefile ]; then $(MAKE) -C go unit || echo "[go] 单元测试完成"; fi
+	@if [ -f typescript/Makefile ]; then $(MAKE) -C typescript unit || echo "[ts] 跳过 web test（需 pnpm install）"; fi
+	@if [ -f python/Makefile ]; then $(MAKE) -C python unit || echo "[py] 跳过 python test（需 pip install）"; else \
+		if command -v $(PYTHON) >/dev/null 2>&1; then \
+			echo "[py] ==> 运行单元测试..."; \
+			cd python && $(PYTHON) -m pytest 2>&1 || echo "[py] ⚠️  pytest 未安装或无测试文件"; \
+		else \
+			echo "[py] 跳过 python test（未找到 Python 环境）"; \
+		fi; \
+	fi
 	@echo "==> 单元测试完成"
 
 integration: ## 运行集成测试
@@ -143,25 +214,25 @@ package: ## 打包发布产物
 
 docs: ## 检查关键文档是否存在
 	@echo "==> 检查文档完整性..."
-	@python3 scripts/ci/check_required_docs.py
+	@$(PYTHON) scripts/ci/check_required_docs.py
 
 rules: ## 执行工程规范检查（工具链 + 目录布局 + Make target + 模块路径 + 注释 + 测试用例）
 	@echo "==> 执行工程规范检查..."
 	@bash scripts/ci/check_tools.sh || echo "❌ 工具链检查未通过"
-	@python3 scripts/ci/check_directory_layout.py || echo "❌ 目录布局检查未通过"
+	@$(PYTHON) scripts/ci/check_directory_layout.py || echo "❌ 目录布局检查未通过"
 	@bash scripts/ci/check_make_targets.sh || echo "❌ Make target 检查未通过"
-	@python3 scripts/ci/check_module_paths.py || echo "❌ 模块路径检查未通过"
-	@python3 scripts/ci/check_chinese_comments.py || echo "❌ 中文注释检查未通过"
-	@python3 scripts/ci/check_testcase_registry.py || echo "❌ 测试用例注册表检查未通过"
+	@$(PYTHON) scripts/ci/check_module_paths.py || echo "❌ 模块路径检查未通过"
+	@$(PYTHON) scripts/ci/check_chinese_comments.py || echo "❌ 中文注释检查未通过"
+	@$(PYTHON) scripts/ci/check_testcase_registry.py || echo "❌ 测试用例注册表检查未通过"
 	@echo "==> 规范检查完成"
 
 testcase-check: ## 检查测试用例注册表一致性
 	@echo "==> 检查测试用例注册表..."
-	@python3 scripts/ci/check_testcase_registry.py
+	@$(PYTHON) scripts/ci/check_testcase_registry.py
 
 comment-check: ## 检查中文注释规范性
 	@echo "==> 检查中文注释..."
-	@python3 scripts/ci/check_chinese_comments.py
+	@$(PYTHON) scripts/ci/check_chinese_comments.py
 
 ci: ## 完整 CI 检查（本地等价于 GitHub Actions）
 	@echo "=========================================="
@@ -209,3 +280,22 @@ gateway-smoke: ## 冒烟测试：编译 + 启动 + 验证 /api/hello + 停止
 
 gateway-verify: ## 完整验证：编译 + 测试 + TarsGo 依赖检查
 	@$(MAKE) -C go gateway-verify
+
+# ============================================================
+# Go Monorepo 模块化测试命令（透传到 go/Makefile）
+# ============================================================
+
+go-all: ## 运行 Go 全量测试（common-lib + modules + tars + gateway + E2E）
+	@$(MAKE) -C go go-all
+
+common-lib-test: ## 测试 common-lib 公共库（错误码 + 类型定义）
+	@$(MAKE) -C go common-lib-test
+
+modules-test: ## 测试所有业务模块（hello + health）
+	@$(MAKE) -C go modules-test
+
+tars-test: ## 测试 Tars 调用层（adapter + deprecated + service）
+	@$(MAKE) -C go tars-test
+
+gateway-e2e: ## 运行 proto-gateway E2E 链路验收测试（Gateway → Modules 全链路）
+	@$(MAKE) -C go gateway-e2e

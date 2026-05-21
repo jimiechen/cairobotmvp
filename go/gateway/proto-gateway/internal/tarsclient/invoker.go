@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jimiechen/mineplanet/go/tars/system/localhandler"
+	"github.com/jimiechen/mineplanet/go/common-lib"
+	"github.com/jimiechen/mineplanet/go/modules/hello"
+	"github.com/jimiechen/mineplanet/go/modules/health"
 )
 
 // Target 定义 Tars 调用目标
@@ -81,22 +83,85 @@ func (li *LocalInvoker) Invoke(ctx context.Context, target Target, request []byt
 
 // RegisterSystemHandlers 注册 System 模块的本地 TarsGo servant handler
 // Gateway 单体部署模式启动时必须调用，注册 HealthCheck 和 HelloWorld
+//
+// Deprecated: 请使用 RegisterModuleHandlers 替代，后者直接使用模块化服务。
+// 此函数保留用于向后兼容，未来版本将移除。
 func RegisterSystemHandlers(invoker *LocalInvoker) {
-	sysHandler := localhandler.NewHandler()
+	sysAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		healthSvc := health.NewService()
+		return healthSvc.Check(ctx, req)
+	})
+
+	helloAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		helloSvc := hello.NewService()
+		return helloSvc.SayHello(ctx, req)
+	})
 
 	invoker.Register(TargetKey{
 		App:     "CaiRobot",
 		Server:  "SystemServer",
 		Servant: "SystemObj",
 		Method:  "HealthCheck",
-	}, sysHandler)
+	}, sysAdapter)
 
 	invoker.Register(TargetKey{
 		App:     "CaiRobot",
 		Server:  "SystemServer",
 		Servant: "SystemObj",
 		Method:  "HelloWorld",
-	}, sysHandler)
+	}, helloAdapter)
+}
+
+// ModuleInvokeFunc 模块服务调用函数签名
+// 业务模块统一使用 Protobuf bytes 作为输入输出，不依赖 MessagePacket
+//
+// Deprecated: 请使用 commonlib.ModuleInvokeFunc 替代。
+type ModuleInvokeFunc = commonlib.ModuleInvokeFunc
+
+// moduleHandler 将模块服务适配为 LocalHandler 接口
+// 负责返回码转换：模块成功→10200，模块失败→10500
+type moduleHandler struct {
+	fn ModuleInvokeFunc
+}
+
+// NewModuleHandler 创建模块适配 handler
+func NewModuleHandler(fn ModuleInvokeFunc) LocalHandler {
+	return &moduleHandler{fn: fn}
+}
+
+// Invoke 实现 LocalHandler 接口，调用底层模块服务并转换返回码
+func (h *moduleHandler) Invoke(ctx context.Context, request []byte, extend map[string]string) (int, []byte, error) {
+	resp, err := h.fn(ctx, request)
+	if err != nil {
+		return commonlib.CodeInternalError, nil, err
+	}
+	return commonlib.CodeSuccess, resp, nil
+}
+
+// RegisterModuleHandlers 注册模块化业务服务的本地 handler
+// 每个模块独立注册到对应的 TargetKey，通过 NewModuleHandler 适配接口
+// 替代 RegisterSystemHandlers，推荐新代码使用此函数
+func RegisterModuleHandlers(invoker *LocalInvoker) {
+	helloSvc := hello.NewService()
+	healthSvc := health.NewService()
+
+	invoker.Register(TargetKey{
+		App:     "CaiRobot",
+		Server:  "SystemServer",
+		Servant: "SystemObj",
+		Method:  "HealthCheck",
+	}, NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		return healthSvc.Check(ctx, req)
+	}))
+
+	invoker.Register(TargetKey{
+		App:     "CaiRobot",
+		Server:  "SystemServer",
+		Servant: "SystemObj",
+		Method:  "HelloWorld",
+	}, NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		return helloSvc.SayHello(ctx, req)
+	}))
 }
 
 // TarsGoInvoker 微服务部署（microservice）模式下的远程 TarsGo client invoker

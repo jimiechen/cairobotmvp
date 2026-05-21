@@ -1,0 +1,15 @@
+{
+    "name": "@mineplanet/proto-generated-ts",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./base/message": "./base/message.ts",
+        "./base/hello": "./base/hello.ts",
+        "./base/health": "./base/health.ts",
+        "./base/result": "./base/result.ts"
+    },
+    "dependencies": {
+        "google-protobuf": "^3.21.2"
+    }
+}

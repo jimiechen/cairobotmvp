@@ -7,7 +7,7 @@ help: ## 显示 Python 子模块帮助
 install: ## 安装 Python 依赖
 	@echo "[py] ==> 安装依赖..."
 	@if [ -f ai/hello/pyproject.toml ]; then \
-		cd ai/hello && pip install -e ".[dev]" || pip install -r requirements.txt || echo "[py] 跳过依赖安装"; \
+		cd ai/hello && $(PYTHON) -m pip install -e ".[dev]" || $(PYTHON) -m pip install -r requirements.txt || echo "[py] 跳过依赖安装"; \
 	fi
 	@echo "[py] 依赖安装完成"
 
@@ -30,7 +30,9 @@ lint: ## 运行 Python Ruff/Flake8 检查
 unit: ## 运行 Python 单元测试
 	@echo "[py] ==> 运行单元测试..."
 	@if [ -d ai ]; then \
-		cd ai && python -m pytest -v --tb=short || echo "[py] 跳过 pytest"; \
+		cd ai && $(PYTHON) -m pytest -v --tb=short || echo "[py] ⚠️  pytest 未安装或无测试文件"; \
+	else \
+		echo "[py] ⏭️  无 ai/ 目录，跳过 python test"; \
 	fi
 	@echo "[py] 单元测试完成"
 
@@ -38,15 +40,15 @@ coverage: ## 生成 Python 覆盖率报告
 	@echo "[py] ==> 生成覆盖率报告..."
 	@mkdir -p ../../docs/reports/coverage/python
 	@if [ -d ai ]; then \
-		cd ai && python -m pytest --cov=. --cov-report=html:../../docs/reports/coverage/python \
-			--cov-report=term-missing -v || echo "[py] 跳过 coverage"; \
+		cd ai && $(PYTHON) -m pytest --cov=. --cov-report=html:../../docs/reports/coverage/python \
+			--cov-report=term-missing -v || echo "[py] ⚠️  coverage 未安装或无测试文件"; \
 	fi
 	@echo "[py] 覆盖率报告已生成"
 
 build: ## 构建 Python 包
 	@echo "[py] ==> 构建包..."
 	@if [ -f ai/hello/pyproject.toml ]; then \
-		cd ai/hello && python -m build || echo "[py] 跳过 build"; \
+		cd ai/hello && $(PYTHON) -m build || echo "[py] 跳过 build"; \
 	fi
 	@echo "[py] 构建完成"
 

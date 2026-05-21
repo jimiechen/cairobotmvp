@@ -1,4 +1,5 @@
 .PHONY: proto tars unit integration coverage lint build package clean help \
+       common-lib-test modules-test tars-test gateway-e2e go-all \
        gateway-build gateway-start gateway-test gateway-verify gateway-stop gateway-smoke
 
 GO_WORK := go.work
@@ -33,7 +34,7 @@ tars: ## 生成 TarsGo/Tars2Go 代码
 unit: ## 运行所有 go.work 中 module 的单元测试
 	@echo "[go] ==> 运行单元测试..."
 	@if [ -f $(GO_WORK) ]; then \
-		for mod in gateway/proto-gateway tars/system; do \
+		for mod in common-lib modules/hello modules/health tars/system gateway/proto-gateway; do \
 			if [ -f "$$mod/go.mod" ]; then \
 				echo "[go] 测试模块: $$mod"; \
 				(cd $$mod && go test ./... -v -count=1 2>&1 | tail -20); \
@@ -44,6 +45,62 @@ unit: ## 运行所有 go.work 中 module 的单元测试
 		go test ./... -v -count=1; \
 	fi
 	@echo "[go] 单元测试完成"
+
+common-lib-test: ## 测试 common-lib 公共库（错误码 + 类型定义）
+	@echo "[go] ==> 测试 common-lib..."
+	@if [ -d common-lib ]; then \
+		cd common-lib && go test ./... -v -count=1 2>&1; \
+	else \
+		echo "[go] ❌ common-lib 目录不存在"; \
+		exit 1; \
+	fi
+	@echo "[go] common-lib 测试完成"
+
+modules-test: ## 测试所有业务模块（hello + health）
+	@echo "[go] ==> 测试业务模块..."
+	@for mod in modules/hello modules/health; do \
+		if [ -f "$$mod/go.mod" ]; then \
+			echo "[go] 测试模块: $$mod"; \
+			(cd $$mod && go test ./... -v -count=1 2>&1); \
+		else \
+			echo "[go] ⚠️  跳过：$$mod 不存在"; \
+		fi; \
+	done
+	@echo "[go] 业务模块测试完成"
+
+tars-test: ## 测试 Tars 调用层（adapter + deprecated + service）
+	@echo "[go] ==> 测试 tars/system..."
+	@if [ -d tars/system ]; then \
+		cd tars/system && go test ./... -v -count=1 2>&1; \
+	else \
+		echo "[go] ❌ tars/system 目录不存在"; \
+		exit 1; \
+	fi
+	@echo "[go] tars/system 测试完成"
+
+gateway-e2e: ## 运行 proto-gateway E2E 链路验收测试（Gateway → Modules 全链路）
+	@echo "[go] ==> 运行 Gateway E2E 链路测试..."
+	@cd $(GATEWAY_DIR) && go test -v -count=1 -run "TestGateway_E2E" ./... 2>&1
+	@echo "[go] Gateway E2E 测试完成"
+
+go-all: ## 运行 Go 全量测试（common-lib + modules + tars + gateway）并输出汇总
+	@echo "=========================================="
+	@echo "  Go Monorepo 全量测试"
+	@echo "=========================================="
+	@echo ""
+	@$(MAKE) common-lib-test
+	@echo ""
+	@$(MAKE) modules-test
+	@echo ""
+	@$(MAKE) tars-test
+	@echo ""
+	@$(MAKE) gateway-test
+	@echo ""
+	@$(MAKE) gateway-e2e
+	@echo ""
+	@echo "=========================================="
+	@echo "  ✅ Go 全量测试完成"
+	@echo "=========================================="
 
 integration: ## 运行集成测试
 	@echo "[go] ==> 运行集成测试..."
