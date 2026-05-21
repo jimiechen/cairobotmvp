@@ -38,8 +38,8 @@ vendor/
 bin/
 
 ## Tabbit / TRAE 原始导出收件箱（inbox 不入库，保留 README 和目录结构）
-docs/tabbit/inbox/**/*
-docs/trae-export/inbox/**/*
+#docs/tabbit/inbox/**/*
+#docs/trae-export/inbox/**/*
 !docs/tabbit/inbox/**/.gitkeep
 !docs/trae-export/inbox/**/.gitkeep
 
