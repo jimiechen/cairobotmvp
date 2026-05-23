@@ -31,6 +31,8 @@ EXPECTED_GENERATED = {
         "proto/generated/go/base/hello.pb.go",
         "proto/generated/go/base/message.pb.go",
         "proto/generated/go/base/result.pb.go",
+        "proto/generated/go/base/app_config.pb.go",
+        "proto/generated/go/base/i18n.pb.go",
     ],
     "typescript": [
         "proto/generated/ts/base/health.ts",
@@ -49,6 +51,11 @@ EXPECTED_GENERATED = {
         "proto/generated/python/base/result_pb2_grpc.py",
     ],
 }
+
+# 禁止存在的路径（历史遗留问题，防止重复生成）
+FORBIDDEN_PATHS = [
+    "proto/generated/go/proto/base",
+]
 
 
 def extract_max_min_from_proto(proto_file):
@@ -99,9 +106,84 @@ def parse_registry():
     return registered
 
 
+def check_go_package_consistency():
+    """检查 .proto 文件中的 go_package 是否与目录结构一致。"""
+    print(" [1] 检查 go_package 一致性...\n")
+    
+    errors = []
+    
+    for root, dirs, files in os.walk(PROTO_DIR):
+        for file in files:
+            if not file.endswith('.proto'):
+                continue
+            
+            proto_file = os.path.join(root, file)
+            rel_path = os.path.relpath(proto_file, PROJECT_ROOT)
+            
+            with open(proto_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            go_package_match = re.search(
+                r'option\s+go_package\s*=\s*"([^"]+)"',
+                content
+            )
+            
+            if not go_package_match:
+                continue
+            
+            go_package = go_package_match.group(1)
+            
+            # 期望的 go_package: github.com/jimiechen/mineplanet/protocols/generated/go/<proto_dir>
+            # 同一目录下的所有 proto 文件共享同一个 go_package
+            proto_rel = os.path.relpath(proto_file, PROTO_DIR)
+            proto_dir = os.path.dirname(proto_rel)
+            expected_suffix = proto_dir.replace(os.sep, '/')
+            expected = f"github.com/jimiechen/mineplanet/protocols/generated/go/{expected_suffix}"
+            
+            if go_package != expected:
+                errors.append({
+                    'file': rel_path,
+                    'actual': go_package,
+                    'expected': expected,
+                })
+    
+    if errors:
+        print("❌ go_package 配置错误：")
+        for err in errors:
+            print(f"  文件: {err['file']}")
+            print(f"    当前: {err['actual']}")
+            print(f"    期望: {err['expected']}")
+        print("")
+        return False
+    
+    print("✅ 所有 .proto 文件的 go_package 配置正确\n")
+    return True
+
+
+def check_forbidden_paths():
+    """检查是否存在禁止的生成代码路径（历史遗留问题）。"""
+    print(" [2] 检查禁止路径...\n")
+    
+    found = []
+    for path in FORBIDDEN_PATHS:
+        full_path = os.path.join(PROJECT_ROOT, path)
+        if os.path.exists(full_path):
+            found.append(path)
+    
+    if found:
+        print("❌ 发现禁止的生成代码路径（历史遗留）：")
+        for path in found:
+            print(f"   - {path}")
+        print("\n  请删除上述目录，统一使用 proto/generated/go/base/ 路径\n")
+        return False
+    
+    print("✅ 未发现禁止路径\n")
+    return True
+
+
 def check_generated_files():
     """检查各语言生成代码文件是否存在。"""
-    print(" [2] 检查生成代码文件存在性...\n")
+    print(" [3] 检查生成代码文件存在性...\n")
     
     all_exist = True
     stats = {"total": 0, "found": 0, "missing": 0}
@@ -201,11 +283,19 @@ def main():
     
     errors = []
     
-    # 1. 检查生成文件存在性
+    # 1. 检查 go_package 一致性
+    if not check_go_package_consistency():
+        errors.append("go_package 配置错误")
+    
+    # 2. 检查禁止路径
+    if not check_forbidden_paths():
+        errors.append("存在禁止的生成代码路径")
+    
+    # 3. 检查生成文件存在性
     if not check_generated_files():
         errors.append("生成代码文件缺失")
     
-    # 2. 检查协议编号
+    # 4. 检查协议编号
     if not check_protocol_numbers():
         errors.append("协议编号检查失败")
     
@@ -226,6 +316,8 @@ def main():
         sys.exit(1)
     else:
         print("\n✅ Proto 校验全部通过")
+        print("  - go_package 配置：正确")
+        print("  - 生成代码路径：无历史遗留问题")
         print("  - 生成代码文件：存在且完整")
         print("  - 协议编号：无重复、已登记\n")
         sys.exit(0)

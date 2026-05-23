@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/TarsCloud/TarsGo/tars"
+	"github.com/jimiechen/mineplanet/go/common-lib"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/adapter"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/tarsclient"
@@ -32,46 +33,46 @@ func NewGatewayServer(rt *router.RouteTable, invoker tarsclient.TarsInvoker, mod
 func (gs *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		tars.TLOG.Warn("method not allowed: " + r.Method + " path=" + r.URL.Path)
-		writeError(w, http.StatusMethodNotAllowed, 10400, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, commonlib.CodeBadRequest, "method not allowed")
 		return
 	}
 
 	if r.Header.Get("Content-Type") != "application/octet-stream" {
 		tars.TLOG.Debug("unsupported Content-Type: " + r.Header.Get("Content-Type"))
-		writeError(w, http.StatusUnsupportedMediaType, 10400, "unsupported media type")
+		writeError(w, http.StatusUnsupportedMediaType, commonlib.CodeBadRequest, "unsupported media type")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		tars.TLOG.Error("read body failed: " + err.Error())
-		writeError(w, http.StatusBadRequest, 10400, "read body failed")
+		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "read body failed")
 		return
 	}
 	defer r.Body.Close()
 
 	if len(body) == 0 {
 		tars.TLOG.Debug("empty body received from " + r.RemoteAddr)
-		writeError(w, http.StatusBadRequest, 10400, "empty body")
+		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "empty body")
 		return
 	}
 
 	packet, err := adapter.DeserializeMessagePacket(body)
 	if err != nil {
 		tars.TLOG.Error("invalid message packet: " + err.Error() + " bodySize=" + fmt.Sprintf("%d", len(body)))
-		writeError(w, http.StatusBadRequest, 10400, "invalid message packet: "+err.Error())
+		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "invalid message packet: "+err.Error())
 		return
 	}
 
 	if packet.MaxType <= 0 || packet.MinType <= 0 {
 		tars.TLOG.Debug("invalid maxType/minType: maxType=" + fmt.Sprintf("%d", packet.MaxType) + " minType=" + fmt.Sprintf("%d", packet.MinType))
-		writeError(w, http.StatusBadRequest, 10400, "maxType/minType must > 0")
+		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "maxType/minType must > 0")
 		return
 	}
 
 	if len(packet.Data) == 0 {
 		tars.TLOG.Debug("empty data field in packet routeKey=" + fmt.Sprintf("%d:%d", packet.MaxType, packet.MinType))
-		writeError(w, http.StatusBadRequest, 10400, "data is empty")
+		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "data is empty")
 		return
 	}
 
@@ -81,7 +82,7 @@ func (gs *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	route, ok := gs.routeTable.FindRoute(packet.MaxType, packet.MinType)
 	if !ok {
 		tars.TLOG.Warn("route not found: " + routeKey)
-		resp := adapter.BuildErrorPacket(packet, 10404, "route not found")
+		resp := adapter.BuildErrorPacket(packet, commonlib.CodeNotFound, "route not found")
 		writePacket(w, resp)
 		return
 	}
@@ -102,7 +103,7 @@ func (gs *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	returnCode, responseBytes, err := gs.invoker.Invoke(r.Context(), target, packet.Data, extend)
 	if err != nil {
 		tars.TLOG.Error("invoke failed ["+route.CommandName+"]: " + err.Error())
-		resp := adapter.BuildErrorPacket(packet, 10500, "invoke failed: "+err.Error())
+		resp := adapter.BuildErrorPacket(packet, commonlib.CodeInternalError, "invoke failed: "+err.Error())
 		writePacket(w, resp)
 		return
 	}

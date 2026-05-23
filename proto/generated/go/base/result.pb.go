@@ -280,8 +280,8 @@ const file_base_result_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
 	"\x04code\x18\x03 \x01(\tR\x04code\"O\n" +
 	"\x10ValidationResult\x12;\n" +
-	"\x06errors\x18\x01 \x03(\v2#.com.mineplanet.pojo.pb.ErrorDetailR\x06errorsBo\n" +
-	"\x13com.mineplanet.pojoB\vResultProtoH\x03ZAgithub.com/jimiechen/mineplanet/protocols/generated/go/proto/base\xa2\x02\x05PROTOb\x06proto3"
+	"\x06errors\x18\x01 \x03(\v2#.com.mineplanet.pojo.pb.ErrorDetailR\x06errorsBi\n" +
+	"\x13com.mineplanet.pojoB\vResultProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3"
 
 var (
 	file_base_result_proto_rawDescOnce sync.Once

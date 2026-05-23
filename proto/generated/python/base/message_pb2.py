@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x62\x61se/message.proto\x12\x13\x63om.mineplanet.pojo\"\xdf\x01\n\rMessagePacket\x12\x0f\n\x07maxType\x18\x01 \x01(\x05\x12\x0f\n\x07minType\x18\x02 \x01(\x05\x12>\n\x06\x65xtend\x18\x03 \x03(\x0b\x32..com.mineplanet.pojo.MessagePacket.ExtendEntry\x12/\n\x08platform\x18\x04 \x01(\x0e\x32\x1d.com.mineplanet.pojo.Platform\x12\x0c\n\x04\x64\x61ta\x18\x05 \x01(\x0c\x1a-\n\x0b\x45xtendEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01*I\n\x08Platform\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x07\n\x03WEB\x10\x01\x12\x06\n\x02PC\x10\x02\x12\x0b\n\x07\x41NDROID\x10\x03\x12\x07\n\x03IOS\x10\x04\x12\t\n\x05OTHER\x10\x05\x42p\n\x13\x63om.mineplanet.pojoB\x0cMessageProtoH\x03ZAgithub.com/jimiechen/mineplanet/protocols/generated/go/proto/base\xa2\x02\x05PROTOb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x62\x61se/message.proto\x12\x13\x63om.mineplanet.pojo\"\xdf\x01\n\rMessagePacket\x12\x0f\n\x07maxType\x18\x01 \x01(\x05\x12\x0f\n\x07minType\x18\x02 \x01(\x05\x12>\n\x06\x65xtend\x18\x03 \x03(\x0b\x32..com.mineplanet.pojo.MessagePacket.ExtendEntry\x12/\n\x08platform\x18\x04 \x01(\x0e\x32\x1d.com.mineplanet.pojo.Platform\x12\x0c\n\x04\x64\x61ta\x18\x05 \x01(\x0c\x1a-\n\x0b\x45xtendEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01*I\n\x08Platform\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x07\n\x03WEB\x10\x01\x12\x06\n\x02PC\x10\x02\x12\x0b\n\x07\x41NDROID\x10\x03\x12\x07\n\x03IOS\x10\x04\x12\t\n\x05OTHER\x10\x05\x42j\n\x13\x63om.mineplanet.pojoB\x0cMessageProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'base.message_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'\n\023com.mineplanet.pojoB\014MessageProtoH\003ZAgithub.com/jimiechen/mineplanet/protocols/generated/go/proto/base\242\002\005PROTO'
+  _globals['DESCRIPTOR']._serialized_options = b'\n\023com.mineplanet.pojoB\014MessageProtoH\003Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\242\002\005PROTO'
   _globals['_MESSAGEPACKET_EXTENDENTRY']._loaded_options = None
   _globals['_MESSAGEPACKET_EXTENDENTRY']._serialized_options = b'8\001'
   _globals['_PLATFORM']._serialized_start=269

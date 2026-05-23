@@ -185,8 +185,8 @@ const file_base_message_proto_rawDesc = "" +
 	"\x02PC\x10\x02\x12\v\n" +
 	"\aANDROID\x10\x03\x12\a\n" +
 	"\x03IOS\x10\x04\x12\t\n" +
-	"\x05OTHER\x10\x05Bp\n" +
-	"\x13com.mineplanet.pojoB\fMessageProtoH\x03ZAgithub.com/jimiechen/mineplanet/protocols/generated/go/proto/base\xa2\x02\x05PROTOb\x06proto3"
+	"\x05OTHER\x10\x05Bj\n" +
+	"\x13com.mineplanet.pojoB\fMessageProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3"
 
 var (
 	file_base_message_proto_rawDescOnce sync.Once

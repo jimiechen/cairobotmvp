@@ -249,7 +249,7 @@ const file_base_health_proto_rawDesc = "" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xb4\x10\x12\b\n" +
-	"\x03min\x10\xb2\x10BZB\vHealthProtoH\x03ZAgithub.com/jimiechen/mineplanet/protocols/generated/go/proto/base\xa2\x02\x05PROTOb\x06proto3"
+	"\x03min\x10\xb2\x10BTB\vHealthProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3"
 
 var (
 	file_base_health_proto_rawDescOnce sync.Once

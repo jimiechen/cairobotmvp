@@ -128,6 +128,8 @@ func ReadPEMData(pemFile string, pemPass []byte) ([]byte, error) {
 	return pemData, nil
 }
 
+// FDFromTLSConn 从 TLS 连接获取文件描述符
+// 用于 TarsGo 框架内部网络层操作
 func FDFromTLSConn(conn *tls.Conn) uintptr {
 	tcpConn := reflect.Indirect(reflect.ValueOf(conn)).FieldByName("conn").Elem().Elem()
 	fdVal := tcpConn.FieldByName("fd")

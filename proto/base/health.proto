@@ -7,7 +7,7 @@ import "base/result.proto";
 package com.mineplanet.pojo.health;
 
 option java_outer_classname = "HealthProto";
-option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
 option optimize_for = LITE_RUNTIME;
 
 // 服务健康检查请求，用于服务间心跳检测

@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo;
+option java_package = "com.mineplanet.pojo";
+option java_outer_classname = "I18nProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
+option optimize_for = LITE_RUNTIME;
+
+import "base/result.proto";
+
+// ===== 语言元数据协议 (6003/6004) =====
+
+// 获取支持的语言列表请求
+message AppFetchLanguageReq {
+  string client_version = 1;
+}
+
+// 语言元数据响应
+message AppFetchLanguageRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated I18nLanguageMeta languages = 2;
+}
+
+// 语言元信息（i18n 专用，避免与 app_config.proto 中的 LanguageMeta 冲突）
+message I18nLanguageMeta {
+  string code        = 1;
+  string name        = 2;
+  string native_name = 3;
+  bool   is_default  = 4;
+}
+
+// ===== 全量语言包协议 (6005/6006) =====
+
+// 获取全量语言包请求
+// 用于首次加载或本地缓存失效时的全量拉取
+message AppFetchLangPackReq {
+  string lang_code = 1;      // 目标语言代码，如 zh-CN
+  string client_version = 2; // 客户端版本号，用于模板类型兼容性过滤
+}
+
+// 全量语言包响应（含模板元信息）
+message AppFetchLangPackRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64  pack_version = 2;            // 语言包版本号
+  repeated LangStringEntry strings = 3; // 全量字符串列表
+}
+
+// ===== 增量语言包协议 (6007/6008) =====
+
+// 获取增量语言包请求
+// 客户端传入当前版本号，服务端返回增量 diff
+message AppFetchLangDifferenceReq {
+  string lang_code = 1;
+  int64  since_version = 2;  // 客户端当前持有的版本号
+  string client_version = 3;
+}
+
+// 增量语言包响应
+message AppFetchLangDifferenceRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64  current_version = 2;              // 服务端最新版本号
+  repeated LangStringEntry additions = 3;  // 新增或修改的字符串
+  repeated string deletions = 4;           // 已删除的 key 列表
+}
+
+// ===== 语言字符串条目（含参数化模板支持）=====
+
+// 语言字符串条目
+// template_type 和 params 是 v2 新增能力，支持参数化多语言文案
+// 老 client_version 的客户端只会收到 template_type=plain 的条目
+message LangStringEntry {
+  string key = 1;
+  // 原始文本值：
+  // - plain: 原样返回
+  // - named: 含 {placeholder} 占位符，客户端按 params 替换
+  // - icu: 含 ICU MessageFormat 语法的复杂模板
+  string value = 2;
+  // 模板类型: plain / named / icu
+  string template_type = 3;
+  // 参数描述列表，定义 value 中占位符的类型和约束
+  repeated LangParam params = 4;
+  // 操作类型: ADD / MOD / DEL（增量协议 6007/6008 使用）
+  string operation_type = 5;
+}
+
+// 参数描述：定义单个占位符的元信息
+message LangParam {
+  string name     = 1;  // 参数名，对应 value 中的 {name}
+  string type     = 2;  // 参数类型: string/int/float/date
+  bool   required = 3;  // 是否必填
+  string default_v = 4; // 默认值（预览用）
+}

@@ -1,0 +1,29 @@
+# CaiRobot MVP 统一服务端配置
+# 基于 server_config_test.yaml 裁剪，仅保留 config/i18n 所需配置
+
+# MySQL Configuration (Shared)
+mysql:
+  host: "rm-t4np5ht1x04y8ko98eo.mysql.singapore.rds.aliyuncs.com"
+  port: 3306
+  username: "mpuser"
+  password: "${MYSQL_PASSWORD}"
+  database: "mineplanet_community_db"
+  charset: "utf8mb4"
+  max_open_conns: 100
+  max_idle_conns: 20
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "10m"
+
+# Redis Configuration (Shared)
+redis:
+  enabled: true
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 0
+
+# Config / I18n Service Specific
+cache:
+  config_ttl_seconds: 30
+  i18n_ttl_seconds: 60
+  pubsub_enabled: true

@@ -7,7 +7,7 @@ import "base/result.proto";
 package com.mineplanet.pojo.hello;
 
 option java_outer_classname = "HelloProto";
-option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
 option optimize_for = LITE_RUNTIME;
 
 // HelloWorld 请求，用于验证端到端链路连通性

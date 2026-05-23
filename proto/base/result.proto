@@ -6,7 +6,7 @@ package com.mineplanet.pojo.pb;
 
 option java_package = "com.mineplanet.pojo";
 option java_outer_classname = "ResultProto";
-option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
 option optimize_for = LITE_RUNTIME;
 
 // 通用返回结果，所有业务响应必须内嵌此 message

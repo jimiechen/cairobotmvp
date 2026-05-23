@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo;
+option java_package = "com.mineplanet.pojo";
+option java_outer_classname = "AppConfigProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
+option optimize_for = LITE_RUNTIME;
+
+import "base/result.proto";
+
+// 获取全量应用配置请求
+// 客户端 App 启动后首次调用 6001 协议获取所有配置模块
+message AppConfigsReq {
+  // env 目标环境，不传则由网关根据请求来源判断
+  string env = 1;
+  // client_scope 客户端范围过滤 (all/android/ios/web/admin)
+  string client_scope = 2;
+  // client_version 客户端版本号，用于兼容性过滤 dynamic_modules 和 template_type
+  string client_version = 3;
+  // requested_modules 请求的模块列表，为空则返回全部已发布模块
+  repeated string requested_modules = 4;
+}
+
+// 应用配置响应（含自描述动态模块）
+// 兼容策略：强类型字段(2-9)保留给老客户端，新字段通过 dynamic_modules(100) 下发
+message AppConfigsRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  // 强类型模块字段（按 schema 自动填充，MVP 初始 8 个模块）
+  AppBaseConfigs    base_cfg   = 2;
+  AppWapUrlConfigs  wap_cfg    = 3;
+  AppRegexConfigs   regex_cfg  = 4;
+  AppPayConfigs     pay_cfg    = 5;
+  AppOssConfigs     oss_cfg    = 6;
+  AppLanguageConfigs lang_cfg  = 7;
+  AppMuteConfigs    mute_cfg   = 8;
+  AppGroupConfigs   group_cfg  = 9;
+
+  // 自描述动态模块容器
+  // 新增 module_key / field_key 无需改此 proto，服务端按 sys_config_schema 动态填充
+  repeated DynamicConfigModule dynamic_modules = 100;
+}
+
+// 动态配置模块：module_key + version + 字段 map + schema 摘要
+// 客户端读取 fields map 后按 descriptors 中的 field_type 做类型转换
+message DynamicConfigModule {
+  string module_key = 1;
+  int64  version    = 2;
+  // 字段 key → JSON-encoded value，值类型由 FieldDescriptor.field_type 描述
+  map<string, string> fields = 3;
+  // 内嵌 schema 摘要，便于客户端调试和动态渲染表单
+  repeated FieldDescriptor descriptors = 4;
+}
+
+// 字段描述符：描述 dynamic_modules 中每个字段的元信息
+message FieldDescriptor {
+  string field_key   = 1;
+  // 类型枚举: string/int/bool/float/enum/json/list
+  string field_type  = 2;
+  bool   is_required = 3;
+  string default_val = 4;
+}
+
+// ===== 强类型消息定义（初始 8 个模块） =====
+
+// 基础配置：域名、签名盐值、联系邮箱等
+message AppBaseConfigs {
+  string domain_root = 1;
+  string domain_wap  = 2;
+  string sign_rand   = 3;
+  string construct_email = 4;
+}
+
+// WAP 页面 URL 配置
+message AppWapUrlConfigs {
+  string user_agreement_url = 1;
+  string privacy_policy_url = 2;
+}
+
+// 正则表达式配置（用于前端校验）
+message AppRegexConfigs {
+  string regex_email        = 1;
+  string regex_password     = 2;
+  string regex_phone        = 3;
+  string regex_nick         = 4;
+  string regex_circle_name  = 5;
+}
+
+// 支付方式配置
+message AppPayConfigs {
+  repeated PayMethod circle_pays = 1;
+}
+
+// PayMethod 支付方式定义
+// 用于配置支持的支付渠道和金额范围
+message PayMethod {
+  string method       = 1;
+  string display_name = 2;
+  double rang_min     = 3;
+  double rang_max     = 4;
+}
+
+// OSS 对象存储配置
+message AppOssConfigs {
+  string oss_host   = 1;
+  string oss_domain = 2;
+  string cdn_domain = 3;
+}
+
+// 语言配置：支持的语言列表和默认语言
+message AppLanguageConfigs {
+  repeated LanguageMeta languages = 1;
+  string lang_code = 2;
+}
+
+// LanguageMeta 语言元数据
+// 描述应用支持的一种语言及其显示信息
+message LanguageMeta {
+  string code        = 1;
+  string name        = 2;
+  string native_name = 3;
+  bool   is_default  = 4;
+}
+
+// 静音时长配置
+message AppMuteConfigs {
+  repeated MuteDuration durations = 1;
+}
+
+// MuteDuration 静音时长选项
+// 用于消息免打扰功能的时长配置
+message MuteDuration {
+  string label   = 1;
+  int32  seconds = 2;
+}
+
+// 群组相关配置
+message AppGroupConfigs {
+  string group_config_pay_notice = 1;
+}
+
+// ===== 版本轮询协议（6009/6010）=====
+
+// 配置与语言包版本轮询请求
+// 客户端定期调用此接口检测是否有更新，避免轮询 6001/6007 全量数据
+message AppConfigVersionReq {
+  string env = 1;
+  // known_versions 客户端已知的各 module_key → version 映射
+  map<string, int64> known_versions = 2;
+  // known_lang_packs 客户端已知的各 lang_code → pack_version 映射
+  map<string, int64> known_lang_packs = 3;
+}
+
+// 版本轮询响应
+message AppConfigVersionRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+  // config_versions 各 module_key → 最新 version
+  map<string, int64> config_versions = 2;
+  // lang_pack_versions 各 lang_code → 最新 pack version
+  map<string, int64> lang_pack_versions = 3;
+  // has_changes 是否有任何变更（客户端据此决定是否拉取 6001/6007）
+  bool has_changes = 4;
+}

@@ -6,7 +6,7 @@ package com.mineplanet.pojo;
 
 option java_package = "com.mineplanet.pojo";
 option java_outer_classname = "MessageProto";
-option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
 option optimize_for = LITE_RUNTIME;
 
 // 平台类型枚举，标识客户端来源平台

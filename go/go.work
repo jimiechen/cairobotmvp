@@ -1,10 +1,15 @@
-go 1.23
+go 1.25.5
 
 use (
 	../proto/generated/go
 	./common-lib
-	./modules/hello
-	./modules/health
 	./gateway/proto-gateway
+	./modules/health
+	./modules/hello
+	./services/config
+	./services/i18n
+	./tars/config
+	./tars/i18n
+	./tars/provider-admin
 	./tars/system
 )

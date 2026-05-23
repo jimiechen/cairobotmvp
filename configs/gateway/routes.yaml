@@ -1,4 +1,5 @@
 routes:
+  # ===== 已有路由（系统基础能力 2100 段）=====
   - request_max: 2100
     request_min: 2097
     route_key: "2100:2097"
@@ -45,4 +46,133 @@ routes:
 
     timeout_ms: 3000
     auth_required: false
+    audit_required: false
+
+  # ===== 全局配置协议（6000 段）=====
+
+  # 6001/6002: 获取全量应用配置（App 启动时调用）
+  - request_max: 6000
+    request_min: 6001
+    route_key: "6000:6001"
+    command_name: GetAppConfigs
+    description: 获取全量应用配置（含 dynamic_modules）
+
+    request_proto: com.mineplanet.pojo.AppConfigsReq
+    response_max: 6000
+    response_min: 6002
+    response_proto: com.mineplanet.pojo.AppConfigsRsp
+
+    tars_app: CaiRobot
+    tars_server: ConfigServer
+    tars_servant: ConfigObj
+    tars_module: CaiRobotConfigApp
+    tars_interface: ConfigObj
+    tars_method: GetAppConfigs
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: false
+
+  # 6009/6010: 配置与语言包版本轮询（轻量检测变更）
+  - request_max: 6000
+    request_min: 6009
+    route_key: "6000:6009"
+    command_name: AppConfigVersion
+    description: 配置/语言包版本轮询
+
+    request_proto: com.mineplanet.pojo.AppConfigVersionReq
+    response_max: 6000
+    response_min: 6010
+    response_proto: com.mineplanet.pojo.AppConfigVersionRsp
+
+    tars_app: CaiRobot
+    tars_server: ConfigServer
+    tars_servant: ConfigObj
+    tars_module: CaiRobotConfigApp
+    tars_interface: ConfigObj
+    tars_method: AppConfigVersion
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
+  # ===== 多语言 i18n 协议（6000 段）=====
+
+  # 6003/6004: 获取语言元数据列表
+  - request_max: 6000
+    request_min: 6003
+    route_key: "6000:6003"
+    command_name: GetAppLanguage
+    description: 获取支持的语言元数据列表
+
+    request_proto: com.mineplanet.pojo.AppFetchLanguageReq
+    response_max: 6000
+    response_min: 6004
+    response_proto: com.mineplanet.pojo.AppFetchLanguageRsp
+
+    tars_app: CaiRobot
+    tars_server: I18nServer
+    tars_servant: I18nObj
+    tars_module: CaiRobotI18nApp
+    tars_interface: I18nObj
+    tars_method: GetAppLanguage
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: false
+    audit_required: false
+
+  # 6005/6006: 获取全量语言包
+  - request_max: 6000
+    request_min: 6005
+    route_key: "6000:6005"
+    command_name: GetLangPack
+    description: 获取全量语言包（含模板元信息）
+
+    request_proto: com.mineplanet.pojo.AppFetchLangPackReq
+    response_max: 6000
+    response_min: 6006
+    response_proto: com.mineplanet.pojo.AppFetchLangPackRsp
+
+    tars_app: CaiRobot
+    tars_server: I18nServer
+    tars_servant: I18nObj
+    tars_module: CaiRobotI18nApp
+    tars_interface: I18nObj
+    tars_method: GetLangPack
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: false
+
+  # 6007/6008: 获取增量语言包
+  - request_max: 6000
+    request_min: 6007
+    route_key: "6000:6007"
+    command_name: GetLangDifference
+    description: 获取增量语言包
+
+    request_proto: com.mineplanet.pojo.AppFetchLangDifferenceReq
+    response_max: 6000
+    response_min: 6008
+    response_proto: com.mineplanet.pojo.AppFetchLangDifferenceRsp
+
+    tars_app: CaiRobot
+    tars_server: I18nServer
+    tars_servant: I18nObj
+    tars_module: CaiRobotI18nApp
+    tars_interface: I18nObj
+    tars_method: GetLangDifference
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 5000
+    auth_required: true
     audit_required: false
