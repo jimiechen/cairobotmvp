@@ -1,0 +1,33 @@
+# CaiRobot Go 服务端共享配置
+# 仅适用于 Go 运行时环境（Gateway / Tars Servant / Admin Server）
+# TypeScript/Python 前端不使用此配置
+#
+# MVP 阶段: 默认使用 SQLite (环境变量 CONFIG_DB_PATH / I18N_DB_PATH)
+# 以下 MySQL/Redis 配置为阶段 D 预留，切换时取消注释即可
+
+# MySQL Configuration (Shared) — 阶段 D 启用
+mysql:
+  host: "rm-t4np5ht1x04y8ko98eo.mysql.singapore.rds.aliyuncs.com"
+  port: 3306
+  username: "mpuser"
+  password: "${MYSQL_PASSWORD}"
+  database: "mineplanet_community_db"
+  charset: "utf8mb4"
+  max_open_conns: 100
+  max_idle_conns: 20
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "10m"
+
+# Redis Configuration (Shared) — 阶段 D 启用 L2 缓存 + PubSub
+redis:
+  enabled: true
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 0
+
+# Cache TTL Configuration
+cache:
+  config_ttl_seconds: 30    # configsdk LRU 默认 TTL
+  i18n_ttl_seconds: 60      # i18nsdk LRU 默认 TTL
+  pubsub_enabled: true      # Redis PubSub 失效通知开关

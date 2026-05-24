@@ -13,52 +13,11 @@ import (
 // 负责配置字段定义的 CRUD 操作
 type ConfigHandler struct {
 	schemaService *service.SchemaService
-	cacheInvalidate CacheInvalidator
-}
-
-// CacheInvalidator 缓存失效接口
-// 用于在写操作后通知 SDK 层失效本地缓存
-//
-// TODO(M-05): 实现 Redis pub/sub 失效广播
-// 未来应通过 Redis PUBLISH 命令发送以下消息：
-//   - 主题: "cairobot.config.invalidate"
-//   - 消息体: {"module_key": "xxx", "action": "create|update|delete", "timestamp": ...}
-//
-// 实现步骤：
-//   1. 在 provider-admin 初始化时创建 Redis 连接
-//   2. 实现此接口的 Redis 版本：RedisCacheInvalidator
-//   3. 在每个写操作成功后调用 InvalidateConfigCache()
-//   4. SDK 层订阅 "cairobot.config.invalidate" 主题，收到消息后清空 LRU 缓存
-//
-// 当前行为：no-op（空实现），SDK 缓存依赖 TTL 过期（30s-10min）
-// 目标行为：热更新延迟 <100ms（通过 pub/sub 即时推送）
-//
-// 参见评审报告: docs/reviews/review-config-i18n-implementation.md#M-05
-type CacheInvalidator interface {
-	InvalidateConfigCache(moduleKey string, action string)
-}
-
-// NoopCacheInvalidator 空操作的缓存失效器（MVP 默认实现）
-type NoopCacheInvalidator struct{}
-
-func (n *NoopCacheInvalidator) InvalidateConfigCache(moduleKey string, action string) {
-
 }
 
 // NewConfigHandler 创建配置 Schema 处理器实例
 func NewConfigHandler(schemaService *service.SchemaService) *ConfigHandler {
-	return &ConfigHandler{
-		schemaService:    schemaService,
-		cacheInvalidate: &NoopCacheInvalidator{},
-	}
-}
-
-// NewConfigHandlerWithCache 创建带缓存失效能力的处理器（未来 Redis 集成时使用）
-func NewConfigHandlerWithCache(schemaService *service.SchemaService, cacheInvalidate CacheInvalidator) *ConfigHandler {
-	return &ConfigHandler{
-		schemaService:    schemaService,
-		cacheInvalidate: cacheInvalidate,
-	}
+	return &ConfigHandler{schemaService: schemaService}
 }
 
 // CreateSchema 新增字段定义
@@ -83,8 +42,6 @@ func (h *ConfigHandler) CreateSchema(c *gin.Context) {
 		})
 		return
 	}
-
-	h.cacheInvalidate.InvalidateConfigCache(req.ModuleKey, "create")
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
@@ -121,7 +78,7 @@ func (h *ConfigHandler) ListSchemas(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "ok",
-		"data": schemas,
+		"data":    schemas,
 	})
 }
 
@@ -160,12 +117,10 @@ func (h *ConfigHandler) UpdateSchema(c *gin.Context) {
 		return
 	}
 
-	h.cacheInvalidate.InvalidateConfigCache(req.ModuleKey, "update")
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "ok",
-		"data": nil,
+		"data":    nil,
 	})
 }
 
@@ -193,11 +148,9 @@ func (h *ConfigHandler) DeleteSchema(c *gin.Context) {
 		return
 	}
 
-	h.cacheInvalidate.InvalidateConfigCache("", "delete")
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "ok",
-		"data": nil,
+		"data":    nil,
 	})
 }

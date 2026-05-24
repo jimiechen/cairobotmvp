@@ -9,7 +9,7 @@ import (
 	"github.com/jimiechen/mineplanet/go/common-lib"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/adapter"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
-	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/tarsclient"
+	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/tarsclient"
 )
 
 // GatewayServer TarsGo HTTP Servant，作为 proto-gateway 的唯一 HTTP 入口

@@ -15,7 +15,7 @@ import (
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/adapter"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/config"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
-	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/tarsclient"
+	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/tarsclient"
 	configcache "github.com/jimiechen/mineplanet/go/services/config/cache"
 	configdomain "github.com/jimiechen/mineplanet/go/services/config/domain"
 	"github.com/jimiechen/mineplanet/go/services/config/repository"

@@ -8,7 +8,7 @@ import (
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/config"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/server"
-	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/tarsclient"
+	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/tarsclient"
 )
 
 func main() {

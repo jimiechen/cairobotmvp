@@ -25,47 +25,13 @@ type AdminI18nRepository interface {
 // I18nHandler 多语言 API 处理器
 // 负责语言包和字符串的 CRUD 操作、发布和预览
 type I18nHandler struct {
-	repo             AdminI18nRepository
-	client           i18nsdk.Client
-	cacheInvalidate I18nCacheInvalidator
-}
-
-// I18nCacheInvalidator I18n 缓存失效接口
-// 用于在写操作后通知 SDK 层失效语言包缓存
-//
-// TODO(M-05): 实现 Redis pub/sub 失效广播
-// 未来应通过 Redis PUBLISH 命令发送以下消息：
-//   - 主题: "cairobot.i18n.invalidate"
-//   - 消息体: {"lang_code": "xxx", "action": "create|update|delete|publish", "timestamp": ...}
-//
-// 参见评审报告: docs/reviews/review-config-i18n-implementation.md#M-05
-type I18nCacheInvalidator interface {
-	InvalidateI18nCache(langCode string, action string)
-}
-
-// NoopI18nCacheInvalidator 空操作的 I18n 缓存失效器（MVP 默认实现）
-type NoopI18nCacheInvalidator struct{}
-
-func (n *NoopI18nCacheInvalidator) InvalidateI18nCache(langCode string, action string) {
-
+	repo   AdminI18nRepository
+	client i18nsdk.Client
 }
 
 // NewI18nHandler 创建多语言处理器实例
 func NewI18nHandler(repo AdminI18nRepository, client i18nsdk.Client) *I18nHandler {
-	return &I18nHandler{
-		repo:             repo,
-		client:           client,
-		cacheInvalidate: &NoopI18nCacheInvalidator{},
-	}
-}
-
-// NewI18nHandlerWithCache 创建带缓存失效能力的处理器（未来 Redis 集成时使用）
-func NewI18nHandlerWithCache(repo AdminI18nRepository, client i18nsdk.Client, cacheInvalidate I18nCacheInvalidator) *I18nHandler {
-	return &I18nHandler{
-		repo:             repo,
-		client:           client,
-		cacheInvalidate: cacheInvalidate,
-	}
+	return &I18nHandler{repo: repo, client: client}
 }
 
 // CreatePack 创建/更新语言包
@@ -90,8 +56,6 @@ func (h *I18nHandler) CreatePack(c *gin.Context) {
 		})
 		return
 	}
-
-	h.cacheInvalidate.InvalidateI18nCache(req.LangCode, "create")
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
@@ -194,8 +158,6 @@ func (h *I18nHandler) CreateString(c *gin.Context) {
 		return
 	}
 
-	h.cacheInvalidate.InvalidateI18nCache("", "create_string")
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "ok",
@@ -274,8 +236,6 @@ func (h *I18nHandler) UpdateString(c *gin.Context) {
 		return
 	}
 
-	h.cacheInvalidate.InvalidateI18nCache("", "update_string")
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "ok",
@@ -306,8 +266,6 @@ func (h *I18nHandler) DeleteString(c *gin.Context) {
 		})
 		return
 	}
-
-	h.cacheInvalidate.InvalidateI18nCache("", "delete_string")
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
@@ -405,8 +363,6 @@ func (h *I18nHandler) PublishLangPack(c *gin.Context) {
 		})
 		return
 	}
-
-	h.cacheInvalidate.InvalidateI18nCache("", "publish")
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
