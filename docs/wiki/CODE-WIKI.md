@@ -15,6 +15,17 @@ TarsCloud 负责服务治理。
 TarsGo 服务负责业务逻辑。
 ```
 
+**项目阶段**：S1（PRD + ADR 落地阶段）
+
+**技术栈**：
+- 后端：Go 1.21+（TarsGo v1.4.6 + Gin）
+- 前端：TypeScript / ReactJS
+- AI 服务：Python 3.11+
+- 协议：Protobuf 3 + Tars IDL
+- 部署：TarsCloud
+
+---
+
 ## 2. 单网关总体架构
 
 ```text
@@ -45,33 +56,469 @@ Gateway 根据 response_proto 解析 response bytes
 返回客户端
 ```
 
-## 3. MessagePacket 入口协议
+---
 
-MessagePacket 是 CaiRobot MVP 对外单网关唯一业务入口报文。
+## 3. 目录结构总览
 
-```proto
+```text
+/workspace/
+├── Makefile                          # 根目录编排器（16 个 target）
+├── go/
+│   ├── go.work                       # Go Workspace 总控
+│   ├── Makefile                      # Go 子模块 Makefile
+│   ├── common-lib/                   # 公共库（错误码、类型定义）
+│   ├── modules/                      # 业务模块（独立 go.mod）
+│   │   ├── hello/                    # HelloWorld 模块
+│   │   └── health/                   # HealthCheck 模块
+│   ├── gateway/
+│   │   └── proto-gateway/            # HTTP 网关、路由、调用分发
+│   ├── services/                     # 业务服务层（独立 go.mod）
+│   │   ├── config/                   # 全局配置领域服务
+│   │   │   ├── domain/               # 领域实体（ModuleKey、Schema、Value、Version）
+│   │   │   ├── repository/           # 数据访问（SQLite/MySQL 双实现）
+│   │   │   ├── cache/                # 缓存抽象（LRU / Redis）
+│   │   │   ├── service/              # 业务逻辑（ConfigService 接口 + 实现）
+│   │   │   └── sdk/                  # configsdk（三层缓存架构）
+│   │   └── i18n/                     # 多语言参数化模板服务
+│   │       ├── domain/               # 领域实体（LangPack、LangString、Template）
+│   │       ├── repository/           # 数据访问
+│   │       ├── cache/                # 缓存抽象
+│   │       ├── service/              # 业务逻辑（I18nService 接口 + 实现）
+│   │       └── sdk/                  # i18nsdk（三层缓存架构）
+│   ├── tars/                         # Tars Servant 层
+│   │   ├── system/                   # System Tars Servant（HealthCheck/HelloWorld）
+│   │   ├── config/                   # Config Tars Servant（6001/6009 协议）
+│   │   ├── i18n/                     # I18n Tars Servant（6003/6005/6007 协议）
+│   │   └── provider-admin/           # Admin 管理后台（Gin HTTP）
+│   └── third_party/
+│       └── TarsGo/                   # TarsCloud/TarsGo v1.4.6 源码
+├── proto/
+│   ├── base/                         # 基础 Protobuf 协议定义
+│   │   ├── message.proto             # MessagePacket 网关入口报文
+│   │   ├── result.proto              # 通用返回结果、分页、错误详情
+│   │   ├── health.proto              # 健康检查请求/响应
+│   │   ├── hello.proto               # HelloWorld 请求/响应
+│   │   ├── app_config.proto          # 应用配置协议（6001/6009）
+│   │   └── i18n.proto                # 多语言协议（6003/6005/6007）
+│   └── generated/                    # 生成的多语言代码
+│       ├── go/                       # Go 生成代码
+│       ├── python/                   # Python 生成代码
+│       └── tarsgo/                   # TarsGo 生成代码
+├── python/
+│   ├── Makefile                      # Python 子模块 Makefile
+│   └── ai/
+│       └── hello/                    # AI HelloWorld 服务
+├── typescript/
+│   ├── Makefile                      # TypeScript 子模块 Makefile
+│   ├── web/                          # ReactJS App 前端
+│   └── admin-web/                    # Admin 前端（预留）
+├── tars/
+│   └── protocol/
+│       └── tars/                     # Tars IDL 协议定义
+│           ├── system.tars
+│           ├── auth.tars
+│           ├── audit.tars
+│           ├── provider_admin.tars
+│           ├── user_center.tars
+│           ├── open_platform.tars
+│           ├── ai_bridge.tars
+│           └── device_gateway.tars
+├── configs/
+│   └── gateway/
+│       └── routes.yaml               # 网关路由表
+├── scripts/
+│   ├── ci/                           # CI 检查脚本
+│   ├── proto/                        # Protobuf 生成脚本
+│   └── coverage/                     # 覆盖率脚本
+└── docs/
+    ├── prd/                          # 产品需求文档
+    ├── adr/                          # 架构决策记录
+    ├── api/                          # API/协议文档
+    ├── testing/                      # 测试策略
+    └── wiki/                         # 知识库（本文件所在目录）
+```
+
+---
+
+## 4. 主要模块职责
+
+### 4.1 Gateway 层（proto-gateway）
+
+**位置**：`go/gateway/proto-gateway/`
+
+**职责**：
+- 对外唯一 HTTP 入口（POST /api/hello）
+- MessagePacket 序列化/反序列化
+- maxType/minType 路由查找
+- Tars 调用分发（LocalInvoker / TarsGoInvoker）
+- 统一响应封装
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `GatewayServer` | `internal/server/http_server.go` | TarsGo HTTP Servant，处理所有请求 |
+| `ServeHTTP` | `internal/server/http_server.go` | HTTP 请求处理主流程 |
+| `RouteTable` | `internal/router/route_table.go` | 路由表查找 |
+| `FindRoute` | `internal/router/route_table.go` | 根据 maxType:minType 查找路由 |
+| `MessagePacket` | `internal/adapter/message_packet.go` | Protobuf 结构体别名 |
+| `BuildErrorPacket` | `internal/adapter/message_packet.go` | 构造错误响应 |
+| `BuildResponsePacket` | `internal/adapter/message_packet.go` | 构造成功响应 |
+| `BuildTarsExtend` | `internal/adapter/message_packet.go` | 构造 Tars 调用 extend map |
+| `DeserializeMessagePacket` | `internal/adapter/message_packet.go` | 反序列化 MessagePacket |
+| `SerializeMessagePacket` | `internal/adapter/message_packet.go` | 序列化 MessagePacket |
+
+### 4.2 TarsClient 层
+
+**位置**：`go/gateway/proto-gateway/tarsclient/`
+
+**职责**：
+- 统一 Tars 调用接口（TarsInvoker）
+- LocalInvoker：单体部署模式下的本进程适配器
+- TarsGoInvoker：微服务部署模式下的远程调用器（S1 未实现）
+- 模块 Handler 注册机制
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `TarsInvoker` | `invoker.go` | 统一调用接口（Invoke 方法） |
+| `LocalInvoker` | `invoker.go` | 单体模式本进程调用适配器 |
+| `TarsGoInvoker` | `invoker.go` | 微服务模式远程调用器（占位） |
+| `Target` | `invoker.go` | Tars 调用目标定义 |
+| `TargetKey` | `invoker.go` | 目标唯一键 |
+| `LocalHandler` | `invoker.go` | 本地 handler 接口 |
+| `ModuleInvokeFunc` | `invoker.go` | 模块服务调用函数签名 |
+| `NewModuleHandler` | `invoker.go` | 创建模块适配 handler |
+| `RegisterModuleHandlers` | `invoker.go` | 注册 hello/health 模块 handler |
+| `RegisterConfigI18nHandlers` | `invoker.go` | 注册 config/i18n 模块 handler |
+| `RegisterSystemHandlers` | `invoker.go` | 注册 System 模块 handler（已废弃） |
+
+### 4.3 业务模块层（modules）
+
+**位置**：`go/modules/`
+
+**职责**：
+- 独立 go.mod，可单独构建测试
+- 只接收 Protobuf bytes，返回 Protobuf bytes
+- 不依赖 MessagePacket
+
+**模块清单**：
+
+| 模块 | 位置 | 职责 | 关键类 |
+|---|---|---|---|
+| hello | `modules/hello/` | HelloWorld 业务逻辑 | `HelloService`（接口）、`Service`（实现）、`SayHello` |
+| health | `modules/health/` | HealthCheck 业务逻辑 | `HealthService`（接口）、`Service`（实现）、`Check` |
+
+### 4.4 业务服务层（services）
+
+**位置**：`go/services/`
+
+**职责**：
+- 领域驱动设计（DDD）分层：domain / repository / service / sdk
+- 支持 SQLite（开发）和 MySQL（生产）双实现
+- 提供 SDK 层供其他服务引用
+
+#### 4.4.1 Config 服务
+
+**位置**：`go/services/config/`
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `ConfigService` | `service/interface.go` | 配置服务接口 |
+| `AppConfigService` | `service/interface.go` | 默认实现，组合 Repo + Cache + Schema |
+| `GetAppConfigs` | `service/interface.go` | 获取全量应用配置 |
+| `GetVersionInfo` | `service/interface.go` | 获取版本轮询信息 |
+| `ConfigRepository` | `repository/interface.go` | 配置数据访问接口 |
+| `SchemaRepository` | `repository/interface.go` | Schema 元数据访问接口 |
+| `SQLiteConfigRepo` | `repository/sqlite_repo.go` | SQLite 实现 |
+| `MySQLConfigRepo` | `repository/mysql_repo.go` | MySQL 实现 |
+| `ModuleKey` | `domain/module_key.go` | 模块键领域实体 |
+| `Schema` | `domain/schema.go` | Schema 领域实体 |
+| `TypedValue` | `domain/value.go` | 类型化值领域实体 |
+| `ConfigVersion` | `domain/version.go` | 版本领域实体 |
+| `Client` | `sdk/client.go` | SDK 客户端接口 |
+| `configClient` | `sdk/client.go` | SDK 默认实现（L1 LRU + L2 Redis + L3 远程） |
+| `Default` | `sdk/client.go` | SDK 工厂方法 |
+
+#### 4.4.2 I18n 服务
+
+**位置**：`go/services/i18n/`
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `I18nService` | `service/interface.go` | 国际化服务接口 |
+| `GetLanguages` | `service/interface.go` | 获取支持的语言列表 |
+| `GetLangPack` | `service/interface.go` | 获取全量语言包 |
+| `GetLangDifference` | `service/interface.go` | 获取增量语言包 |
+| `ValidateTemplate` | `service/interface.go` | 校验模板一致性 |
+| `LanguageMeta` | `service/interface.go` | 语言元信息结构 |
+| `LangPackResponse` | `service/interface.go` | 全量语言包响应 |
+| `LangDiffResponse` | `service/interface.go` | 增量语言包响应 |
+| `LangStringEntry` | `service/interface.go` | 语言字符串条目 |
+| `Client` | `sdk/client.go` | I18n SDK 客户端接口 |
+| `clientImpl` | `sdk/client.go` | SDK 默认实现 |
+| `T` | `sdk/client.go` | 翻译并渲染参数 |
+| `Raw` | `sdk/client.go` | 获取原始模板 |
+| `BatchT` | `sdk/client.go` | 批量翻译 |
+
+### 4.5 Tars Servant 层
+
+**位置**：`go/tars/`
+
+**职责**：
+- Tars IDL 实现层
+- 标准 bytes 接口适配器
+- LocalInvoker 注册
+
+**模块清单**：
+
+| 模块 | 位置 | 职责 | 关键入口 |
+|---|---|---|---|
+| system | `tars/system/` | HealthCheck / HelloWorld | `cmd/main.go`、`adapter/system_adapter.go` |
+| config | `tars/config/` | Config Tars Servant（6001/6009） | `cmd/main.go` |
+| i18n | `tars/i18n/` | I18n Tars Servant（6003/6005/6007） | `cmd/main.go` |
+| provider-admin | `tars/provider-admin/` | Admin 管理后台（Gin HTTP） | `cmd/main.go`、`internal/server/http_server.go` |
+
+### 4.6 Admin 管理后台（provider-admin）
+
+**位置**：`go/tars/provider-admin/`
+
+**职责**：
+- Gin HTTP 服务（非 Tars bytes 接口）
+- Schema CRUD
+- 配置值管理
+- 多语言全量 API
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `HTTPServer` | `internal/server/http_server.go` | HTTP 服务器封装 |
+| `registerRoutes` | `internal/server/http_server.go` | 注册所有 API 路由 |
+| `HealthHandler` | `internal/handler/health_handler.go` | 健康检查处理器 |
+| `ConfigHandler` | `internal/handler/config_handler.go` | Schema CRUD 处理器 |
+| `ConfigValueHandler` | `internal/handler/config_value_handler.go` | 配置值管理处理器 |
+| `I18nHandler` | `internal/handler/i18n_handler.go` | 多语言处理器 |
+| `CORS` | `internal/middleware/cors.go` | 跨域中间件 |
+
+### 4.7 公共库（common-lib）
+
+**位置**：`go/common-lib/`
+
+**职责**：
+- 统一错误码定义
+- 共享类型定义
+
+**关键类/函数**：
+
+| 名称 | 位置 | 职责 |
+|---|---|---|
+| `CodeSuccess` | `codes.go` | 成功码 10200 |
+| `CodeBadRequest` | `codes.go` | 请求参数错误 10400 |
+| `CodeUnauthorized` | `codes.go` | 未授权 10401 |
+| `CodeNotFound` | `codes.go` | 资源未找到 10404 |
+| `CodeInternalError` | `codes.go` | 内部错误 10500 |
+| `CodeTarsNotImplemented` | `codes.go` | Tars 远程调用未实现 10501 |
+| `ModuleInvokeFunc` | `types.go` | 模块服务调用函数签名 |
+| `ModuleHandler` | `types.go` | 模块处理器接口 |
+
+---
+
+## 5. 关键协议定义
+
+### 5.1 MessagePacket（网关入口报文）
+
+**文件**：`proto/base/message.proto`
+
+```protobuf
 message MessagePacket {
-  int32 maxType = 1;             // 必填，协议大类
-  int32 minType = 2;             // 必填，协议小类
-  map<string, string> extend = 3; // 非必填，通用透传上下文
-  Platform platform = 4;         // 非必填，平台类型
-  bytes data = 5;                // 必填，业务协议包
+  int32 maxType = 1;              // 协议大类
+  int32 minType = 2;              // 协议小类
+  map<string, string> extend = 3; // 通用透传上下文
+  Platform platform = 4;          // 平台类型
+  bytes data = 5;                 // 业务协议包
 }
 ```
 
-- `maxType/minType` 来自业务 Request message 的 `Type.max/Type.min`
-- `data` 是业务 Request message 序列化后的 bytes
-- 响应也使用 MessagePacket，其中 `maxType/minType` 来自 Response message 的 `Type.max/Type.min`
+**Platform 枚举**：
+- `UNKNOWN = 0`：未知平台
+- `WEB = 1`：网页浏览器
+- `PC = 2`：桌面客户端
+- `ANDROID = 3`：安卓移动设备
+- `IOS = 4`：苹果移动设备
+- `OTHER = 5`：其他平台
 
-## 4. Protobuf 协议编号规范
+### 5.2 Result（通用返回结果）
 
-- 协议编号 `max + min` 是接口报文的唯一身份
-- 每个业务 Request/Response message 内部必须声明 enum Type
-- `Type.max` 表示协议大类，`Type.min` 表示协议小类
-- `max + min` 组合在全仓库内必须唯一
-- Request 和 Response 应分别拥有独立编号
+**文件**：`proto/base/result.proto`
 
-编号范围：
+```protobuf
+message Result {
+  int32 code = 1;     // 响应码，成功建议 10200
+  string message = 2; // 人类可读消息
+}
+
+message PageInfo {
+  int32 pageSize = 1;
+  int32 pageToken = 2;
+  int32 totalCount = 3;
+  string nextPageToken = 4;
+}
+
+message ErrorDetail {
+  string field = 1;
+  string message = 2;
+  string code = 3;
+}
+
+message ValidationResult {
+  repeated ErrorDetail errors = 1;
+}
+```
+
+### 5.3 HealthCheck 协议（2100 段）
+
+**文件**：`proto/base/health.proto`
+
+| 方向 | max | min | Message |
+|---|---|---|---|
+| C->S | 2100 | 2097 | `ServiceHealthCheckRequest` |
+| S->C | 2100 | 2098 | `ServiceHealthCheckResponse` |
+
+```protobuf
+message ServiceHealthCheckRequest {
+  string service_name = 1;
+}
+
+message ServiceHealthCheckResponse {
+  com.mineplanet.pojo.pb.Result result = 1;
+  string status = 2;      // "OK" 或 "Unhealthy"
+  int64 timestamp = 3;    // Unix 秒
+}
+```
+
+### 5.4 HelloWorld 协议（2100 段）
+
+**文件**：`proto/base/hello.proto`
+
+| 方向 | max | min | Message |
+|---|---|---|---|
+| C->S | 2100 | 2101 | `HelloWorldRequest` |
+| S->C | 2100 | 2102 | `HelloWorldResponse` |
+
+```protobuf
+message HelloWorldRequest {
+  string name = 1;
+}
+
+message HelloWorldResponse {
+  com.mineplanet.pojo.pb.Result result = 1;
+  string message = 2;
+  int64 timestamp = 3;
+}
+```
+
+### 5.5 应用配置协议（6000 段）
+
+**文件**：`proto/base/app_config.proto`
+
+| 方向 | max | min | Message | 说明 |
+|---|---|---|---|---|
+| C->S | 6000 | 6001 | `AppConfigsReq` | 获取全量应用配置 |
+| S->C | 6000 | 6002 | `AppConfigsRsp` | 应用配置响应 |
+| C->S | 6000 | 6009 | `AppConfigVersionReq` | 版本轮询请求 |
+| S->C | 6000 | 6010 | `AppConfigVersionRsp` | 版本轮询响应 |
+
+**关键消息**：
+
+```protobuf
+message AppConfigsReq {
+  string env = 1;
+  string client_scope = 2;
+  string client_version = 3;
+  repeated string requested_modules = 4;
+}
+
+message AppConfigsRsp {
+  com.mineplanet.pojo.pb.Result result = 1;
+  AppBaseConfigs base_cfg = 2;
+  AppWapUrlConfigs wap_cfg = 3;
+  AppRegexConfigs regex_cfg = 4;
+  AppPayConfigs pay_cfg = 5;
+  AppOssConfigs oss_cfg = 6;
+  AppLanguageConfigs lang_cfg = 7;
+  AppMuteConfigs mute_cfg = 8;
+  AppGroupConfigs group_cfg = 9;
+  repeated DynamicConfigModule dynamic_modules = 100;
+}
+
+message DynamicConfigModule {
+  string module_key = 1;
+  int64 version = 2;
+  map<string, string> fields = 3;
+  repeated FieldDescriptor descriptors = 4;
+}
+
+message FieldDescriptor {
+  string field_key = 1;
+  string field_type = 2;   // string/int/bool/float/enum/json/list
+  bool is_required = 3;
+  string default_val = 4;
+}
+```
+
+### 5.6 多语言协议（6000 段）
+
+**文件**：`proto/base/i18n.proto`
+
+| 方向 | max | min | Message | 说明 |
+|---|---|---|---|---|
+| C->S | 6000 | 6003 | `AppFetchLanguageReq` | 获取语言元数据 |
+| S->C | 6000 | 6004 | `AppFetchLanguageRsp` | 语言元数据响应 |
+| C->S | 6000 | 6005 | `AppFetchLangPackReq` | 获取全量语言包 |
+| S->C | 6000 | 6006 | `AppFetchLangPackRsp` | 全量语言包响应 |
+| C->S | 6000 | 6007 | `AppFetchLangDifferenceReq` | 获取增量语言包 |
+| S->C | 6000 | 6008 | `AppFetchLangDifferenceRsp` | 增量语言包响应 |
+
+**关键消息**：
+
+```protobuf
+message LangStringEntry {
+  string key = 1;
+  string value = 2;
+  string template_type = 3;   // plain / named / icu
+  repeated LangParam params = 4;
+  string operation_type = 5;  // ADD / MOD / DEL
+}
+
+message LangParam {
+  string name = 1;
+  string type = 2;            // string/int/float/date
+  bool required = 3;
+  string default_v = 4;
+}
+```
+
+### 5.7 Tars IDL 标准接口
+
+**文件**：`tars/protocol/tars/*.tars`
+
+所有 Tars 接口统一使用 bytes 签名：
+
+```tars
+interface XxxObj {
+    int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    int XxxMethod(vector<byte> request, map<string,string> extend, out vector<byte> response);
+};
+```
+
+### 5.8 协议编号范围
 
 | max 范围 | 模块 |
 |---:|---|
@@ -85,104 +532,219 @@ message MessagePacket {
 | 8000-8999 | 设备通信与设备网关 |
 | 9000-9999 | App、Web、前端交互协议 |
 
-## 5. routes.yaml 路由设计
+---
 
-routes.yaml 以 `request_max/request_min` 为主路由键：
+## 6. 依赖关系
 
-```yaml
-routes:
-  - request_max: 2100
-    request_min: 2097
-    route_key: "2100:2097"
-    request_proto: com.mineplanet.pojo.health.ServiceHealthCheckRequest
-    response_max: 2100
-    response_min: 2098
-    response_proto: com.mineplanet.pojo.health.ServiceHealthCheckResponse
-    tars_app: CaiRobot
-    tars_server: SystemServer
-    tars_servant: SystemObj
-    tars_module: CaiRobotSystemApp
-    tars_interface: SystemObj
-    tars_method: HealthCheck
-    tars_request_type: vector<byte>
-    tars_response_type: vector<byte>
+### 6.1 模块依赖图
+
+```text
+Client/App/Web
+    ↓ POST /api/hello (application/octet-stream)
+GatewayServer (proto-gateway)
+    ↓ MessagePacket bytes
+adapter.DeserializeMessagePacket
+    ↓ maxType/minType
+RouteTable.FindRoute
+    ↓ routes.yaml
+TarsInvoker.Invoke
+    ├── LocalInvoker（单体模式）→ 进程内 handler 调用
+    └── TarsGoInvoker（微服务模式）→ 远程 TarsCloud 调用（S1 未实现）
+        ↓
+    ModuleHandler / LocalHandler
+        ↓
+    modules/hello.Service.SayHello
+    modules/health.Service.Check
+    services/config.AppConfigService.GetAppConfigs
+    services/i18n.I18nService.GetLangPack
+        ↓
+    Protobuf Response bytes
+        ↓
+    Gateway 封装 MessagePacket 返回
 ```
 
-## 5.1 配置与多语言协议路由示例（6000 段）
+### 6.2 Go Module 依赖关系
 
-```yaml
-# 6001/6002: 获取全量应用配置（App 启动时调用）
-- request_max: 6000
-  request_min: 6001
-  route_key: "6000:6001"
-  command_name: GetAppConfigs
-  tars_app: CaiRobot
-  tars_server: ConfigServer
-  tars_servant: ConfigObj
-  tars_method: GetAppConfigs
-
-# 6009/6010: 配置与语言包版本轮询
-- request_max: 6000
-  request_min: 6009
-  command_name: AppConfigVersion
-  tars_server: ConfigServer
-  tars_servant: ConfigObj
-  tars_method: AppConfigVersion
-
-# 6003/6004: 语言元数据
-- request_max: 6000
-  request_min: 6003
-  tars_server: I18nServer
-  tars_servant: I18nObj
-  tars_method: GetAppLanguage
-
-# 6005/6006: 全量语言包
-- request_max: 6000
-  request_min: 6005
-  tars_server: I18nServer
-  tars_servant: I18nObj
-  tars_method: GetLangPack
-
-# 6007/6008: 增量语言包
-- request_max: 6000
-  request_min: 6007
-  tars_server: I18nServer
-  tars_servant: I18nObj
-  tars_method: GetLangDifference
+```text
+go.work
+├── proto/generated/go          # Protobuf 生成代码（被所有模块依赖）
+├── common-lib                  # 错误码、类型定义（被所有模块依赖）
+├── modules/hello               # 依赖 common-lib, proto/generated/go
+├── modules/health              # 依赖 common-lib, proto/generated/go
+├── gateway/proto-gateway       # 依赖 common-lib, proto/generated/go, modules/*, services/*
+├── services/config             # 依赖 common-lib, proto/generated/go
+├── services/i18n               # 依赖 common-lib, proto/generated/go
+├── tars/system                 # 依赖 common-lib, proto/generated/go, modules/*
+├── tars/config                 # 依赖 common-lib, proto/generated/go, services/config
+├── tars/i18n                   # 依赖 common-lib, proto/generated/go, services/i18n
+└── tars/provider-admin         # 依赖 common-lib, services/config, services/i18n
 ```
 
-## 6. TarsCloud/TarsGo 内部服务治理
+### 6.3 外部依赖
 
-- TarsCloud App 统一为 `CaiRobot`
-- Server 使用 `XxxServer`
-- Servant 使用 `XxxObj`
-- IDL module 使用 `CaiRobotXxxApp`
-- interface 使用 `XxxObj`
-- 每个 servant 都暴露 Health / HealthCheck
-- Tars 方法统一 bytes 签名
-
-## 7. Tars 标准 bytes 接口
-
-```tars
-int Xxx(vector<byte> request, map<string,string> extend, out vector<byte> response);
-```
-
-- `request`：Protobuf Request message 序列化 bytes
-- `extend`：上下文透传 map
-- `response`：Protobuf Response message 序列化 bytes
-- `return int`：项目统一状态码
-
-## 8. Tars App / Server / Servant / module / interface 命名规范
-
-| 层级 | 命名规则 | 示例 |
+| 依赖 | 版本 | 用途 |
 |---|---|---|
-| App | CaiRobot | CaiRobot |
-| Server | XxxServer | UserCenterServer |
-| Servant | XxxObj | UserCenterObj |
-| module | CaiRobotXxxApp | CaiRobotUserCenterApp |
-| interface | XxxObj | UserCenterObj |
+| TarsGo | v1.4.6 | TarsCloud 服务框架 |
+| Protobuf | v3 | 协议定义 |
+| Gin | latest | Admin 管理后台 HTTP 框架 |
+| google/uuid | latest | traceId/requestId 生成 |
 
-## 9. extend map 上下文透传规范
+---
+
+## 7. 项目运行方式
+
+### 7.1 环境准备
+
+```bash
+# 初始化开发环境（检查工具链 + 安装依赖）
+make bootstrap
+
+# 需要的工具
+- Go 1.21+
+- Python 3.11+
+- Node.js 20+
+- protoc（Protobuf 编译器）
+- make
+```
+
+### 7.2 常用命令
+
+```bash
+# 显示帮助
+make help
+
+# 生成 Protobuf 代码（Go/TS/Python/TarsGo）
+make proto
+
+# 校验 Protobuf 生成代码（CI 用，不需要 protoc）
+make proto-check
+
+# 运行所有测试（单元 + 集成）
+make test
+
+# 运行单元测试
+make unit
+
+# 运行集成测试
+make integration
+
+# 运行 Lint 检查
+make lint
+
+# 生成覆盖率报告
+make coverage
+
+# 构建可执行文件
+make build
+
+# 执行完整 CI 检查
+make ci
+
+# 执行工程规范检查
+make rules
+
+# 清理构建产物
+make clean
+```
+
+### 7.3 Gateway 运行
+
+```bash
+# 编译 proto-gateway
+gateway-build
+# 或：make -C go gateway-build
+
+# 启动 proto-gateway（local 模式，默认端口 8080）
+gateway-start
+# 或：make -C go gateway-start
+
+# 停止 proto-gateway
+gateway-stop
+# 或：make -C go gateway-stop
+
+# 运行 Gateway 测试
+gateway-test
+# 或：make -C go gateway-test
+
+# 冒烟测试（编译 + 启动 + 验证 + 停止）
+gateway-smoke
+# 或：make -C go gateway-smoke
+
+# 完整验证（编译 + 单元测试 + TarsGo 依赖检查）
+gateway-verify
+# 或：make -C go gateway-verify
+```
+
+**单体部署模式（默认）**：
+
+```bash
+GATEWAY_INVOKER_MODE=local
+```
+
+- 不连接远程 TarsCloud 注册中心
+- 通过 LocalInvoker 进程内调用
+- 所有 servant 在同一部署单元
+
+**微服务部署模式**：
+
+```bash
+GATEWAY_INVOKER_MODE=tars
+```
+
+- 连接远程 TarsCloud 注册中心
+- 通过 TarsGoInvoker 远程调用
+- **S1 阶段未实现**
+
+### 7.4 Go 模块测试
+
+```bash
+# 运行 Go 全量测试（common-lib + modules + tars + gateway + E2E）
+make go-all
+# 或：make -C go go-all
+
+# 测试 common-lib
+make common-lib-test
+# 或：make -C go common-lib-test
+
+# 测试业务模块（hello + health）
+make modules-test
+# 或：make -C go modules-test
+
+# 测试 Tars 调用层
+make tars-test
+# 或：make -C go tars-test
+
+# 运行 Gateway E2E 链路测试
+make gateway-e2e
+# 或：make -C go gateway-e2e
+```
+
+### 7.5 Config/I18n 服务运行
+
+```bash
+# 运行 Config Tars Servant
+cd go/tars/config && go run cmd/main.go
+
+# 运行 I18n Tars Servant
+cd go/tars/i18n && go run cmd/main.go
+
+# 运行 Admin 管理后台
+cd go/tars/provider-admin && go run cmd/main.go
+```
+
+### 7.6 前端运行
+
+```bash
+# Web 前端（TypeScript/ReactJS）
+cd typescript/web && pnpm install && pnpm dev
+
+# Admin 前端
+cd typescript/admin-web && pnpm install && pnpm dev
+```
+
+---
+
+## 8. extend map 上下文透传规范
 
 标准字段：
 
@@ -195,415 +757,46 @@ int Xxx(vector<byte> request, map<string,string> extend, out vector<byte> respon
 | clientIp | 客户端 IP | Gateway |
 | userId | 用户 ID | AuthServer 校验结果 |
 | tenantId | 租户 / 服务商 ID | AuthServer 校验结果 |
-| clientVersion | 客户端版本号 | 客户端或 Gateway（用于模板兼容性过滤） |
+| clientVersion | 客户端版本号 | 客户端或 Gateway |
+| maxType | 协议大类 | Gateway 自动填充 |
+| minType | 协议小类 | Gateway 自动填充 |
+| platform | 平台类型 | Gateway 自动填充 |
+| routeKey | 路由键 | Gateway 自动填充 |
+| requestProto | 请求 Proto 类型 | Gateway 自动填充 |
+| responseProto | 响应 Proto 类型 | Gateway 自动填充 |
+| authRequired | 是否需要鉴权 | Gateway 自动填充 |
+| auditRequired | 是否需要审计 | Gateway 自动填充 |
 
-## 10. Tars return 与 Result.code 分层规则
+---
 
-- Tars return 表示内部 Tars 方法调用的处理状态
-- Protobuf Response message 内部的 Result.code 表示业务响应状态
-- Gateway 对外返回 MessagePacket 时，优先使用业务 Response.Result.code
-- Tars 框架异常由 Gateway 映射为项目统一错误码
+## 9. Tars 命名规范
 
-## 11. Gateway 调用 Tars 完整流程
-
-1. 客户端请求 `POST /api/hello`
-2. 请求体是 `MessagePacket` bytes
-3. Gateway 反序列化 MessagePacket
-4. Gateway 校验 maxType/minType/data
-5. Gateway 使用 `maxType:minType` 查询 routes.yaml
-6. Gateway 校验协议编号是否已登记
-7. Gateway 根据 `request_proto` 反序列化 data
-8. Gateway 构造 Tars extend 并调用 TarsGo servant
-9. TarsGo 服务处理业务，返回 response bytes 和 return code
-10. Gateway 根据 `response_proto` 反序列化 response bytes
-11. Gateway 封装响应 MessagePacket 返回客户端
-
-## 12. Health / HealthCheck 基础接口
-
-每个 Tars interface 必须包含：
-
-```tars
-int Health(vector<byte> request, map<string,string> extend, out vector<byte> response);
-int HealthCheck(vector<byte> request, map<string,string> extend, out vector<byte> response);
-```
-
-## 13. 目录结构说明
-
-### 13.1 文档目录
-
-```text
-docs/
-  api/
-    protobuf规范.md
-    tars规范.md
-    http-gateway规范.md
-    openapi-protobuf映射规范.md
-    OpenAPI规范.md
-    协议编号注册表.md
-  adr/
-    ADR-0001-总体系统架构.md
-    ADR-0003-服务协议使用Protobuf.md
-    ADR-0008-use-tarscloud-routing-layer.md
-  wiki/
-    CODE-WIKI.md
-```
-
-### 13.2 Go 语言资产
-
-```text
-go/
-  go.work                                    # Workspace 总控
-  common-lib/                                # 公共库（错误码、类型定义）
-    codes.go
-    codes_test.go
-    types.go
-  modules/                                   # 业务模块（独立 go.mod）
-    hello/                                    # Hello 模块
-      service.go
-      service_test.go
-      go.mod
-    health/                                   # Health 模块
-      service.go
-      service_test.go
-      go.mod
-    (users/auth/groups/topics/readonly 预留)
-  gateway/
-    proto-gateway/
-      README.md
-      go.mod                          # 引入 github.com/TarsCloud/TarsGo v1.4.6
-      cmd/
-        server/
-          main.go                         # TarsGo 入口：TarsHttpMux + AddHttpServant + Run
-        testclient/
-          main.go                         # E2E 测试客户端（参考实现）
-      configs/
-        gateway/
-          gateway.local.conf               # TarsGo 单体部署本地配置（locator 为空）
-      internal/
-        config/
-          routes.go
-          routes_test.go
-        server/
-          http_server.go
-          http_server_test.go
-          e2e_modules_test.go             # E2E 全链路测试（Gateway → Modules）
-        tarsclient/
-          invoker.go                     # TarsInvoker 接口 + LocalInvoker + TarsGoInvoker + ModuleHandler
-          invoker_test.go
-          module_handler_test.go         # 模块注册测试
-        adapter/
-          message_packet.go
-          message_packet_test.go
-  tars/
-    system/
-      go.mod
-      cmd/
-        main.go
-      internal/
-        service/
-          system_service.go              # @deprecated 标记废弃，保留兼容
-          system_service_test.go
-      adapter/                            # Adapter 层（替代旧 localhandler）
-        system_adapter.go                # LocalHandler 接口适配器
-        system_adapter_test.go
-        deprecated/                       # 废弃代码归档
-          local_handler.go               # 旧 LocalHandler 实现
-          local_handler_test.go
-    auth/                                 # 预留
-    audit/                                # 预留
-    ...
-  services/                                   # 业务服务层（独立 go.mod）
-    config/                                    # 全局配置服务
-      domain/                                  # 领域实体
-      repository/                              # 数据访问（SQLite/MySQL 双实现）
-      cache/                                   # 缓存抽象
-      service/                                 # 业务逻辑
-      sdk/                                     # configsdk（阶段 B.5 新增）
-    i18n/                                      # 多语言服务
-      domain/ repository/ cache/ service/ sdk/ # 同上结构
-  tars/
-    config/                                    # Config Tars Servant
-      cmd/main.go                              # 服务入口 + LocalInvoker 注册
-      adapter/config_adapter.go                # bytes → service 适配器
-      e2e_test.go                              # E2E 集成测试（3 场景）
-    i18n/                                      # I18n Tars Servant
-      cmd/main.go adapter/i18n_adapter.go e2e_test.go # 同上
-    provider-admin/                             # Admin 管理后台（Gin HTTP）
-      cmd/main.go                               # Gin 服务入口
-      internal/
-        server/http_server.go                  # 路由注册 + DI
-        handler/                                # API 处理器
-          config_handler.go                     # Schema CRUD
-          config_value_handler.go               # 配置值管理
-          i18n_handler.go                       # 多语言全量 API
-          health_handler.go                    # 健康检查
-          admin_i18n_repo.go                   # 扩展写操作仓库
-        middleware/cors.go                      # CORS 中间件
-  shared/
-    audit/
-    config/
-    result/
-    protoadapter/
-  third_party/
-    TarsGo/
-      README.md                           # TarsGo v1.4.6 依赖基线说明
-      TarsGo-1.4.6/                       # TarsCloud/TarsGo v1.4.6 源码（replace 指向）
-  gateway/proto-gateway/
-    tarsclient/                                # 从 internal 移出的公共 Tars 客户端包
-      invoker.go                               # LocalInvoker + RegisterConfigI18nHandlers
-```
-
-**架构分层**：
-
-| 层级 | 目录 | 职责 |
-|------|------|------|
-| 公共库 | `common-lib/` | 错误码、类型定义、常量 |
-| 业务模块 | `modules/*` | 独立 go.mod，可单独构建测试 |
-| Gateway | `gateway/proto-gateway/` | HTTP 入口、路由、调用分发 |
-| Tars 适配层 | `tars/system/adapter/` | LocalHandler → ModuleInvokeFunc 适配 |
-| Tars 服务 | `tars/system/internal/service/` | 具体业务逻辑（标记 @deprecated） |
-
-### 13.3 Python 语言资产
-
-```text
-python/
-  ai/
-    service/
-    README.md
-  tools/
-    README.md
-```
-
-### 13.4 TypeScript 语言资产
-
-```text
-typescript/
-  web/
-    src/                                     # 业务源码（纯实现，无测试文件）
-      pages/
-        hello/
-          HelloPage.tsx                      # React 页面组件
-      utils/                                 # 工具函数库（可复用）
-        proto-client.ts                      # Proto-Gateway 客户端（buildPacket/postGateway）
-    tests/                                   # 测试目录（与源码隔离）
-      e2e/                                   # E2E 集成测试
-        gateway-modules.test.ts              # Gateway → Modules 全链路测试
-      unit/                                  # 单元测试
-        hello/
-          HelloPage.test.tsx                 # HelloPage 组件单元测试
-    package.json                             # 依赖配置（google-protobuf + 路径别名）
-    pnpm-lock.yaml
-    vite.config.ts                            # Vite 配置（@proto/@utils/@pages 别名）
-    tsconfig.json                             # TS 编译配置（paths 映射）
-    tsconfig.node.json                        # Node.js 类型声明
-  admin-web/                                 # 预留
-  app-h5/                                    # 预留
-  packages/                                  # 预留
-  README.md
-```
-
-**TS 测试分层规范**：
-
-| 目录 | 类型 | 特征 |
-|------|------|------|
-| `tests/unit/` | 单元测试 | Mock 外部依赖，快速执行，不依赖真实服务 |
-| `tests/e2e/` | E2E 集成测试 | 真实 HTTP 请求，验证完整链路，支持优雅降级 |
-
-**路径别名**：
-
-| 别名 | 指向 | 用途 |
-|------|------|------|
-| `@proto/*` | `../../proto/generated/ts/*` | Protobuf 生成类型 |
-| `@utils/*` | `src/utils/*` | 工具函数库 |
-| `@pages/*` | `src/pages/*` | 页面组件 |
-
-### 13.5 Tars 协议目录
-
-```text
-tars/
-  protocol/
-    tars/
-      system.tars
-      auth.tars
-      provider_admin.tars
-      user_center.tars
-      open_platform.tars
-      ai_bridge.tars
-      device_gateway.tars
-      audit.tars
-```
-
-### 13.6 部署目录
-
-```text
-deploy/
-  tarscloud/
-    README.md
-    configs/
-    templates/
-```
-
-## 14. Go Workspace 管理
-
-Go Workspace 位于 `go/go.work`，管理所有 Go 子模块：
-
-```text
-go/go.work
-├── common-lib                  (github.com/jimiechen/mineplanet/go/common-lib)
-├── modules/hello               (github.com/jimiechen/mineplanet/go/modules/hello)
-├── modules/health              (github.com/jimiechen/mineplanet/go/modules/health)
-├── gateway/proto-gateway        (github.com/jimiechen/mineplanet/go/gateway/proto-gateway)
-└── tars/system                 (github.com/jimiechen/mineplanet/go/tars/system)
-```
-
-**模块化架构原则**：
-
-| 原则 | 说明 |
-|------|------|
-| 独立 go.mod | 每个业务模块独立版本管理 |
-| replace 路径 | 通过相对路径引用 common-lib |
-| Workspace 统一 | go.work 统一构建和测试入口 |
-| 单一职责 | 每个模块只承担一类明确职责 |
-
-**当前模块清单**：
-
-| 模块 | Path | 职责 | 测试数 |
-|------|------|------|--------|
-| common-lib | `go/common-lib` | 错误码、类型定义 | 7 |
-| modules/hello | `go/modules/hello` | Hello 业务逻辑 | 3 |
-| modules/health | `go/modules/health` | Health 业务逻辑 | 4 |
-| gateway/proto-gateway | `go/gateway/proto-gateway` | HTTP 网关、路由、调用分发 | 16 |
-| tars/system | `go/tars/system` | Tars 适配层、服务骨架 | 11 |
-| services/config | `go/services/config` | 全局配置领域服务 | ~30 |
-| services/i18n | `go/services/i18n` | 多语言参数化模板服务 | ~25 |
-| tars/provider-admin | `go/tars/provider-admin` | Admin 管理后台（Gin） | ~10 |
-| tars/config | `go/tars/config` | Config Tars Servant | ~3 |
-| tars/i18n | `go/tars/i18n` | I18n Tars Servant | ~3 |
-
-**执行命令前需 `cd go/`**
-
-## 15. 依赖关系
-
-- Protobuf 定义协议身份和业务字段
-- MessagePacket 定义单网关入口
-- routes.yaml 定义 maxType/minType 到 Tars 目标的映射
-- Tars IDL 定义内部服务方法
-- TarsCloud 负责服务治理
-- TarsGo 服务负责业务逻辑
-
-## 16. Gateway 运行模式
-
-Gateway 基于 TarsCloud/TarsGo v1.4.6 技术基线，支持两种**部署拓扑**：
-
-### 16.1 单体部署模式（默认）
-
-```bash
-GATEWAY_INVOKER_MODE=local
-```
-
-- 本地开发、测试、演示使用
-- **使用 TarsGo 框架运行**（TarsHttpMux / AddHttpServant / Run）
-- **不连接远程 TarsCloud 注册中心**（locator 为空），但不是不依赖 TarsGo
-- 通过 **LocalInvoker**（本进程 TarsGo servant adapter）调用同部署单元内的业务 servant
-- 所有 TarsGo servant 在同一进程或同一部署单元中
-- 仍然严格走 routes.yaml
-- 严格遵守 Tars bytes 契约：request/response 均为 Protobuf bytes
-
-### 16.2 微服务部署模式
-
-```bash
-GATEWAY_INVOKER_MODE=tars
-```
-
-- 正式部署或集成环境使用
-- **使用 TarsGo 框架运行**（与单体模式相同的技术基线）
-- 连接远程 TarsCloud 注册中心，通过 **TarsGoInvoker**（远程 TarsGo client）调用独立部署的 TarsCloud servant
-- GatewayServer、SystemServer 等独立部署为不同进程
-- 当前 **TarsGoInvoker 远程调用尚未实现**，启动会报错（S1 阶段）
-
-### 16.3 TarsInvoker 接口
-
-统一调用接口：
-
-```go
-type TarsInvoker interface {
-    Invoke(ctx context.Context, target Target, request []byte, extend map[string]string) (returnCode int, response []byte, err error)
-}
-```
-
-实现：
-- **LocalInvoker**：单体部署模式下的本进程 TarsGo servant adapter。不绕过 Tars 框架，而是在同部署单元内通过进程内调用转发到 TarsGo servant。严格遵守 Tars bytes 契约。
-- **TarsGoInvoker**：微服务部署模式下的远程 TarsGo client invoker。通过 TarsGo client 远程调用独立部署的 TarsCloud servant。与 LocalInvoker 共享同一接口和 Tars bytes 契约。S1 未实现。
-
-## 18. 开发与运行方式
-
-当前为 **S1 阶段**，在 S0 文档、规范、目录骨架基础上，已实现：
-- **全局配置服务（Config）**：Schema Registry + DynamicConfigModule 自描述容器，支持运营自助扩展配置字段
-- **多语言服务（I18n）**：参数化模板架构，支持 plain/named/icu 三种模板类型
-- **Admin 管理后台（provider-admin）**：Gin HTTP 服务，提供 Schema CRUD / 配置值管理 / 多语言全量 API
-- **Config/I18n Tars Servant**：标准 bytes 接口适配器 + LocalInvoker 注册 + E2E 集成测试
-- **SDK 层（configsdk / i18nsdk）**：三层缓存（L1 LRU → L2 Redis → L3 远程兜底），业务服务通过 SDK 引用配置和多语言能力
-
-## 19. 测试与校验要求
-
-### 19.1 Gateway 测试
-
-| 测试项 | 要求 |
-|---|---|
-| MessagePacket 解析测试 | 验证 application/octet-stream 请求体可反序列化 |
-| maxType/minType 路由测试 | 验证 route_key 正确命中 |
-| routes.yaml 重复路由测试 | 重复 request_max/request_min 应启动失败 |
-| 协议编号注册表一致性测试 | routes.yaml 中编号必须存在于注册表 |
-| request_proto/response_proto 一致性测试 | proto 类型与 Type.max/min 一致 |
-| .tars 方法存在性测试 | tars_method 必须存在于 interface |
-| Tars bytes 调用测试 | request bytes / response bytes 完整透传 |
-| Tars return 映射测试 | 10200/10401/10500/10504 正确映射 |
-| extend 透传测试 | traceId/requestId/userId/tenantId 正确传递 |
-
-### 19.2 System 模块测试
-
-| 测试项 | 要求 |
-|---|---|
-| SystemService 业务逻辑测试 | HealthCheck / HelloWorld 返回正确 |
-| LocalHandler bytes 适配测试 | 请求 bytes 正确反序列化，响应正确序列化 |
-| LocalHandler 错误处理测试 | 非法 bytes / 未知 maxType/minType 返回错误 |
-
-## 20. Module Path 规范
-
-所有 Go module 使用统一 path 前缀：
-
-```text
-github.com/jimiechen/mineplanet/go/...
-```
-
-当前模块：
-
-| 模块 | Path | 状态 |
+| 层级 | 命名规则 | 示例 |
 |---|---|---|
-| common-lib | github.com/jimiechen/mineplanet/go/common-lib | ✅ 新增 (2026-05-21) |
-| modules/hello | github.com/jimiechen/mineplanet/go/modules/hello | ✅ 新增 (2026-05-21) |
-| modules/health | github.com/jimiechen/mineplanet/go/modules/health | ✅ 新增 (2026-05-21) |
-| gateway/proto-gateway | github.com/jimiechen/mineplanet/go/gateway/proto-gateway | ✅ 已有 |
-| tars/system | github.com/jimiechen/mineplanet/go/tars/system | ✅ 已有 |
-| services/config | github.com/jimiechen/mineplanet/go/services/config | ✅ 新增 (2026-05-22) |
-| services/i18n | github.com/jimiechen/mineplanet/go/services/i18n | ✅ 新增 (2026-05-22) |
-| tars/provider-admin | github.com/jimiechen/mineplanet/go/tars/provider-admin | ✅ 新增 (2026-05-22) |
-| tars/config | github.com/jimiechen/mineplanet/go/tars/config | ✅ 新增 (2026-05-22) |
-| tars/i18n | github.com/jimiechen/mineplanet/go/tars/i18n | ✅ 新增 (2026-05-22) |
+| App | CaiRobot | CaiRobot |
+| Server | XxxServer | UserCenterServer |
+| Servant | XxxObj | UserCenterObj |
+| module | CaiRobotXxxApp | CaiRobotUserCenterApp |
+| interface | XxxObj | UserCenterObj |
 
-**预留模块（尚未实现）**：
+---
 
-| 模块 | Path | 计划阶段 |
+## 10. 错误码规范
+
+| 错误码 | 含义 | 使用场景 |
 |---|---|---|
-| modules/users | go/modules/users | MVP2 |
-| modules/auth | go/modules/auth | MVP2 |
-| modules/groups | go/modules/groups | MVP2 |
-| modules/topics | go/modules/topics | MVP2 |
-| modules/readonly | go/modules/readonly | MVP2 |
+| 10200 | 成功 | 操作成功 |
+| 10400 | 请求参数错误 | 参数校验失败 |
+| 10401 | 未授权 | Token 无效或过期 |
+| 10404 | 资源未找到 | 路由不存在、handler 未注册 |
+| 10500 | 内部错误 | 服务内部异常 |
+| 10501 | Tars 远程调用未实现 | S1 阶段占位 |
 
-## 21. 相关文档索引
+---
 
-**ADR（架构决策）**：
+## 11. 相关文档索引
+
+### ADR（架构决策）
 - [ADR-0001-总体系统架构](../adr/ADR-0001-总体系统架构.md)
 - [ADR-0003-服务协议使用Protobuf](../adr/ADR-0003-服务协议使用Protobuf.md)
 - [ADR-0008-use-tarscloud-routing-layer](../adr/ADR-0008-use-tarscloud-routing-layer.md)
@@ -613,7 +806,7 @@ github.com/jimiechen/mineplanet/go/...
 - [ADR-009-config-i18n-schema-template](../adr/ADR-009-config-i18n-schema-template.md)
 - [ADR-010-admin-boundary-sdk](../adr/ADR-010-admin-boundary-sdk.md)
 
-**API 规范**：
+### API 规范
 - [protobuf规范](../api/protobuf规范.md)
 - [tars规范](../api/tars规范.md)
 - [http-gateway规范](../api/http-gateway规范.md)
@@ -621,51 +814,23 @@ github.com/jimiechen/mineplanet/go/...
 - [OpenAPI规范](../api/OpenAPI规范.md)
 - [协议编号注册表](../api/协议编号注册表.md)
 
-**设计文档**：
-- [Go Monorepo 模块化重构设计](../superpowers/specs/2026-05-21-go-monorepo-modular-refactoring-design.md)
+### 工程规范
+- [编码规范](../../.trae/rules/coding.md)
+- [中文注释规范](../../.trae/rules/commenting.md)
+- [TDD 规范](../../.trae/rules/tdd.md)
+- [测试规范](../../.trae/rules/testing.md)
+- [Git 规范](../../.trae/rules/git.md)
+- [Makefile 规范](../../.trae/rules/makefile.md)
 
-## 22. 变更日志
+---
+
+## 12. 变更日志
 
 | 日期 | 变更内容 |
 |---|---|
-| 2026-05-22 | **S1 阶段 Config/I18n 基础设施**：新增 services/config（全局配置领域服务）和 services/i18n（多语言参数化模板服务）业务服务层；新增 tars/config 和 tars/i18n Tars Servant（标准 bytes 接口 + LocalInvoker 注册）；新增 tars/provider-admin Admin 管理后台（Gin HTTP）；SDK 层（configsdk / i18nsdk）三层缓存架构；6000 段协议编号范围重新定义为 App/Web/前端交互协议；§5.1 新增配置与多语言路由示例；extend map 新增 clientVersion 字段；开发阶段从 S0 升级为 S1 |
-| 2026-05-21 | **Go 多模块重构**：新增 common-lib、modules/hello、modules/health 独立 go.mod；实现 LocalInvoker 模块注册机制（ModuleHandler + Adapter）；迁移 localhandler → adapter/deprecated（标记废弃）；**TS E2E 集成**：集成 proto/generated/ts 官方 Protobuf 类型；新增 tests/e2e/gateway-modules.test.ts 全链路测试；抽取 src/utils/proto-client.ts 工具函数库；目录规范化为 tests/unit + tests/e2e 分层结构；Makefile 多语言工具链自动发现 Go/Python/Node.js 路径；全量测试 89/89 PASS |
-| 2026-05-20 | **架构口径修正**：local 模式不是"不使用 Tars"，而是 TarsGo 单体部署模式（monolith）；LocalInvoker 是本进程 TarsGo servant adapter，非绕过 Tars 的普通 Go 调用；proto-gateway 改造为基于 TarsGo HTTP 模块（TarsHttpMux / AddHttpServant / Run）的 TarsGo HTTP Servant；引入 TarsCloud/TarsGo v1.4.6 技术基线到 go/third_party/TarsGo/ |
-| 2026-05-19 | 按 ADR-0012 重构多语言 monorepo 目录布局：Go 进 go/、Python 进 python/、TypeScript 进 typescript/；删除根目录 Makefile；go.work 移至 go/ |
-| 2026-05-19 | 恢复根目录 Makefile，采用三层结构（总控 + 子 Makefile + scripts）；新增 16 个 target；新增 CI 规范检查脚本；建立测试用例注册表；新增中文注释规范 |
-| 2026-05-19 | 实现 Gateway 单体/微服务双模式骨架；System 模块独立存在；建立 Go Workspace；统一 TarsInvoker 接口；module path 标准化 |
-| 2026-05-18 | 根据 ADR-0008，内部核心服务主链路从 gRPC 调整为 TarsCloud/TarsGo；外部入口收敛为单网关 POST /api/hello；MessagePacket 成为唯一入口报文 |
-
-## 23. Makefile 工程入口
-
-### 23.1 三层架构
-
-```
-Makefile（根目录总控）
-├── go/Makefile
-├── typescript/Makefile
-├── python/Makefile
-└── scripts/
-    ├── ci/          # check_*.py / check_*.sh
-    ├── proto/       # generate-*.sh
-    └── coverage/    # *_coverage.sh
-```
-
-### 23.2 常用命令
-
-```bash
-make help        # 显示帮助
-make bootstrap   # 初始化环境
-make proto       # 生成 Protobuf 代码
-make lint        # Lint 检查
-make test        # 全部测试
-make unit        # 单元测试
-make ci          # 完整 CI 检查
-make rules       # 规范检查
-make clean       # 清理产物
-```
-
-### 23.3 相关文档
-
-- [ADR-0013](../adr/ADR-0013-makefile-engineering-entrypoint-and-rule-enforcement.md)
-- [.trae/rules/makefile.md](../../.trae/rules/makefile.md)
+| 2026-05-24 | **更新 CODE-WIKI**：补充 services/config 和 services/i18n 完整模块说明、SDK 三层缓存架构、Admin 管理后台、协议定义详解、extend map 规范、错误码规范 |
+| 2026-05-22 | **S1 阶段 Config/I18n 基础设施**：新增 services/config（全局配置领域服务）和 services/i18n（多语言参数化模板服务）业务服务层；新增 tars/config 和 tars/i18n Tars Servant；新增 tars/provider-admin Admin 管理后台（Gin HTTP）；SDK 层（configsdk / i18nsdk）三层缓存架构；6000 段协议编号范围重新定义 |
+| 2026-05-21 | **Go 多模块重构**：新增 common-lib、modules/hello、modules/health 独立 go.mod；实现 LocalInvoker 模块注册机制；TS E2E 集成；全量测试 89/89 PASS |
+| 2026-05-20 | **架构口径修正**：LocalInvoker 是本进程 TarsGo servant adapter；proto-gateway 改造为基于 TarsGo HTTP 模块 |
+| 2026-05-19 | **恢复根目录 Makefile**：采用三层结构（总控 + 子 Makefile + scripts）；新增 16 个 target |
+| 2026-05-18 | **内部核心服务主链路从 gRPC 调整为 TarsCloud/TarsGo** |
