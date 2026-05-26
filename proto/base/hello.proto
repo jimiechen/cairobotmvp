@@ -12,6 +12,7 @@ option optimize_for = LITE_RUNTIME;
 
 // HelloWorld 请求，用于验证端到端链路连通性
 // 作为 MVP 阶段的第一个业务协议，确认 Gateway → TarsGo 全链路可达
+// 升级版：支持多语言 + 配置驱动校验
 message HelloWorldRequest {
   enum Type {
     none = 0;
@@ -21,10 +22,13 @@ message HelloWorldRequest {
 
   // name 表示可选的问候名称，为空时返回默认问候语
   string name = 1;
+  // lang_code 表示语言代码，如 zh-CN、en，为空时默认 zh-CN
+  string lang_code = 2;
 }
 
 // HelloWorld 响应，携带服务端生成的问候消息
 // 用于验证 Protobuf 序列化/反序列化和 Tars bytes 透传正确性
+// 升级版：演示 configsdk + i18nsdk 接入
 message HelloWorldResponse {
   enum Type {
     none = 0;
@@ -34,8 +38,14 @@ message HelloWorldResponse {
 
   // result 统一返回结果码
   com.mineplanet.pojo.pb.Result result = 1;
-  // message 表示服务端生成的问候消息文本
+  // message 表示服务端生成的问候消息文本（保留兼容）
   string message = 2;
   // timestamp 表示服务端响应时间戳（Unix 秒）
   int64 timestamp = 3;
+  // greeting 表示通过 i18nsdk 渲染的多语言问候语（新增）
+  string greeting = 4;
+  // server_name 表示通过 configsdk 读取的服务名称（新增）
+  string server_name = 5;
+  // max_name_length 表示通过 configsdk 读取的名称长度限制（新增）
+  int32 max_name_length = 6;
 }

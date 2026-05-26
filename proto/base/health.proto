@@ -11,7 +11,7 @@ option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base
 option optimize_for = LITE_RUNTIME;
 
 // 服务健康检查请求，用于服务间心跳检测
-// 不携带业务数据，仅用于确认目标服务存活状态
+// 升级版：支持多语言 + 深度控制 + 依赖健康汇总
 message ServiceHealthCheckRequest {
   enum Type {
     none = 0;
@@ -21,10 +21,27 @@ message ServiceHealthCheckRequest {
 
   // service_name 表示请求方服务名称，用于日志追踪和调用链定位
   string service_name = 1;
+  // lang_code 表示语言代码，如 zh-CN、en，用于响应文案渲染（新增）
+  string lang_code = 2;
+  // depth 表示检查深度：0=仅自身存活，1=依赖 ping，2=依赖+实际查询（新增）
+  int32 depth = 3;
 }
 
-// 服务健康检查响应，返回目标服务的运行状态
-// 网关和 TarsCloud 调度层依赖此响应判断是否路由流量到该节点
+// 组件健康状态，用于描述单个依赖的健康情况
+// 后续每个业务模块的 Checker 实现都返回此结构
+message ComponentStatus {
+  // name 表示组件名称，如 mysql、redis、config、i18n
+  string name = 1;
+  // healthy 表示组件是否健康
+  bool healthy = 2;
+  // latency_ms 表示检查耗时（毫秒）
+  int64 latency_ms = 3;
+  // error 表示错误信息，healthy=true 时为空
+  string error = 4;
+}
+
+// 服务健康检查响应，返回目标服务的运行状态和各组件健康状态
+// 升级版：支持 i18n ICU plural 模板 + 多依赖健康汇总
 message ServiceHealthCheckResponse {
   enum Type {
     none = 0;
@@ -38,4 +55,10 @@ message ServiceHealthCheckResponse {
   string status = 2;
   // timestamp 表示服务端响应时间戳（Unix 秒），用于计算延迟
   int64 timestamp = 3;
+  // version 表示通过 configsdk 读取的构建版本号（新增）
+  string version = 4;
+  // message 表示通过 i18nsdk 渲染的人性化状态摘要（新增）
+  string message = 5;
+  // components 表示各依赖组件的健康状态列表（新增）
+  repeated ComponentStatus components = 6;
 }
