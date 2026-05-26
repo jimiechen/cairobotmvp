@@ -12,4 +12,7 @@ use (
 	./tars/i18n
 	./tars/provider-admin
 	./tars/system
+	./third_party/mysqlx
+	./third_party/redisx
+	./third_party/sqlitex
 )

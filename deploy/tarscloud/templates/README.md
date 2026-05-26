@@ -38,4 +38,4 @@
 - [../README.md](../README.md)
 - [../../docs/api/tars规范.md](../../docs/api/tars规范.md)
 - [../../docs/api/协议编号注册表.md](../../docs/api/协议编号注册表.md)
-- [../../go/gateway/proto-gateway/configs/routes.yaml](../../go/gateway/proto-gateway/configs/routes.yaml)
+- [../../configs/gateway/routes.yaml](../../configs/gateway/routes.yaml)
