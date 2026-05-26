@@ -1,6 +1,7 @@
 .PHONY: proto tars unit integration coverage lint build package clean help \
        common-lib-test modules-test tars-test gateway-e2e go-all \
-       gateway-build gateway-start gateway-test gateway-verify gateway-stop gateway-smoke
+       gateway-build gateway-start gateway-test gateway-verify gateway-stop gateway-smoke \
+       module-lint
 
 GO_WORK := go.work
 
@@ -251,3 +252,18 @@ gateway-verify: ## 完整验证（编译 + 单元测试 + TarsGo 依赖检查）
 	@echo "[gateway] 3/3 TarsGo 依赖检查..."
 	@cd $(GATEWAY_DIR) && go list -m all | grep -i "tars\|tarscloud" || echo "[gateway] ⚠️  未找到 TarsGo 依赖"
 	@echo "[gateway] ========== 验证完成 =========="
+
+# ============================================================
+# module-lint：模块接入规范自动检查（10+1 项强制检查）
+# ============================================================
+
+module-lint: ## 模块合规性 lint 检查（L1-L10 + SDK_USAGE，任一失败 exit 1）
+	@echo "[go] ==> 执行模块 lint 检查..."
+	@bash ../../scripts/lint/module_lint.sh
+	@echo "[go] ✅ module-lint 全部通过"
+
+module-lint-hello: ## 仅检查 hello 模块合规性
+	@bash ../../scripts/lint/module_lint.sh --module hello
+
+module-lint-health: ## 仅检查 health 模块合规性
+	@bash ../../scripts/lint/module_lint.sh --module health

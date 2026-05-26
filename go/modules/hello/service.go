@@ -2,52 +2,28 @@ package hello
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"google.golang.org/protobuf/proto"
-
-	pb "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/common-lib/module"
 )
 
-// HelloService HelloWorld 模块接口
-// 业务模块不依赖 MessagePacket，只接收 Protobuf bytes 并返回 Protobuf bytes
-type HelloService interface {
-	SayHello(ctx context.Context, request []byte) ([]byte, error)
+// Service Hello 模块服务
+// 负责依赖装配和对外暴露接口
+type Service struct {
+	handler *Handler
 }
 
-// Service Hello 模块的具体实现
-type Service struct{}
+// New 创建 Hello Service 实例（统一 Deps 装配入口）
+// deps: 模块依赖，必须包含 Config 和 Logger
+func New(deps module.Deps) *Service {
+	usecase := NewUsecase(deps.Config, deps.I18n)
+	handler := NewHandler(usecase, deps.Logger)
 
-// NewService 创建 Hello Service 实例
-func NewService() *Service {
-	return &Service{}
+	return &Service{
+		handler: handler,
+	}
 }
 
-// SayHello 执行问候操作
-// ctx: 上下文（可携带 traceId、requestId 等链路信息）
-// request: Protobuf 序列化的 HelloWorldRequest bytes
-// 返回: Protobuf 序列化的 HelloWorldResponse bytes
+// SayHello 执行问候操作（保持接口兼容）
 func (s *Service) SayHello(ctx context.Context, request []byte) ([]byte, error) {
-	var req pb.HelloWorldRequest
-
-	if err := proto.Unmarshal(request, &req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	name := req.Name
-	if name == "" {
-		name = "World"
-	}
-
-	resp := &pb.HelloWorldResponse{
-		Result: &pb.Result{
-			Code:    10200,
-			Message: "success",
-		},
-		Message:   fmt.Sprintf("Hello, %s!", name),
-		Timestamp: time.Now().Unix(),
-	}
-
-	return proto.Marshal(resp)
+	return s.handler.HandleSayHello(ctx, request)
 }

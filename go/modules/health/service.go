@@ -2,46 +2,66 @@ package health
 
 import (
 	"context"
-	"time"
 
-	"google.golang.org/protobuf/proto"
-
-	pb "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/common-lib/health"
+	"github.com/jimiechen/mineplanet/go/common-lib/module"
+	"github.com/jimiechen/mineplanet/go/third_party/mysqlx"
+	"github.com/jimiechen/mineplanet/go/third_party/redisx"
 )
 
-// HealthService HealthCheck 模块接口
-// 业务模块不依赖 MessagePacket，只接收 Protobuf bytes 并返回 Protobuf bytes
-type HealthService interface {
-	Check(ctx context.Context, request []byte) ([]byte, error)
+// Service Health 模块服务
+type Service struct {
+	handler *Handler
 }
 
-// Service Health 模块的具体实现
-type Service struct{}
+// New 创建 Health Service 实例（统一 Deps 装配入口）
+func New(deps module.Deps, checkers []health.Checker) *Service {
+	allCheckers := buildDefaultCheckers(deps, checkers)
 
-// NewService 创建 Health Service 实例
-func NewService() *Service {
-	return &Service{}
+	usecase := NewUsecase(deps.Config, deps.I18n, allCheckers)
+	handler := NewHandler(usecase, deps.Logger)
+
+	return &Service{
+		handler: handler,
+	}
+}
+
+// Register 动态注册额外 Checker
+func (s *Service) Register(checker health.Checker) {
+	s.handler.Register(checker)
+}
+
+// buildDefaultCheckers 构建默认 Checker 列表
+func buildDefaultCheckers(deps module.Deps, extra []health.Checker) []health.Checker {
+	checkers := make([]health.Checker, 0, len(extra)+4)
+
+	checkers = append(checkers,
+		NewConfigChecker(deps.Config),
+		NewI18nChecker(deps.I18n),
+	)
+
+	var db mysqlx.DB
+	if deps.DB != nil {
+		if v, ok := deps.DB.(mysqlx.DB); ok {
+			db = v
+		}
+	}
+	checkers = append(checkers, NewMySQLChecker(db))
+
+	var cache redisx.Client
+	if deps.Cache != nil {
+		if v, ok := deps.Cache.(redisx.Client); ok {
+			cache = v
+		}
+	}
+	checkers = append(checkers, NewRedisChecker(cache))
+
+	checkers = append(checkers, extra...)
+
+	return checkers
 }
 
 // Check 执行健康检查
-// ctx: 上下文（可携带 traceId、requestId 等链路信息）
-// request: Protobuf 序列化的 HealthCheckRequest bytes
-// 返回: Protobuf 序列化的 HealthCheckResponse bytes
 func (s *Service) Check(ctx context.Context, request []byte) ([]byte, error) {
-	var req pb.ServiceHealthCheckRequest
-
-	if err := proto.Unmarshal(request, &req); err != nil {
-		return nil, err
-	}
-
-	resp := &pb.ServiceHealthCheckResponse{
-		Result: &pb.Result{
-			Code:    10200,
-			Message: "success",
-		},
-		Status:    "OK",
-		Timestamp: time.Now().Unix(),
-	}
-
-	return proto.Marshal(resp)
+	return s.handler.HandleCheck(ctx, request)
 }
