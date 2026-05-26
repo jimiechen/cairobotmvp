@@ -1,0 +1,8 @@
+module CaiRobotConfigApp
+{
+    interface ConfigObj
+    {
+        int GetAppConfigs(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int AppConfigVersion(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};

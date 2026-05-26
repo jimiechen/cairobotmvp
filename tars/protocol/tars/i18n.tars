@@ -1,0 +1,9 @@
+module CaiRobotI18nApp
+{
+    interface I18nObj
+    {
+        int GetAppLanguage(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int GetLangPack(vector<byte> request, map<string,string> extend, out vector<byte> response);
+        int GetLangDifference(vector<byte> request, map<string,string> extend, out vector<byte> response);
+    };
+};
