@@ -63,6 +63,7 @@ LLM Wiki 采用 **Raw → Distillation → Index** 三层结构：
 | 测试报告 | `docs/reports/testing/` | TDD 红绿报告 |
 | 审计报告 | `docs/reports/audit/` | 审计记录 |
 | 覆盖率报告 | `docs/reports/coverage/` | 测试覆盖率 |
+| **Trae 任务原始档案** | **`docs/wiki/raw/tasks/`** | **Trae 任务提示词、执行结果、产物清单** |
 
 ## 7. Distillation 层入口
 
@@ -72,6 +73,19 @@ LLM Wiki 采用 **Raw → Distillation → Index** 三层结构：
 | 任务归档 | `docs/wiki/tasks/` | Tabbit / TRAE 归档任务（ADR-0009 体系） |
 | 架构决策 | `docs/wiki/decisions/` | 经确认的技术决策（ADR 补充） |
 | 模块知识 | `docs/wiki/modules/` | 各模块的稳定知识页 |
+
+**🆕 2026-05-26 新增蒸馏条目**：
+
+| 蒸馏内容 | 来源 | 产物 | 状态 |
+|----------|------|------|------|
+| 模块接入规范（sample-module） | Hello / Health 模块升级实践 | [sample-module.md](./modules/sample-module.md) | ✅ 已完成 |
+| configsdk 接入范例 | Hello 模块 H1 升级 | [hello/README.md](./modules/hello/README.md) | ✅ 已完成 |
+| i18nsdk ICU + Checker 范例 | Health 模块 H2 升级 | [health/README.md](./modules/health/README.md) | ✅ 已完成 |
+
+**蒸馏说明**：
+- 将 Hello / Health 两次升级过程沉淀为后续所有业务模块的统一接入模板
+- 包含 10 项 Checklist、命名规范、Seed 数据规范、终验收标准
+- 后续新模块开发只需照抄骨架，研发零思考、Trae 零跑偏
 
 ## 8. Index 层入口
 

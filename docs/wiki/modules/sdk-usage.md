@@ -67,11 +67,34 @@ L1(进程LRU) → L2(Redis) → L3(Service)
 
 ## 7. 业务接入示例
 
-### OpenAPI 服务
+### 7.1 Hello 模块（configsdk + i18nsdk 完整范例）✅ **推荐参考**
 
-### 设备网关服务
+**演示能力**：
+- ✅ 强类型配置读取（GetString / GetInt）
+- ✅ 配置驱动校验（max_name_length）
+- ✅ 服务端 i18n 渲染（named 模板）
+- ✅ 失败降级机制
 
-### 用户中台服务
+**代码位置**：[go/modules/hello/](../../../go/modules/hello/)
+- [usecase.go (97行)](../../../go/modules/hello/usecase.go) - 核心业务逻辑
+- [usecase_test.go (247行)](../../../go/modules/hello/usecase_test.go) - 单元测试
+
+### 7.2 Health 模块（i18nsdk ICU plural + Checker 范例）✅ **推荐参考**
+
+**演示能力**：
+- ✅ ICU plural 模板渲染
+- ✅ Checker 抽象与复用
+- ✅ 并发健康检查（超时控制）
+
+**代码位置**：[go/modules/health/](../../../go/modules/health/)
+- [usecase.go (144行)](../../../go/modules/health/usecase.go) - 核心业务逻辑
+- [checker.go (96行)](../../../go/modules/health/checker.go) - Checker 实现
+
+### 7.3 OpenAPI 服务（待实现）
+
+### 7.4 设备网关服务（待实现）
+
+### 7.5 用户中台服务（待实现）
 
 ## 8. 禁止事项（铁律）
 
@@ -84,3 +107,16 @@ L1(进程LRU) → L2(Redis) → L3(Service)
 ## 9. 故障排查
 
 常见错误码及解决方案
+
+## 10. 参考实现索引 🆕
+
+> **2026-05-26 新增**：Hello / Health 模块已升级为 SDK 接入参考实现。
+
+详细接入规范请查看：[sample-module.md](./sample-module.md)
+
+| 模块 | 演示的 SDK 能力 | 代码位置 |
+|------|----------------|----------|
+| Hello | configsdk.GetString/GetInt + i18nsdk.T (named 模板) | [hello/usecase.go](../../../go/modules/hello/usecase.go) |
+| Health | i18nsdk.T (ICU plural) + health.Checker 接口 | [health/usecase.go](../../../go/modules/health/usecase.go) |
+
+**新模块开发时，建议先阅读 [sample-module.md](./sample-module.md)，照 Hello / Health 抄一遍骨架，再填业务逻辑。**

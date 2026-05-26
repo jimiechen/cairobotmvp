@@ -75,3 +75,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: 检查报告完整性
         run: python3 scripts/ci/check_reports.py
+
+  module-lint:
+    name: 模块合规性 Lint（合入硬门槛）
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [ci-full]
+    steps:
+      - uses: actions/checkout@v4
+      - name: 执行模块 lint 检查（10+1 项强制检查）
+        run: bash scripts/lint/module_lint.sh
+      - name: 检查 hello 模块
+        run: bash scripts/lint/module_lint.sh --module hello
+      - name: 检查 health 模块
+        run: bash scripts/lint/module_lint.sh --module health

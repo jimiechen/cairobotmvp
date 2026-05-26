@@ -197,6 +197,30 @@ int Xxx(vector<byte> request, map<string,string> extend, out vector<byte> respon
 | tenantId | 租户 / 服务商 ID | AuthServer 校验结果 |
 | clientVersion | 客户端版本号 | 客户端或 Gateway（用于模板兼容性过滤） |
 
+## 9.5 模块接入规范 🆕
+
+> **2026-05-26 新增**：Hello / Health 模块已升级为 SDK + Schema 驱动的参考实现。
+
+所有业务模块必须遵循统一接入规范，详见 [sample-module.md](./modules/sample-module.md)。
+
+**核心要点**：
+- 使用 `common-lib/module.Deps` 统一依赖装配（内联接口解耦）
+- 通过 configsdk / i18nsdk 读取配置和渲染文案
+- 实现 health.Checker 接口注册依赖健康检查（含真实 mysqlx.Ping / redisx.Ping）
+- 提供 Seed 脚本注入 Schema 和 i18n 数据
+- 单元测试使用 Fake SDK，覆盖率 ≥80%
+- 语言解析通过 `i18n.ResolveLang()` 4 级优先级统一管理
+- 错误信息通过 `i18n.TruncateError()` UTF-8 安全截断（≤512 字符）
+
+**强制合规检查（`make module-lint`）**：
+- 10+1 项自动检查（L1-L10 + SDK_USAGE 清单），任一失败 = PR 不予合入
+- CI 已集成 module-lint job（required）
+- 检查脚本：[module_lint.sh](../../scripts/lint/module_lint.sh)
+
+**参考实现**：
+- [Hello 模块（configsdk 范例）](./modules/hello/README.md) — 覆盖率 82.9%
+- [Health 模块（i18nsdk ICU + Checker 范例）](./modules/health/README.md) — 覆盖率 77.8%
+
 ## 10. Tars return 与 Result.code 分层规则
 
 - Tars return 表示内部 Tars 方法调用的处理状态
