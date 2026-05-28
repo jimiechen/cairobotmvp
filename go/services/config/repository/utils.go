@@ -84,3 +84,21 @@ func scanFieldSchema(rows *sql.Rows) (*domain.FieldSchema, error) {
 	fs.FieldType = domain.FieldType(fieldTypeStr)
 	return fs, nil
 }
+
+// scanFieldSchemaRow 从 sql.Row（QueryRow 结果）扫描单条 FieldSchema 记录
+func scanFieldSchemaRow(row *sql.Row) (*domain.FieldSchema, error) {
+	fs := &domain.FieldSchema{}
+	var fieldTypeStr string
+	err := row.Scan(
+		&fs.ID, &fs.ModuleKey, &fs.FieldKey, &fieldTypeStr,
+		&fs.DefaultValue, &fs.Validator,
+		&fs.IsRequired, &fs.IsSecret, &fs.Description,
+		&fs.ClientScope, &fs.MinAppVer,
+		&fs.SortOrder, &fs.IsEnabled,
+	)
+	if err != nil {
+		return nil, err
+	}
+	fs.FieldType = domain.FieldType(fieldTypeStr)
+	return fs, nil
+}

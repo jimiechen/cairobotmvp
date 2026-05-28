@@ -23,6 +23,9 @@ func (m *mockSchemaRepoImpl) ListByModule(moduleKey string) ([]*domain.FieldSche
 func (m *mockSchemaRepoImpl) Create(schema *domain.FieldSchema) error   { return nil }
 func (m *mockSchemaRepoImpl) Update(schema *domain.FieldSchema) error   { return nil }
 func (m *mockSchemaRepoImpl) DeleteSoft(id int64) error                { return nil }
+func (m *mockSchemaRepoImpl) FindSchema(_ int64) (*domain.FieldSchema, error) {
+	return nil, nil
+}
 
 func TestParseConfigJSON_带schema解析(t *testing.T) {
 	repo := newMockSchemaRepo()

@@ -41,6 +41,7 @@ type Client interface {
 	Set(ctx context.Context, key string, value any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 	Scan(ctx context.Context, pattern string) ([]string, error)
+	Invalidate(ctx context.Context, pattern string) error
 	Ping(ctx context.Context) error
 	Close() error
 }
@@ -118,6 +119,30 @@ func (r *redisClient) Scan(ctx context.Context, pattern string) ([]string, error
 	}
 	
 	return keys, nil
+}
+
+const invalidateBatchSize = 500
+
+// Invalidate 按 pattern 扫描并分批删除匹配的键
+// 用于缓存失效场景，避免一次性 DEL 大量 key 阻塞 Redis
+func (r *redisClient) Invalidate(ctx context.Context, pattern string) error {
+	keys, err := r.Scan(ctx, pattern)
+	if err != nil {
+		return fmt.Errorf("redisx: invalidate scan failed: %w", err)
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	for i := 0; i < len(keys); i += invalidateBatchSize {
+		end := i + invalidateBatchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		if delErr := r.Delete(ctx, keys[i:end]...); delErr != nil {
+			return fmt.Errorf("redisx: invalidate delete batch [%d:%d] failed: %w", i, end, delErr)
+		}
+	}
+	return nil
 }
 
 // Ping 检查连接健康状态

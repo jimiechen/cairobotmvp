@@ -65,6 +65,14 @@ func (r *SQLiteRepo) GetPackByLangCode(langCode string, env string) (*domain.Lan
 	return &pack, nil
 }
 
+// PublishPack 发布语言包（标记 IsPublished + 更新 Version）
+func (r *SQLiteRepo) PublishPack(packID int64, version int) error {
+	now := time.Now().Format(timeLayout)
+	query := `UPDATE sys_lang_pack SET is_published=1, version=?, published_at=?, updated_at=? WHERE id=?`
+	_, err := r.db.Exec(query, version, now, now, packID)
+	return err
+}
+
 // ListPacks 查询指定环境下所有已发布语言包，按 lang_code 排序
 func (r *SQLiteRepo) ListPacks(env string) ([]domain.LangPack, error) {
 	query := `SELECT id, pack_name, env, version, lang_code, description, is_published, published_at, published_by, created_at, updated_at 

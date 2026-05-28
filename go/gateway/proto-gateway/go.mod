@@ -1,6 +1,6 @@
 module github.com/jimiechen/mineplanet/go/gateway/proto-gateway
 
-go 1.25.0
+go 1.25.5
 
 require (
 	github.com/TarsCloud/TarsGo v1.4.6
@@ -12,16 +12,19 @@ require (
 )
 
 require (
+	github.com/jimiechen/mineplanet/protocols/generated/go/base v0.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.50.1
 )
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	go.uber.org/automaxprocs v1.5.2 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	modernc.org/libc v1.72.3 // indirect

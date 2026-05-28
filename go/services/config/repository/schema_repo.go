@@ -12,6 +12,7 @@ import (
 // 与 ConfigRepository 分离：前者管版本数据，后者管字段定义
 type SchemaRepository interface {
 	ListByModule(moduleKey string) ([]*domain.FieldSchema, error)
+	FindSchema(id int64) (*domain.FieldSchema, error)
 	Create(schema *domain.FieldSchema) error
 	Update(schema *domain.FieldSchema) error
 	DeleteSoft(id int64) error
@@ -114,4 +115,20 @@ func (r *SQLiteSchemaRepo) DeleteSoft(id int64) error {
 		return fmt.Errorf("软删除 field_schema 失败: %w", err)
 	}
 	return nil
+}
+
+// FindSchema 按主键 ID 查询单条字段 Schema
+func (r *SQLiteSchemaRepo) FindSchema(id int64) (*domain.FieldSchema, error) {
+	query := `
+	SELECT id, module_key, field_key, field_type, default_value, validator,
+	       is_required, is_secret, description, client_scope, min_app_ver,
+	       sort_order, is_enabled
+	FROM sys_config_schema WHERE id = ?
+	`
+	row := r.db.QueryRow(query, id)
+	fs, err := scanFieldSchemaRow(row)
+	if err != nil {
+		return nil, fmt.Errorf("查询 schema 失败: %w", err)
+	}
+	return fs, nil
 }

@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 	"strings"
 	"sync"
 
@@ -66,9 +68,46 @@ func (p *pubsubManager) stop() {
 }
 
 // onMessage 处理收到的 pub/sub 消息
-// 消息格式为 module_key，支持批量失效（逗号分隔）
+// 三级降级策略：
+// 1. 完整 JSON（含 tenant_id）→ 结构化处理
+// 2. 部分 JSON（可解析但无 tenant_id，有 module_keys）→ 提取 module_keys 后走结构化
+// 3. 纯逗号分隔 / 无法识别格式 → 旧版兼容处理
 func (p *pubsubManager) onMessage(msg string) {
+	var evt InvalidateEvent
+	if err := json.Unmarshal([]byte(msg), &evt); err == nil {
+		if evt.TenantID != "" {
+			p.handleStructured(evt)
+			return
+		}
+		if len(evt.ModuleKeys) > 0 {
+			log.Printf("[WARN] config-sdk: received JSON without tenant_id, extracting module_keys. msg=%s", truncateMsg(msg, 80))
+			p.handleStructured(evt)
+			return
+		}
+	}
+	log.Printf("[WARN] config-sdk: received legacy pub/sub format, migrating to JSON. msg=%s", truncateMsg(msg, 80))
 	moduleKeys := strings.Split(msg, ",")
+	p.handleLegacy(moduleKeys)
+}
+
+// handleStructured 处理结构化 InvalidateEvent 消息
+func (p *pubsubManager) handleStructured(evt InvalidateEvent) {
+	for _, key := range evt.ModuleKeys {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+		cacheKey := buildCacheKey(key)
+		p.cache.delete(cacheKey)
+		p.watcher.notify(key, &ModuleSnapshot{
+			ModuleKey: key,
+			Fields:    make(map[string]*domain.TypedValue),
+		})
+	}
+}
+
+// handleLegacy 处理旧版逗号分隔格式的消息
+func (p *pubsubManager) handleLegacy(moduleKeys []string) {
 	for _, key := range moduleKeys {
 		key = strings.TrimSpace(key)
 		if key == "" {
@@ -81,6 +120,13 @@ func (p *pubsubManager) onMessage(msg string) {
 			Fields:    make(map[string]*domain.TypedValue),
 		})
 	}
+}
+
+func truncateMsg(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 // Ping 检查配置服务是否可用

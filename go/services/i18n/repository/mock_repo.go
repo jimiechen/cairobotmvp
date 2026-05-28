@@ -61,6 +61,51 @@ func (r *MockRepo) ListPacks(env string) ([]domain.LangPack, error) {
 	return packs, nil
 }
 
+// SaveString 新增或更新一条语言字符串（Mock 实现：内存追加）
+func (r *MockRepo) SaveString(s *domain.LangString) error {
+	if r.Strings[s.PackID] == nil {
+		r.Strings[s.PackID] = []domain.LangString{}
+	}
+	s.ID = int64(len(r.Strings[s.PackID]) + 1)
+	r.Strings[s.PackID] = append(r.Strings[s.PackID], *s)
+	return nil
+}
+
+// DeleteString 标记删除一条语言字符串（Mock 实现：从内存移除）
+func (r *MockRepo) DeleteString(id int64) error {
+	for packID, strings := range r.Strings {
+		for i, s := range strings {
+			if s.ID == id {
+				r.Strings[packID] = append(strings[:i], strings[i+1:]...)
+				return nil
+			}
+		}
+	}
+	return nil
+}
+
+// PublishPack 发布语言包（Mock 实现：更新内存中的状态）
+func (r *MockRepo) PublishPack(packID int64, version int) error {
+	for _, pack := range r.Packs {
+		if pack.ID == packID {
+			pack.IsPublished = true
+			pack.Version = version
+			return nil
+		}
+	}
+	return nil
+}
+
+// FindStringByKey 按 key 查询单条语言字符串
+func (r *MockRepo) FindStringByKey(packID int64, key domain.StringKey) (*domain.LangString, error) {
+	for _, s := range r.Strings[packID] {
+		if s.StringKey == key {
+			return &s, nil
+		}
+	}
+	return nil, nil
+}
+
 // SetupMockRepoWithSeedData 创建带种子数据的 Mock 仓库
 // 用于单元测试，预填充 zh-CN 和 en 两种语言的示例数据
 func SetupMockRepoWithSeedData() *MockRepo {

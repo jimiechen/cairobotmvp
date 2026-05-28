@@ -141,3 +141,118 @@ func TestBuildCacheKey(t *testing.T) {
 		t.Fatalf("expected sdk:base_cfg, got %s", key)
 	}
 }
+
+func TestOnMessage_JsonStructured(t *testing.T) {
+	redis := newMockRedis()
+	cache := newLRUCache(10)
+	watcher := newModuleWatcher()
+	snapshot := &ModuleSnapshot{
+		ModuleKey: "hello_cfg",
+		Fields:    make(map[string]*domain.TypedValue),
+	}
+	cache.set("sdk:hello_cfg", snapshot)
+
+	var notified bool
+	var mu sync.Mutex
+	watcher.register("hello_cfg", func(s *ModuleSnapshot) {
+		mu.Lock()
+		defer mu.Unlock()
+		notified = true
+	})
+
+	pm := newPubsubManager(redis, cache, watcher)
+
+	jsonPayload := `{"tenant_id":"default","scope":"config","module_keys":["hello_cfg"],"version":1,"timestamp":1716739200}`
+	redis.publish(pubsubChannel, jsonPayload)
+	time.Sleep(50 * time.Millisecond)
+
+	_, ok := cache.get("sdk:hello_cfg")
+	if ok {
+		t.Fatal("expected cache invalidated by structured event")
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if !notified {
+		t.Fatal("expected watcher notified")
+	}
+	pm.stop()
+}
+
+func TestOnMessage_JsonMissingTenantId_Fallback(t *testing.T) {
+	redis := newMockRedis()
+	cache := newLRUCache(10)
+	watcher := newModuleWatcher()
+	snapshot := &ModuleSnapshot{
+		ModuleKey: "legacy_mod",
+		Fields:    make(map[string]*domain.TypedValue),
+	}
+	cache.set("sdk:legacy_mod", snapshot)
+
+	pm := newPubsubManager(redis, cache, watcher)
+
+	jsonNoTenant := `{"scope":"config","module_keys":["legacy_mod"]}`
+	redis.publish(pubsubChannel, jsonNoTenant)
+	time.Sleep(50 * time.Millisecond)
+
+	_, ok := cache.get("sdk:legacy_mod")
+	if ok {
+		t.Fatal("expected cache invalidated (fallback to legacy)")
+	}
+	pm.stop()
+}
+
+func TestOnMessage_LegacyCommaFormat(t *testing.T) {
+	redis := newMockRedis()
+	cache := newLRUCache(10)
+	watcher := newModuleWatcher()
+	snapshot := &ModuleSnapshot{
+		ModuleKey: "old_mod",
+		Fields:    make(map[string]*domain.TypedValue),
+	}
+	cache.set("sdk:old_mod", snapshot)
+
+	pm := newPubsubManager(redis, cache, watcher)
+
+	redis.publish(pubsubChannel, "old_mod")
+	time.Sleep(50 * time.Millisecond)
+
+	_, ok := cache.get("sdk:old_mod")
+	if ok {
+		t.Fatal("expected cache invalidated by legacy format")
+	}
+	pm.stop()
+}
+
+func TestOnMessage_InvalidJson_Fallback(t *testing.T) {
+	redis := newMockRedis()
+	cache := newLRUCache(10)
+	watcher := newModuleWatcher()
+	snapshot := &ModuleSnapshot{
+		ModuleKey: "broken_mod",
+		Fields:    make(map[string]*domain.TypedValue),
+	}
+	cache.set("sdk:broken_mod", snapshot)
+
+	pm := newPubsubManager(redis, cache, watcher)
+
+	redis.publish(pubsubChannel, "{invalid json")
+	time.Sleep(50 * time.Millisecond)
+
+	_, ok := cache.get("sdk:broken_mod")
+	if !ok {
+		t.Fatal("unrecognizable input must NOT invalidate unrelated caches")
+	}
+	pm.stop()
+}
+
+func TestOnMessage_Empty_NoPanic(t *testing.T) {
+	redis := newMockRedis()
+	cache := newLRUCache(10)
+	watcher := newModuleWatcher()
+
+	pm := newPubsubManager(redis, cache, watcher)
+
+	redis.publish(pubsubChannel, "")
+	time.Sleep(50 * time.Millisecond)
+	pm.stop()
+}

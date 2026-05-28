@@ -27,4 +27,18 @@ type I18nRepository interface {
 
 	// ListPacks 列出所有已发布的语言包
 	ListPacks(env string) ([]domain.LangPack, error)
+
+	// --- 以下为 Admin 写入操作 ---
+
+	// SaveString 新增或更新一条语言字符串
+	SaveString(s *domain.LangString) error
+
+	// DeleteString 标记删除一条语言字符串（operation_type=DEL）
+	DeleteString(id int64) error
+
+	// PublishPack 发布语言包（标记 IsPublished + 更新 Version）
+	PublishPack(packID int64, version int) error
+
+	// FindStringByKey 按 string_key 查询单条字符串
+	FindStringByKey(packID int64, key domain.StringKey) (*domain.LangString, error)
 }

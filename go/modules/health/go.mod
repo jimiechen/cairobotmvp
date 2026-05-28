@@ -3,7 +3,7 @@ module github.com/jimiechen/mineplanet/go/modules/health
 go 1.23
 
 require (
-	github.com/TarsCloud/TarsGo/contrib/log v0.0.0
+	github.com/jimiechen/mineplanet/protocols/generated/go/base v0.0.0
 	google.golang.org/protobuf v1.36.11
 )
 

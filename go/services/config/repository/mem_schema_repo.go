@@ -114,15 +114,15 @@ func (r *MemSchemaRepo) SeedWithDefaults() {
 }
 
 // FindSchema 按主键查找单条 Schema（辅助方法）
-func (r *MemSchemaRepo) FindSchema(id int64) *domain.FieldSchema {
+func (r *MemSchemaRepo) FindSchema(id int64) (*domain.FieldSchema, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, s := range r.schemas {
 		if s.ID == id {
-			return s
+			return s, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("未找到 ID=%d 的记录", id)
 }
 
 // Count 返回当前记录数（测试用）
