@@ -352,11 +352,10 @@ go/
       e2e_test.go                              # E2E 集成测试（3 场景）
     i18n/                                      # I18n Tars Servant
       cmd/main.go adapter/i18n_adapter.go e2e_test.go # 同上
-    provider-admin/                             # Admin 管理后台（Gin HTTP）
-      cmd/main.go                               # Gin 服务入口
-      internal/
-        server/http_server.go                  # 路由注册 + DI
-        handler/                                # API 处理器
+    admin/                                     # Admin 管理后台（go-admin v2.2.0）
+      main.go                                   # go-admin 引擎入口
+      config/settings.yml                        # 配置文件
+      app/admin/apis/                            # API 处理器（我们写的插件）
           config_handler.go                     # Schema CRUD
           config_value_handler.go               # 配置值管理
           i18n_handler.go                       # 多语言全量 API
@@ -500,7 +499,7 @@ go/go.work
 | tars/system | `go/tars/system` | Tars 适配层、服务骨架 | 11 |
 | services/config | `go/services/config` | 全局配置领域服务 | ~30 |
 | services/i18n | `go/services/i18n` | 多语言参数化模板服务 | ~25 |
-| tars/provider-admin | `go/tars/provider-admin` | Admin 管理后台（Gin） | ~10 |
+| admin | `go/admin` | Admin 管理后台（go-admin v2.2.0） | ~50 (框架+插件) |
 | tars/config | `go/tars/config` | Config Tars Servant | ~3 |
 | tars/i18n | `go/tars/i18n` | I18n Tars Servant | ~3 |
 
@@ -564,7 +563,7 @@ type TarsInvoker interface {
 当前为 **S1 阶段**，在 S0 文档、规范、目录骨架基础上，已实现：
 - **全局配置服务（Config）**：Schema Registry + DynamicConfigModule 自描述容器，支持运营自助扩展配置字段
 - **多语言服务（I18n）**：参数化模板架构，支持 plain/named/icu 三种模板类型
-- **Admin 管理后台（provider-admin）**：Gin HTTP 服务，提供 Schema CRUD / 配置值管理 / 多语言全量 API
+- **Admin 管理后台（admin）**：go-admin v2.2.0 框架 + 自定义插件，提供 Schema CRUD / 配置值管理 / 多语言全量 API
 - **Config/I18n Tars Servant**：标准 bytes 接口适配器 + LocalInvoker 注册 + E2E 集成测试
 - **SDK 层（configsdk / i18nsdk）**：三层缓存（L1 LRU → L2 Redis → L3 远程兜底），业务服务通过 SDK 引用配置和多语言能力
 
@@ -611,7 +610,7 @@ github.com/jimiechen/mineplanet/go/...
 | tars/system | github.com/jimiechen/mineplanet/go/tars/system | ✅ 已有 |
 | services/config | github.com/jimiechen/mineplanet/go/services/config | ✅ 新增 (2026-05-22) |
 | services/i18n | github.com/jimiechen/mineplanet/go/services/i18n | ✅ 新增 (2026-05-22) |
-| tars/provider-admin | github.com/jimiechen/mineplanet/go/tars/provider-admin | ✅ 新增 (2026-05-22) |
+| admin | github.com/jimiechen/mineplanet/go/admin | ✅ 新增 (2026-05-26, 从 provider-admin 迁移) |
 | tars/config | github.com/jimiechen/mineplanet/go/tars/config | ✅ 新增 (2026-05-22) |
 | tars/i18n | github.com/jimiechen/mineplanet/go/tars/i18n | ✅ 新增 (2026-05-22) |
 
@@ -652,7 +651,7 @@ github.com/jimiechen/mineplanet/go/...
 
 | 日期 | 变更内容 |
 |---|---|
-| 2026-05-22 | **S1 阶段 Config/I18n 基础设施**：新增 services/config（全局配置领域服务）和 services/i18n（多语言参数化模板服务）业务服务层；新增 tars/config 和 tars/i18n Tars Servant（标准 bytes 接口 + LocalInvoker 注册）；新增 tars/provider-admin Admin 管理后台（Gin HTTP）；SDK 层（configsdk / i18nsdk）三层缓存架构；6000 段协议编号范围重新定义为 App/Web/前端交互协议；§5.1 新增配置与多语言路由示例；extend map 新增 clientVersion 字段；开发阶段从 S0 升级为 S1 |
+| 2026-05-26 | **M0' 阶段 Admin 管理后台升级**：废弃 tars/provider-admin（Gin），迁移至 go/admin（go-admin v2.2.0 框架）；新增 typescript/admin-web（go-admin-ui v2.0.9 Vue2 前端）；新增 redisx.Invalidate 分批删除 API；pub/sub payload 升级为 JSON InvalidateEvent 格式；DSN 加密存储（AES-256-CBC）；provider-admin 源码归档至 archive/provider-admin-v0 分支（保留至 2026-11）
 | 2026-05-21 | **Go 多模块重构**：新增 common-lib、modules/hello、modules/health 独立 go.mod；实现 LocalInvoker 模块注册机制（ModuleHandler + Adapter）；迁移 localhandler → adapter/deprecated（标记废弃）；**TS E2E 集成**：集成 proto/generated/ts 官方 Protobuf 类型；新增 tests/e2e/gateway-modules.test.ts 全链路测试；抽取 src/utils/proto-client.ts 工具函数库；目录规范化为 tests/unit + tests/e2e 分层结构；Makefile 多语言工具链自动发现 Go/Python/Node.js 路径；全量测试 89/89 PASS |
 | 2026-05-20 | **架构口径修正**：local 模式不是"不使用 Tars"，而是 TarsGo 单体部署模式（monolith）；LocalInvoker 是本进程 TarsGo servant adapter，非绕过 Tars 的普通 Go 调用；proto-gateway 改造为基于 TarsGo HTTP 模块（TarsHttpMux / AddHttpServant / Run）的 TarsGo HTTP Servant；引入 TarsCloud/TarsGo v1.4.6 技术基线到 go/third_party/TarsGo/ |
 | 2026-05-19 | 按 ADR-0012 重构多语言 monorepo 目录布局：Go 进 go/、Python 进 python/、TypeScript 进 typescript/；删除根目录 Makefile；go.work 移至 go/ |
@@ -693,3 +692,106 @@ make clean       # 清理产物
 
 - [ADR-0013](../adr/ADR-0013-makefile-engineering-entrypoint-and-rule-enforcement.md)
 - [.trae/rules/makefile.md](../../.trae/rules/makefile.md)
+
+---
+
+## 24. Admin 管理后台（go-admin v2.2.0）🆕
+
+### 24.1 架构定位
+
+```
+Admin HTTP → go/admin/plugins/{config,i18n}_admin/apis/
+         → services/{config,i18n}/admin/（写入层）
+           → 复用 services/{config,i18n}/service/（校验层）
+           → repository → MySQL
+           → redisx.Client.Invalidate（缓存失效）
+           → redisx.PubSubClient.Publish（变更广播）
+```
+
+**铁律：admin 插件禁止直写 sys_config_* / sys_lang_* 表。**
+
+### 24.2 Redis 访问约定
+
+admin 子包同时持有两个 Redis 实例，职责严格分离：
+
+| 实例 | 接口 | 用途 | 方法 |
+|---|---|---|---|
+| cache | `redisx.Client` | 缓存失效 | `Invalidate(ctx, pattern)` |
+| bus | `redisx.PubSubClient` | 变更广播 | `Publish(ctx, channel, payloadJSON)` |
+
+**禁止在 `redisx.Client` 接口上扩展 Publish（保持职责单一）。**
+
+### 24.3 pub/sub 协议
+
+**Channel 命名：**
+- config 失效：`cairobot.config.invalidate`
+- i18n 失效：`cairobot.i18n.invalidate`
+
+**Payload 格式（InvalidateEvent JSON）：**
+```json
+{
+  "tenant_id": "default",
+  "scope": "config|i18n",
+  "env": "prod|dev|test",
+  "module_keys": ["key1","key2"],
+  "lang_codes": ["zh-CN","en"],
+  "version": 42,
+  "timestamp": 1716739200,
+  "trace_id": "uuid-v4"
+}
+```
+
+**SDK 消费端升级策略（向后兼容）：**
+1. 优先尝试 `json.Unmarshal` → 解析成功且 tenant_id 非空 → handleStructured
+2. 否则按逗号分隔降级 → handleLegacy + WARN 日志
+3. 降级分支保留至 S2 阶段
+
+### 24.4 职责边界自检
+
+```bash
+# admin 不做字段级校验
+grep -E "field_type ==|switch.*field_type|validator JSON" \
+  go/services/config/admin/*.go go/services/i18n/admin/*.go
+# 必须为空
+
+# admin 必须复用 service 层
+grep "ValidateSchema\|ValidateValue\|ValidateLangString" \
+  go/services/config/admin/*.go go/services/i18n/admin/*.go
+# 必须命中
+```
+
+### 24.5 M0'~M5' 交付清单（2026-05-27 完成）
+
+| 批次 | 层级 | 模块 | 文件数 | 测试数 | 状态 |
+|------|------|------|--------|--------|------|
+| M0' | SDK 升级 | config/sdk/pubsub.go 三阶兼容 + i18n 可行性报告 | 3 报告 | 17 (pubsub) | ✅ |
+| M1' | 服务层 | config/admin + i18n/admin（CRUD+审计+缓存+广播） | 12 文件 | 24 | ✅ |
+| M2' | 插件层 | config_admin/apis（Schema CRUD + Value 发布） | 6 文件 | 12 | ✅ |
+| M3' | 插件层 | i18n_admin/apis（字符串 CRUD + 包管理 + CSV 导入导出） | 7 文件 | 20 | ✅ |
+| M4' | 前端 | admin-web 配置管理页（schema-list + value-publish） | 5 文件 | build✅ | ✅ |
+| M5' | 前端 | admin-web 国际化管理页（string-list + pack-manage + import-export） | 7 文件 | build✅ | ✅ |
+| **合计** | | | **40 文件** | **56+17=73** | **✅** |
+
+### 24.6 关键接口速查
+
+**config/admin 核心接口：**
+```go
+type ConfigAdminService interface {
+    ConfigSchemaService   // ListSchemas/CreateSchema/UpdateSchema/DeleteSchema
+    ConfigValueService    // PublishValue/GetValueVersions
+}
+```
+
+**i18n/admin 核心接口：**
+```go
+type I18nAdminService interface {
+    I18nStringService     // CreateString/UpdateString/DeleteString/ListStrings
+    I18nPackService       // PublishPack/RollbackPack/ImportStringsFromCSV/ExportStringsToCSV
+}
+```
+
+**HTTP 路由前缀：**
+- 配置：`/api/admin/v1/config/{schema,value}/*`
+- 国际化：`/api/admin/v1/i18n/{string,pack}/*` + `/import/csv` + `/export/csv`
+
+**10400 错误码：** 校验失败统一返回 `{"code":10400,"errors":[{"field":"...","message":"..."}]}`

@@ -1,12 +1,16 @@
 # 模块接入规范（Sample Module）
 
+> **⚠️ 本规范由 `make module-lint` 强制执行，任一项失败 = PR 不予合入。**
+>
+> **⚠️ 违反任一条等同架构违规，CI 将直接阻断合入。**
+>
 > **本文档是后续所有业务模块的统一接入模板。**
 >
 > **任何业务模块（OpenAPI、设备网关、用户中台、AI 服务、TenantServer 等）只需照抄 Hello / Health 骨架，再填业务逻辑即可。**
 
 ---
 
-## 📋 新模块接入 Checklist（10 项）
+## 📋 新模块接入 Checklist（11 项）
 
 | # | 检查项 | 通过判据 |
 |---|--------|----------|
@@ -20,8 +24,9 @@
 | 8 | 实现 Checker 并注册到 modules/health | 单测通过 |
 | 9 | usecase_test.go 覆盖率 ≥80% | go cover |
 | 10 | README.md 含统一 6 节内容 | 人工 review |
+| 11 | **SDK 引用清单完整**（configsdk/i18nsdk/Checker 调用点） | `make module-lint` L8 通过 |
 
-**任何业务模块只要能完整打钩这 10 项，就算合规。**
+**任何业务模块只要能完整打钩这 11 项，就算合规。第 11 项由 `make module-lint` 自动判定，不允许人工放行。**
 
 ---
 
@@ -339,6 +344,51 @@ func TestUsecase_Greet_NormalCase(t *testing.T) {
 
 ---
 
+## 🔌 十、SDK 引用清单模板（Checklist #11）
+
+> **本节为 Checklist 第 11 项的填写模板。每个模块必须在 README.md 中包含此节，或提供独立 `SDK_USAGE.md`。**
+>
+> **`make module-lint` 的 L8 检查项会自动扫描此内容是否存在且非空。**
+
+### 10.1 configsdk 调用点表
+
+| module_key | field_key | 调用方法 | 读时机 | 降级默认值 |
+|------------|-----------|----------|--------|------------|
+| `<模块名>_cfg` | `<字段名>` | GetString / GetInt | 请求时 / 启动时 | `<值>` |
+
+### 10.2 i18nsdk 调用点表
+
+| key | template_type | 参数 schema | 调用时机 | fallback |
+|-----|---------------|-------------|----------|----------|
+| `svc_<模块名>_<场景>` | named / icu | `{param, type}` | 响应渲染时 | `<英文兜底文案>` |
+
+### 10.3 health.Checker 注册表
+
+| Checker 名称 | 依赖 | 超时 | 实现位置 |
+|-------------|------|------|----------|
+| `<名称>` | `<mysqlx.DB / redisx.Client / configsdk 等>` | `1s` | `modules/<name>/checker.go` |
+
+### 10.4 ResolveLang 使用说明
+
+本模块语言解析优先级（由高到低）：
+1. `MessagePacket.extend.langCode`（最高优先级，网关层注入）
+2. 协议体 `lang_code` 字段（兜底，旧客户端兼容）
+3. `configsdk.GetString(ctx, "system_cfg", "default_lang_code")`（配置降级）
+4. 硬编码 `"zh-CN"`（最终降级）
+
+**实现入口**：[ResolveLang()](../../../go/common-lib/i18n/lang_resolver.go)
+
+### 10.5 TruncateError 使用说明
+
+本模块对所有 Checker 的 `ComponentStatus.Error` 字段执行截断：
+- 默认上限：**512 字符**
+- 截断方式：UTF-8 rune 级别安全截断
+- 后缀标记：`...(truncated, original N chars)`
+
+**实现入口**：[TruncateError()](../../../go/common-lib/i18n/error_truncater.go)
+
+---
+
 ## 🔗 十、参考实现
 
 ### 10.1 Hello 模块（configsdk 接入范例）
@@ -374,7 +424,7 @@ func TestUsecase_Greet_NormalCase(t *testing.T) {
 
 ---
 
-## ⚠️ 十一、全程禁止事项
+## ⚠️ 十二、全程禁止事项
 
 1. ❌ **不允许 git push**（本次任务范围内）
 2. ❌ **不允许在 modules/* 中 import services/* 的内部包**，必须只用 SDK
@@ -385,7 +435,7 @@ func TestUsecase_Greet_NormalCase(t *testing.T) {
 
 ---
 
-## 📊 十二、终验收标准
+## 📊 十三、终验收标准
 
 完成新模块开发后，请执行以下自检：
 

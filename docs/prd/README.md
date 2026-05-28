@@ -14,6 +14,7 @@
 | PRD-05 | App 前端系统 | 草稿 | P0 | 定义 App 前端系统的功能和需求 |
 | PRD-06 | 设备通信与协议 | 草稿 | P0 | 定义设备通信与协议的功能和需求 |
 | PRD-09 | HelloWorld 与 HealthCheck 验收规范 | 草稿 | P0 | 定义 HelloWorld 和 HealthCheck 的验收标准 |
+| PRD-11 | proto-tester 协议测试客户端 v2.0 | 已确认 | P0 | Web UI + CLI 双模式协议联调工具，T0~T9 任务分解 |
 
 ## PRD 编写规范
 

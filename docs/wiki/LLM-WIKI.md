@@ -126,6 +126,7 @@ LLM Wiki 采用 **Raw → Distillation → Index** 三层结构：
 - ADR-009: Tabbit 任务归档流程
 - ADR-0012: 多语言 Monorepo 目录布局
 - ADR-0013: Makefile 工程入口与规则强制执行
+- **ADR-013: Admin Boundary Pattern（管理后台架构决策）** 🆕
 - **LLM Wiki 三层架构**（2026-05-19 新增）
 
 ## 11. 每日蒸馏索引入口
@@ -140,7 +141,7 @@ LLM Wiki 采用 **Raw → Distillation → Index** 三层结构：
 
 ### 已完成（S0 阶段）
 
-工程规范框架、PRD/ADR/TDD/测试/CI 体系、HelloWorld 验收、Gateway 双模式骨架、三层 Makefile、多语言 monorepo 布局、中文注释规范、Tabbit 归档流程（v3）、**LLM Wiki 三层结构**。
+工程规范框架、PRD/ADR/TDD/测试/CI 体系、HelloWorld 验收、Gateway 双模式骨架、三层 Makefile、多语言 monorepo 布局、中文注释规范、Tabbit 归档流程（v3）、**LLM Wiki 三层结构**、**Admin 管理后台 MVP（M0'~M5'，73 测试通过）**。
 
 完整清单详见各子索引文件。
 

@@ -53,8 +53,8 @@ CaiRobot MVP 阶段需要运营人员能够自主完成以下操作，不再依�
 
 | 编号 | 决策内容 | 决策值 | 依据 |
 |---|---|---|---|
-| D1 | go-admin 版本 | M0' 阶段锁定最新 stable tag + commit hash | POC 验证后由主控签字确认 |
-| D2 | 前端框架 | 官方 go-admin-ui（Vue3 + Element Plus） | 保持默认主题，不调品牌色 |
+| D1 | go-admin 版本 | **v2.2.0**（commit: `8f8a197d`，单体应用模板非库） | POC 验证后由主控签字确认 |
+| D2 | 前端框架 | 官方 go-admin-ui **v2.0.9**（**Vue 2.6.11 + Element UI**，vue-cli-service） | 保持默认主题，不调品牌色 |
 | D3 | 数据源 | 固定 3 个 DSN（ops_db / config_db / i18n_db），写配置文件 | 不做 sys_data_source 表 |
 | D4 | 租户字段 | 所有表 `tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'`，SQL 默认带过滤 | 顶部不放租户切换栏 |
 | D5 | 写路径 | admin 控制器 → `services/{config,i18n}/admin` → MySQL → Redis | **禁止** admin 插件直写 sys_config_* / sys_lang_* 表 |
@@ -77,7 +77,57 @@ Admin HTTP 请求
         → redisx.PubSubClient.Publish                  ← 变更广播
 ```
 
-### 3.2 禁止事项（全程 18 条）
+### 3.2 启动架构（go-admin 安装后）
+
+```
+┌──────────────────────────────────────────────────────┐
+│                    开发者本地环境                       │
+│                                                      │
+│  ┌─────────────────┐    ┌─────────────────────────┐  │
+│  │ 终端 A           │    │ 终端 B                   │  │
+│  │                 │    │                          │  │
+│  │ cd go/admin     │    │ cd typescript/admin-web  │  │
+│  │ go run cmd/     │    │ pnpm dev                 │  │
+│  │ admin/main.go   │    │                          │  │
+│  │                 │    │ :3000 (Vite dev server)   │  │
+│  │ :8000 (Gin) ───┼──→│ proxy → :8000             │  │
+│  │ go-admin engine │    │                          │  │
+│  └────────┬────────┘    └────────▲─────────────────┘  │
+│           │                      │                    │
+│           ▼                      │                    │
+│  ┌─────────────────────────────────┴────────────────┐  │
+│  │              go/admin/ (独立 Go module)            │  │
+│  │                                                  │  │
+│  │  go.mod ← github.com/go-admin-team/go-admin      │  │
+│  │  ├── config/settings.yml                         │  │
+│  │  │   ├── DSN (AES-256-CBC 加密)                   │  │
+│  │  │   └── Redis 连接配置                            │  │
+│  │  ├── cmd/admin/main.go                            │  │
+│  │  │   └── engine.Default() + gin.Server{}          │  │
+│  │  └── plugins/                                     │  │
+│  │      ├── config_admin/  (我们写的)                │  │
+│  │      └── i18n_admin/     (我们写的)                │  │
+│  └──────────────┬───────────────────────────────────┘  │
+│                 │                                       │
+│         ┌───────┴───────┐                             │
+│         │ Go workspace  │ ← go/work 注册 ./admin       │
+│         └───────────────┘                             │
+│                                                      │
+│  依赖来源（M0'.0.1 安装）：                           │
+│  ├─ go-admin 核心包     → Go module proxy 自动拉取     │
+│  ├─ Gin / GORM / Casbin → 随 go-admin 引入（隔离在     │
+│  │                        go/admin/go.mod 内）          │
+│  └─ go-admin-ui 源码    → git clone + 整合到          │
+│                          typescript/admin-web/src/    │
+└──────────────────────────────────────────────────────┘
+
+启动顺序：
+  ① M0'.0.1: git clone tag → mkdir骨架 → go mod init → go mod tidy
+  ② M0'.0.2: clone ui → pnpm install → 编辑 main.go → go run → 浏览器验证
+  ③ M0'.0.3: 配置 DSN 加密 → 设置 ADMIN_DSN_KEY → 启动验证连接
+```
+
+### 3.3 禁止事项（全程 18 条）
 
 ```text
 1.  不允许 git push
@@ -100,7 +150,7 @@ Admin HTTP 请求
 18. 不允许以"与 config SDK 同样逻辑"作为 i18n SDK 实施依据
 ```
 
-### 3.3 边界隔离自检（每批必须通过）
+### 3.4 边界隔离自检（每批必须通过）
 
 ```bash
 # admin 插件不得直写业务表
@@ -202,7 +252,7 @@ go/services/i18n/admin/
 ├── audit.go
 └── *_test.go                          覆盖率 ≥80%
 
-typescript/admin-web/                  ← go-admin-ui fork（Vue3 + Element Plus）
+typescript/admin-web/                  ← go-admin-ui **v2.0.9** fork（**Vue 2.6.11 + Element UI**，vue-cli-service）
 └── src/views/
     ├── config/
     │   ├── schema-list.vue
@@ -670,7 +720,7 @@ func (s *I18nServiceImpl) ValidateLangString(ls *domain.LangString) error {
 
 ## 十一、前端页面设计（admin-web）
 
-基于 go-admin-ui Vue3 + Element Plus，不改主题。i18n 自身文案用 vue-i18n + 静态 JSON（zh-CN + en），不复用业务 sys_lang_string。
+基于 go-admin-ui **v2.0.9**（**Vue 2.6.11 + Element UI**），不改主题。i18n 自身文案用 vue-i18n + 静态 JSON（zh-CN + en），不复用业务 sys_lang_string。
 
 ### 11.1 Schema 列表页（schema-list.vue）
 
@@ -744,13 +794,483 @@ import-export.vue：
 
 ## 十二、执行批次（M0' ~ M7'）
 
-### M0'：环境锁定 + 5 个阻塞问题整改（1 天）
+### M0'：环境锁定 + go-admin 安装配置 + 5 个阻塞问题整改（1 天）
+
+#### 前置现状
+
+执行前仓库状态：
+- `go/admin/` 目录 **不存在**（需新建）
+- `typescript/admin-web/` 仅有一个空 README.md（需填充）
+- `go/work` 中无 admin 模块（仍为旧的 `./tars/provider-admin`）
+- go-admin / go-admin-ui 依赖 **未引入**
+
+---
+
+#### 0.1：锁定并安装 go-admin 后端框架
+
+**步骤 1：查询最新稳定版本**
+
+```bash
+git ls-remote --tags https://github.com/go-admin-team/go-admin \
+  | grep -v '{}' | grep -v 'beta\|rc\|alpha' | tail -10
+```
+
+输出示例：
+```
+abc1234...    refs/tags/v2.0.0
+def5678...    refs/tags/v2.0.1
+```
+
+记录最终选定的 **tag 名**（如 `v2.x.x`）和 **commit hash**（如 `a1b2c3d`），写入可行性报告。
+
+**步骤 2：创建 go/admin 目录骨架**
+
+```bash
+mkdir -p go/admin/{cmd/admin,config,plugins/{config_admin,i18n_admin}/{apis,service,models,router}}
+cd go/admin
+
+# 初始化 Go module（module 路径与项目一致）
+go mod init github.com/jimiechen/mineplanet/go/admin
+```
+
+创建最小入口文件 `cmd/admin/main.go`：
+
+```go
+package main
+
+import (
+    "log"
+    _ "github.com/go-admin-team/go-admin/core"
+)
+
+func main() {
+    log.Println("go-admin entry point (M0' placeholder)")
+}
+```
+
+**步骤 3：引入 go-admin 核心依赖**
+
+在 `go/admin/go.mod` 中暂不手动写 require，先通过 import 触发自动拉取：
+
+编辑 `cmd/admin/main.go` 为：
+
+```go
+package main
+
+import (
+    "github.com/gin-gonic/gin"
+    _ "github.com/go-admin-team/go-admin/core"
+    _ "github.com/go-admin-team/go-admin/modules/db"
+    _ "github.com/go-admin-team/go-admin/modules/language"
+    _ "github.com/go-admin-team/go-admin/modules/menu"
+    _ "github.com/go-admin-team/go-admin/plugins/admin"
+)
+
+func main() {}
+```
+
+然后执行：
+
+```bash
+cd go/admin
+go mod tidy
+```
+
+`go mod tidy` 会自动从 Go module proxy 拉取 go-admin 及其全部依赖（Gin/GORM/Casbin/golang-jwt 等）。
+
+**步骤 4：验证依赖拉取成功**
+
+```bash
+cd go/admin
+go list -m all | grep go-admin
+# 预期输出类似：
+# github.com/go-admin-team/go-admin v2.x.x
+# github.com/go-admin-team/go-admin/core v2.x.x
+# github.com/go-admin-team/go-admin/plugins/admin v2.x.x
+```
+
+**步骤 5：依赖冲突检查**
+
+对比 go-admin 引入的依赖与项目现有依赖：
+
+| 依赖 | 项目当前版本 | go-admin 默认版本 | 冲突？ |
+|---|---|---|---|
+| Gin | TarsGo 内置 | go-admin 自带 | 需确认 |
+| GORM | mysqlx 使用 | go-admin 自带 | 需确认 |
+| Casbin | — | go-admin RBAC 用 | 新增 |
+| golang-jwt | — | go-admin 认证用 | 新增 |
+
+将结果填入 `docs/reports/go-admin-feasibility-report.md` 的依赖冲突矩阵表。若存在大版本冲突（如 Gin v1 vs 不兼容），记录到报告中并提出解决方案（replace / upgrade / vendor）。
+
+> **注意**：go/admin 是独立 Go module（有自己的 go.mod），不与 go/services/config 或 go/tars/ 共享 go.mod，因此依赖隔离天然由 Go workspace 保证。
+
+**通过判据**：
+
+- □ 给出 go-admin 最终 tag + commit hash
+- □ `go/admin/go.mod` 已创建且 `go mod tidy` 成功
+- □ `go list -m all \| grep go-admin` 输出非空
+- □ 依赖冲突矩阵已填写（有/无冲突均需说明）
+
+---
+
+#### 0.2：安装配置 go-admin-ui 前端 + 启动验证
+
+**步骤 1：获取 go-admin-ui 源码**
+
+go-admin-ui 是独立前端仓库，需要确认官方发布方式：
+
+```bash
+# 方式 A：检查 npm 是否有官方包
+npm view go-admin-ui version 2>/dev/null && echo "npm 包可用" || echo "npm 包不可用"
+
+# 方式 B：直接 clone 官方 Git 仓库（推荐）
+git clone --depth 1 \
+  -b $(git ls-remote --tags https://github.com/go-admin-team/go-admin-ui \
+       2>/dev/null | grep -v '{}' | grep -v 'beta\|rc\|alpha' | tail -1 | awk '{print $2}' | sed 's/refs.tags//') \
+  https://github.com/go-admin-team/go-admin-ui.git \
+  typescript/admin-ui-temp
+```
+
+**步骤 2：将前端源码整合到 typescript/admin-web/**
+
+```bash
+# 如果 typescript/admin-web/ 已有空壳内容，先清空（保留 .gitignore 如有）
+rm -rf typescript/admin-web/src typescript/admin-web/package.json \
+      typescript/admin-web/index.html typescript/admin-web/vite.config.* \
+      typescript/admin-web/tsconfig.*
+
+# 将 clone 的源码核心内容复制过来
+cp -r typescript/admin-ui-temp/src   typescript/admin-web/
+cp    typescript/admin-ui-temp/package.json   typescript/admin-web/
+cp    typescript/admin-ui-temp/index.html     typescript/admin-web/
+cp    typescript/admin-ui-temp/vite.config.*  typescript/admin-web/
+cp    typescript/admin-ui-temp/tsconfig.*     typescript/admin-web/
+
+# 清理临时目录
+rm -rf typescript/admin-ui-temp
+```
+
+**步骤 3：安装前端依赖**
+
+```bash
+cd typescript/admin-web
+pnpm install
+```
+
+**步骤 4：更新 go.work 注册 admin 模块**
+
+编辑 `go/go.work`，将：
+```
+./tars/provider-admin
+```
+替换为：
+```
+./admin
+```
+
+完整 go.work 内容应为：
+
+```
+go 1.25.5
+
+use (
+    ../proto/generated/go
+    ./common-lib
+    ./gateway/proto-gateway
+    ./modules/health
+    ./modules/hello
+    ./services/config
+    ./services/i18n
+    ./tars/config
+    ./tars/i18n
+    ./admin                              ← 替换原来的 provider-admin
+    ./tars/system
+    ./third_party/mysqlx
+    ./third_party/redisx
+    ./third_party/sqlitex
+)
+```
+
+然后同步：
+
+```bash
+cd go
+go work sync
+```
+
+**步骤 5：后端启动验证**
+
+创建 `go/admin/config/settings.yml`（M0' 最小配置）：
+
+```yaml
+url_prefix: /admin
+store:
+  path: ./data/admin.db
+language:
+    languages:
+        {zh-CN: 简体中文,en: English}
+```
+
+创建 `go/admin/cmd/admin/main.go` 最小可启动版本：
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "os/signal"
+    "syscall"
+    "time"
+
+    _ "github.com/go-admin-team/go-admin/core"
+    "github.com/go-admin-team/go-admin/engine"
+    "github.com/go-admin-team/go-admin/plugins/admin"
+    "github.com/go-admin-team/go-admin/modules/config"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    cfg := config.ReadConfig(config.ConfigPath("config/settings.yml"))
+
+    eng := engine.Default()
+
+    eng.Use(gin.Recovery())
+    eng.UsePublic()
+
+    eng.AddConfigFromPath("config/settings.yml")
+
+    eng.InjectRouter(
+        admin.Admin(ctx.Background()),
+    )
+
+    eng.SetMenu(admin.GetAdminMenu())
+
+    srv := &http.Server{
+        Addr:         ":8000",
+        Handler:      eng.RunUnix(),
+        ReadTimeout:  10 * time.Second,
+        WriteTimeout: 10 * time.Second,
+    }
+
+    log.Printf("[go-admin] server starting at :8000")
+    log.Printf("[go-admin] default login: admin / admin")
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            log.Fatalf("server error: %v", err)
+        }
+    }()
+
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    srv.Shutdown(ctx)
+    fmt.Println("Server exiting")
+}
+```
+
+启动后端：
+
+```bash
+cd go/admin
+go run cmd/admin/main.go
+```
+
+预期日志输出：
+```
+[go-admin] server starting at :8000
+[go-admin] default login: admin / admin
+[go-admin] init menu & permission data success
+```
+
+浏览器访问 `http://localhost:8000/admin` → 看到 go-admin 默认登录页 → 输入 `admin / admin` 登录成功 → 进入默认管理后台面板 ✅
+
+**步骤 6：前端启动验证**
+
+新开终端：
+
+```bash
+cd typescript/admin-web
+pnpm dev
+```
+
+预期：前端 dev server 启动（通常 proxy 到后端 8000），浏览器展示 go-admin-ui 默认管理界面 ✅
+
+**通过判据**：
+
+- □ `go/work` 中已注册 `./admin`（不再有 provider-admin）
+- □ `go run go/admin/cmd/admin/main.go` 启动无报错
+- □ 浏览器 `http://localhost:8000/admin` 可访问
+- □ `admin / admin` 登录成功进入默认面板
+- □ `pnpm dev` 在 typescript/admin-web/ 下启动成功
+- □ 前端页面正常渲染（菜单、表格、按钮可见）
+
+---
+
+#### 0.3：三个 DSN 配置 + 加密存储
+
+**DSN 加密方案**：
+
+- 算法：AES-256-CBC
+- 密钥来源：环境变量 `ADMIN_DSN_KEY`（32 字节 hex 编码的 AES key）
+- 存储位置：`go/admin/config/settings.yml` 中的 DSN 字段值为 Base64(AES加密(明文DSN))
+- go-admin 自带 config.Encrypt 工具或自定义加解密函数
+
+**settings.yml DSN 配置段**：
+
+```yaml
+database:
+    driver: mysql
+    # ops_dsn 为 AES 加密后的 Base64 字符串
+    # 明文格式: user:password@tcp(host:3306)/ops_db?charset=utf8mb4&parseTime=True&loc=Local
+    ops_dsn: "${ADMIN_OPS_DSN_ENCRYPTED}"
+    config_dsn: "${ADMIN_CONFIG_DSN_ENCRYPTED}"
+    i18n_dsn: "${ADMIN_I18N_DSN_ENCRYPTED}"
+
+redis:
+    addr: "127.0.0.1:6379"
+    password: ""
+    db: 0
+```
+
+**密钥初始化脚本**（一次性）：
+
+```bash
+# 生成随机 32 字节 AES-256 密钥
+openssl rand -hex 32 > configs/keys/dev.key
+
+# 设置环境变量指向密钥文件
+export ADMIN_DSN_KEY=$(cat configs/keys/dev.key)
+```
+
+**DSN 加解密工具函数**（放在 `go/admin/config/dsn.go`）：
+
+```go
+package config
+
+import (
+    "crypto/aes"
+    "crypto/cipher"
+    "crypto/rand"
+    "encoding/base64"
+    "encoding/hex"
+    "os"
+    "strings"
+)
+
+func GetDSN(envKey string) (string, error) {
+    encrypted := os.Getenv(envKey)
+    if encrypted == "" {
+        return "", fmt.Errorf("environment variable %s is empty", envKey)
+    }
+
+    keyHex := os.Getenv("ADMIN_DSN_KEY")
+    if keyHex == "" {
+        return "", fmt.Errorf("ADMIN_DSN_KEY environment variable not set")
+    }
+
+    key, err := hex.DecodeString(keyHex)
+    if err != nil || len(key) != 32 {
+        return "", fmt.Errorf("invalid ADMIN_DSN_KEY: must be 32-byte hex")
+    }
+
+    ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
+    if err != nil {
+        return "", fmt.Errorf("failed to decode base64 DSN: %w", err)
+    }
+
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return "", fmt.Errorf("failed to create cipher: %w", err)
+    }
+
+    if len(ciphertext) < aes.BlockSize {
+        return "", fmt.Errorf("ciphertext too short")
+    }
+
+    iv := ciphertext[:aes.BlockSize]
+    ciphertext = ciphertext[aes.BlockSize:]
+
+    mode := cipher.NewCBCDecrypter(block, iv)
+    mode.CryptBlocks(ciphertext, ciphertext)
+
+    padding := ciphertext[len(ciphertext)-1]
+    if int(padding) > len(ciphertext) || padding == 0 || padding > aes.BlockSize {
+        return "", fmt.Errorf("invalid padding")
+    }
+
+    return string(ciphertext[:len(ciphertext)-int(padding)]), nil
+}
+
+func EncryptDSN(plainDSN string, keyHex string) (string, error) {
+    key, err := hex.DecodeString(keyHex)
+    if err != nil || len(key) != 32 {
+        return "", fmt.Errorf("invalid key")
+    }
+
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return "", err
+    }
+
+    plaintext := []byte(plainDSN)
+    plaintext = PKCS7Pad(plaintext, block.BlockSize())
+
+    ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+    iv := make([]byte, aes.BlockSize)
+    if _, err := rand.Read(iv); err != nil {
+        return "", err
+    }
+    copy(ciphertext[:aes.BlockSize], iv)
+
+    mode := cipher.NewCBCEncrypter(block, iv)
+    mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
+
+    return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func PKCS7Pad(data []byte, blockSize int) []byte {
+    pad := blockSize - len(data)%blockSize
+    b := make([]byte, len(data)+pad)
+    copy(b, data)
+    for i := len(data); i < len(b); i++ {
+        b[i] = byte(pad)
+    }
+    return b
+}
+```
+
+**自检：DSN 不泄露到日志**
+
+```bash
+# 启动后 grep 确认 DSN 不出现在 stdout/stderr
+go run cmd/admin/main.go 2>&1 | tee /tmp/admin-log.txt
+grep -E "(mysql|password|@tcp)" /tmp/admin-log.txt
+# 预期：无匹配（DSN 以加密形式存储，运行时不打印明文）
+```
+
+**密钥轮换文档**（M0'.0.3 输出）：`docs/runbook/admin-dsn-key-rotation.md`
+
+**通过判据**：
+
+- □ 三个 DSN 可正确解密连接 MySQL
+- □ `grep` 日志无明文 DSN 泄露
+- □ 密钥轮换文档已输出
+- □ 多环境密钥文件存在：`configs/keys/{dev,test,prod}.key`
+
+---
+
+#### 0.4：provider-admin 废弃迁移（前后端一并归档+删除）
 
 | 任务 | 内容 | 通过判据 |
 |---|---|---|
-| 0.1 | 锁定 go-admin 最新 stable tag + commit hash；同步锁定 go-admin-ui | 给出最终 hash |
-| 0.2 | go.work 接入 go/admin；pnpm dev 启动 admin-ui；admin/admin 登录通过 | 启动 OK + 登录 OK |
-| 0.3 | 三个 DSN 配置（AES-256-CBC 加密，密钥从 ADMIN_DSN_KEY 环境变量读）；密钥轮换文档 | DSN 不出现在日志 |
 | **0.4** | **provider-admin 废弃迁移（前后端一并归档+删除）** | grep 全局无残留；build 通过；归档分支含前后端 |
 | **0.5** | **redisx.Invalidate API 实现（含接口声明+分批删除+单测≥80%）** | miniredis 测试全 PASS |
 | 0.6 | Publish 接入约定文档化（CODE-WIKI §9） | 文档已更新 |
@@ -960,6 +1480,67 @@ grep -rn "sys_config_schema\|sys_config_version\|sys_lang_pack\|sys_lang_string"
 | R-I18N-SDK-007 | R2 | i18n SDK 抽象层与 config SDK 不同 | C.1 现状摘要强制前置，主控拍板 A/B/C |
 | R-DUP-008 | R2 | admin 与 service 校验逻辑重复 | 1.6 自检脚本强制拦截 |
 | R-FRONTEND-009 | R2 | web/provider-admin 清理遗漏 | 0.4 订正版已扩展清理范围 |
+
+---
+
+## 十四点五、版本锁定与升级路径（M0' 执行后固化）
+
+### 实际锁定版本
+
+| 组件 | 版本 | Commit Hash | 来源 | 关键特征 |
+|---|---|---|---|---|
+| **go-admin 后端** | **v2.2.0** | `8f8a197db1a50403d332519ad3caa743d65d5f1a` | [deploy/go-admin-2.2.0.zip](../deploy/go-admin-2.2.0.zip) ⬇️ 离线安装包 | 单体应用模板，module=`go-admin`，非 Go 库 |
+| **go-admin-core** | **v1.5.3-rc.3** | `2763de5dcdf4` (via go.mod) | go-admin 依赖 | Gin v1.10 + GORM v1.25 + Casbin v2.104 |
+| **go-admin-ui 前端** | **v2.0.9** | — | [deploy/go-admin-ui-2.0.9.zip](../deploy/go-admin-ui-2.0.9.zip) ⬇️ 离线安装包 | **Vue 2.6.11** + Element UI + vue-cli-service |
+| **Gin** | v1.10.0 | — | go-admin 依赖 | 与 TarsGo 内置 Gin 隔离（不同 module） |
+| **GORM** | v1.25.12 | — | go-admin 依赖 | 与 services/mysqlx 隔离（不同 module） |
+
+> ⚠️ **源码包来源说明**：
+> 上述两个 zip 包由项目主控提供，存放于 `deploy/` 目录。
+> - `go-admin-2.2.0.zip` — 解压后得到完整 go-admin v2.2.0 后端源码
+> - `go-admin-ui-2.0.9.zip` — 解压后得到完整 go-admin-ui v2.0.9 前端源码
+>
+> **后续升级操作**：
+> 1. 从 [go-admin-team/go-admin](https://github.com/go-admin-team/go-admin) Releases 页下载新版本 zip
+> 2. 从 [go-admin-team/go-admin-ui](https://github.com/go-admin-team/go-admin-ui) Releases 页下载新版本 zip
+> 3. 替换 `deploy/` 目录下对应文件
+> 4. 按本报告「升级路径」章节执行兼容性检查
+
+### 架构发现（与 PRD 原假设的差异）
+
+```text
+PRD 原假设                          实际情况
+─────────────────────────────────────────────────────
+go-admin 是 Go 库                   → 是单体应用模板（fork 整个仓库）
+import "github.com/go-admin-team/   → module 名为 "go-admin"
+  go-admin/core"
+前端 Vue3 + Element Plus             → Vue 2.6.11 + Element UI
+前端 Vite 构建工具                    → vue-cli-service (webpack)
+前端 dev 端口未指定                  → 默认 9527，API proxy → :8000
+```
+
+### 升级路径记录
+
+```text
+当前状态：go-admin v2.2.0 + go-admin-ui v2.0.9
+
+后续升级注意事项：
+1. go-admin 大版本升级（v2→v3）需评估：
+   - module 路径是否变化
+   - core 包接口是否 breaking change
+   - 数据库迁移脚本是否兼容
+
+2. go-admin-ui 升级到 Vue3 版本时需注意：
+   - 当前为 Vue 2.6.11（v2.0.9 是最后一个 Vue2 版本）
+   - Vue3 版本在独立分支或新仓库
+   - 升级需要重写组件语法（Options API → Composition API）
+   - 建议：本轮先用 v2.0.9 跑通闭环，S2 阶段再评估 Vue3 迁移成本
+
+3. 源码包存放在 deploy/ 目录：
+   - go-admin-2.2.0.zip    ← 后端源码备份
+   - go-admin-ui-2.0.9.zip ← 前端源码备份
+   - 后续升级时替换这两个包即可
+```
 
 ---
 
