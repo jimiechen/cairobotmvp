@@ -132,6 +132,11 @@ github.com/jimiechen/mineplanet/go/...
 - `github.com/jimiechen/mineplanet/go/gateway/proto-gateway`
 - `github.com/jimiechen/mineplanet/go/tars/system`
 
+**必须统一带 `/go` 前缀**，原因：
+1. 与目录结构一致（代码在 `go/` 下）
+2. 避免与根目录其他语言模块冲突
+3. 明确标识为 Go 语言资产
+
 ### Go Workspace
 
 `go.work` 从根目录移动到 `go/go.work`，只管理 Go 子模块：
@@ -144,6 +149,8 @@ use (
     ./tars/system
 )
 ```
+
+执行 Go 命令前必须 `cd go/`。
 
 ## 后果
 
@@ -176,6 +183,29 @@ use (
 
 - 优点：功能聚合度高
 - 缺点：多语言项目按功能域分层会导致每个目录内部语言混杂，构建工具难以统一
+
+### Proto 跨语言契约层
+
+`proto/` 是跨语言协议契约层，不归属于 Go/Python/TypeScript 任一语言：
+
+- Protobuf 定义在 `proto/` 下
+- Go 生成代码在 `proto/generated/go/` 下
+- Python 生成代码在 `proto/generated/python/` 下
+- TypeScript 生成代码在 `proto/generated/typescript/` 下
+- 各语言通过生成代码引用，不直接引用 `proto/` 下的 `.proto` 文件
+
+### Scripts 跨语言自动化入口
+
+`scripts/` 是跨语言自动化入口，按用途分类：
+
+| 目录 | 用途 | 示例 |
+|---|---|---|
+| `scripts/ci/` | CI 检查脚本 | `check_required_docs.py`、`check_proto_registry.py`、`check_go_modules.sh` |
+| `scripts/dev/` | 开发辅助脚本 | `go-test.sh` |
+| `scripts/proto/` | Protobuf 生成脚本 | `generate-go.sh` |
+| `scripts/docs/` | 文档生成脚本 | 日报生成、蒸馏脚本 |
+
+CI workflow 直接调用 `scripts/`，不依赖根目录 Makefile。
 
 ## 相关文档
 
