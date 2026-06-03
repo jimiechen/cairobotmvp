@@ -13,11 +13,12 @@
             controls-position="right"
             placeholder="请输入 Pack ID"
             style="width:180px"
+            data-id="ia-input-yuyanbao-id"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
-          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+          <el-button type="primary" icon="el-icon-search" data-id="ia-btn-chaxun-string" @click="handleQuery">查询</el-button>
+          <el-button icon="el-icon-refresh" data-id="ia-btn-chongzhi-string" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
 
@@ -29,6 +30,7 @@
             icon="el-icon-plus"
             size="mini"
             :disabled="!queryParams.packID"
+            data-id="ia-btn-xinzeng-string"
             @click="handleAdd"
           >新增字符串</el-button>
         </el-col>
@@ -39,6 +41,7 @@
             icon="el-icon-delete"
             size="mini"
             :disabled="!currentRow"
+            data-id="ia-btn-shanchu-string-toolbar"
             @click="handleDelete"
           >删除</el-button>
         </el-col>
@@ -50,13 +53,14 @@
         border
         stripe
         highlight-current-row
+        data-id="ia-table-string-list"
         @current-change="handleCurrentChange"
       >
         <el-table-column label="ID" prop="id" width="70" align="center" />
         <el-table-column label="String Key" prop="stringKey" min-width="160" show-overflow-tooltip />
         <el-table-column label="字符串值" prop="stringValue" min-width="200" show-overflow-tooltip>
           <template slot-scope="scope">
-            <el-popover trigger="hover" placement="top" width="300">
+            <el-popover trigger="hover" placement="top" width="300" data-id="ia-popover-string-preview">
               <p style="word-break:break-all">{{ scope.row.stringValue }}</p>
               <div slot="reference" class="name-wrapper">
                 {{ scope.row.stringValue | truncate(40) }}
@@ -80,6 +84,7 @@
               type="text"
               size="mini"
               icon="el-icon-edit"
+              data-id="ia-btn-bianji-string-row"
               @click="handleEdit(scope.row)"
             >编辑</el-button>
             <el-button
@@ -88,6 +93,7 @@
               size="mini"
               icon="el-icon-delete"
               class="text-danger"
+              data-id="ia-btn-shanchu-string-row"
               @click="handleDelete(scope.row)"
             >删除</el-button>
           </template>
@@ -101,7 +107,7 @@
             <el-input-number v-model.number="form.packID" :min="1" disabled controls-position="right" style="width:100%" />
           </el-form-item>
           <el-form-item label="String Key" prop="stringKey">
-            <el-input v-model="form.stringKey" placeholder="如：greeting.hello、error.notFound" :disabled="isEdit" />
+            <el-input v-model="form.stringKey" placeholder="如：greeting.hello、error.notFound" :disabled="isEdit" data-id="ia-input-string-key-dialog" />
           </el-form-item>
           <el-form-item label="字符串值" prop="stringValue">
             <el-input
@@ -109,12 +115,13 @@
               type="textarea"
               :rows="3"
               placeholder="请输入翻译文本"
+              data-id="ia-textarea-string-value-dialog"
             />
           </el-form-item>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="模板类型" prop="templateType">
-                <el-select v-model="form.templateType" placeholder="选择类型" style="width:100%">
+                <el-select v-model="form.templateType" placeholder="选择类型" style="width:100%" data-id="ia-select-moban-leixing-dialog">
                   <el-option label="纯文本 (plain)" value="plain" />
                   <el-option label="命名参数 (named)" value="named" />
                   <el-option label="ICU 格式 (icu)" value="icu" />
@@ -123,7 +130,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="分组" prop="groupName">
-                <el-input v-model="form.groupName" placeholder="如：common、error" />
+                <el-input v-model="form.groupName" placeholder="如：common、error" data-id="ia-input-fenzu-dialog" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -133,6 +140,7 @@
               type="textarea"
               :rows="2"
               placeholder="如：{&quot;name&quot;:&quot;string&quot;,&quot;count&quot;:&quot;number&quot;}"
+              data-id="ia-textarea-canshu-schema-dialog"
             />
           </el-form-item>
           <el-form-item v-if="form.templateType !== 'plain'" label="预览示例">
@@ -141,12 +149,13 @@
               type="textarea"
               :rows="2"
               placeholder="如：Hello {name}, you have {count} messages"
+              data-id="ia-textarea-yulan-shili-dialog"
             />
           </el-form-item>
         </el-form>
         <div slot="footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+          <el-button data-id="ia-btn-quxiao-string-dialog" @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitLoading" data-id="ia-btn-queding-string-dialog" @click="handleSubmit">确定</el-button>
         </div>
       </el-dialog>
     </el-card>

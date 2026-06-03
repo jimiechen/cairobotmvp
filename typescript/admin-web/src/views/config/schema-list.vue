@@ -12,12 +12,13 @@
             placeholder="请输入模块标识"
             clearable
             style="width: 200px"
+            data-id="ca-input-mokuai-key"
             @keyup.enter.native="handleQuery"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
-          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+          <el-button type="primary" icon="el-icon-search" data-id="ca-btn-sousuo" @click="handleQuery">搜索</el-button>
+          <el-button icon="el-icon-refresh" data-id="ca-btn-chongzhi" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
 
@@ -28,6 +29,7 @@
             type="primary"
             icon="el-icon-plus"
             size="mini"
+            data-id="ca-btn-xinzeng-schema"
             @click="handleAdd"
           >新增 Schema</el-button>
         </el-col>
@@ -38,6 +40,7 @@
             icon="el-icon-delete"
             size="mini"
             :disabled="!currentRow"
+            data-id="ca-btn-shanchu-schema-toolbar"
             @click="handleDelete"
           >删除</el-button>
         </el-col>
@@ -49,6 +52,7 @@
         border
         stripe
         highlight-current-row
+        data-id="ca-table-schema-list"
         @current-change="handleCurrentChange"
       >
         <el-table-column label="ID" prop="id" width="70" align="center" />
@@ -74,9 +78,10 @@
               type="text"
               size="mini"
               icon="el-icon-edit"
+              data-id="ca-btn-bianji-schema-row"
               @click="handleEdit(scope.row)"
             >编辑</el-button>
-            <el-button type="text" size="mini" icon="el-icon-delete" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button type="text" size="mini" icon="el-icon-delete" class="text-danger" data-id="ca-btn-shanchu-schema-row" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,6 +91,7 @@
         :total="total"
         :page.sync="queryParams.pageNum"
         :limit.sync="queryParams.pageSize"
+        data-id="ca-pagination-schema-list"
         @pagination="getList"
       />
 
@@ -93,13 +99,13 @@
       <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="560px" :close-on-click-modal="false">
         <el-form ref="schemaForm" :model="form" :rules="formRules" label-width="100px">
           <el-form-item label="模块 Key" prop="moduleKey">
-            <el-input v-model="form.moduleKey" placeholder="如：app.server" :disabled="isEdit" />
+            <el-input v-model="form.moduleKey" placeholder="如：app.server" :disabled="isEdit" data-id="ca-input-mokuai-key-dialog" />
           </el-form-item>
           <el-form-item label="字段 Key" prop="fieldKey">
-            <el-input v-model="form.fieldKey" placeholder="如：timeout、port" :disabled="isEdit" />
+            <el-input v-model="form.fieldKey" placeholder="如：timeout、port" :disabled="isEdit" data-id="ca-input-ziduan-key-dialog" />
           </el-form-item>
           <el-form-item label="字段类型" prop="fieldType">
-            <el-select v-model="form.fieldType" placeholder="选择字段类型" @change="onFieldTypeChange">
+            <el-select v-model="form.fieldType" placeholder="选择字段类型" data-id="ca-select-ziduan-leixing-dialog" @change="onFieldTypeChange">
               <el-option label="字符串 (string)" value="string" />
               <el-option label="整数 (int)" value="int" />
               <el-option label="浮点数 (float)" value="float" />
@@ -108,18 +114,20 @@
             </el-select>
           </el-form-item>
           <el-form-item label="是否必填" prop="required">
-            <el-switch v-model="form.required" active-text="是" inactive-text="否" />
+            <el-switch v-model="form.required" active-text="是" inactive-text="否" data-id="ca-switch-bitian-dialog" />
           </el-form-item>
           <el-form-item label="默认值" prop="defaultValue">
             <el-input
               v-if="form.fieldType === 'string' || form.fieldType === 'json'"
               v-model="form.defaultValue"
               :placeholder="form.fieldType === 'json' ? 'JSON 格式' : '请输入默认值'"
+              data-id="ca-input-morenzhi-dialog"
             />
             <el-input-number
               v-else-if="form.fieldType === 'int'"
               v-model.number="form.defaultValueInt"
               controls-position="right"
+              data-id="ca-input-morenzhi-dialog"
             />
             <el-input-number
               v-else-if="form.fieldType === 'float'"
@@ -127,14 +135,16 @@
               :precision="2"
               :step="0.1"
               controls-position="right"
+              data-id="ca-input-morenzhi-dialog"
             />
             <el-switch
               v-else-if="form.fieldType === 'bool'"
               v-model="form.defaultValueBool"
               active-text="true"
               inactive-text="false"
+              data-id="ca-input-morenzhi-dialog"
             />
-            <el-input v-else v-model="form.defaultValue" placeholder="请输入默认值" />
+            <el-input v-else v-model="form.defaultValue" placeholder="请输入默认值" data-id="ca-input-morenzhi-dialog" />
           </el-form-item>
           <el-form-item v-if="form.fieldType === 'int' || form.fieldType === 'float'" label="取值范围" prop="validator">
             <el-row :gutter="10">
@@ -153,15 +163,16 @@
               type="textarea"
               :rows="3"
               placeholder="如：{&quot;min&quot;:0,&quot;max&quot;:100} 或 {&quot;pattern&quot;:&quot;^https://&quot;}"
+              data-id="ca-textarea-jiaoyan-guize-dialog"
             />
           </el-form-item>
           <el-form-item label="描述" prop="description">
-            <el-input v-model="form.description" type="textarea" :rows="2" placeholder="字段用途说明" />
+            <el-input v-model="form.description" type="textarea" :rows="2" placeholder="字段用途说明" data-id="ca-textarea-miaoshu-dialog" />
           </el-form-item>
         </el-form>
         <div slot="footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+          <el-button data-id="ca-btn-quxiao-schema-dialog" @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitLoading" data-id="ca-btn-queding-schema-dialog" @click="handleSubmit">确定</el-button>
         </div>
       </el-dialog>
     </el-card>

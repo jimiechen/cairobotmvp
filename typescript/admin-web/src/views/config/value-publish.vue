@@ -4,12 +4,13 @@
       <div slot="header" class="clearfix">
         <span>配置值发布</span>
         <el-button
-          style="float:right"
-          type="primary"
-          size="mini"
-          icon="el-icon-refresh"
-          @click="loadSchemaList"
-        >刷新 Schema</el-button>
+        style="float:right"
+        type="primary"
+        size="mini"
+        icon="el-icon-refresh"
+        data-id="ca-btn-shuaxin-schema"
+        @click="loadSchemaList"
+      >刷新 Schema</el-button>
       </div>
 
       <el-alert
@@ -30,6 +31,7 @@
                 filterable
                 allow-create
                 style="width:100%"
+                data-id="ca-select-mokuai-value"
                 @change="onModuleChange"
               >
                 <el-option
@@ -43,7 +45,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="环境" prop="env">
-              <el-select v-model="form.env" placeholder="选择环境" style="width:100%">
+              <el-select v-model="form.env" placeholder="选择环境" style="width:100%" data-id="ca-select-huanjing-value">
                 <el-option label="开发 (dev)" value="dev" />
                 <el-option label="测试 (test)" value="test" />
                 <el-option label="预发 (staging)" value="staging" />
@@ -78,6 +80,7 @@
                   v-if="field.fieldType === 'string' || field.fieldType === 'json'"
                   v-model="fieldValues[field.fieldKey]"
                   :placeholder="'默认: ' + (field.defaultValue || '-')"
+                  :data-id="'ca-input-dongtai-' + field.fieldKey"
                   @blur="validateField(field)"
                 />
 
@@ -88,6 +91,7 @@
                   controls-position="right"
                   style="width:100%"
                   :placeholder="'默认: ' + (field.defaultValue || '0')"
+                  :data-id="'ca-input-dongtai-' + field.fieldKey"
                   @change="validateField(field)"
                 />
 
@@ -99,6 +103,7 @@
                   :step="0.1"
                   controls-position="right"
                   style="width:100%"
+                  :data-id="'ca-input-dongtai-' + field.fieldKey"
                   @change="validateField(field)"
                 />
 
@@ -119,7 +124,7 @@
               </el-form-item>
 
               <!-- 字段级校验错误展示（10400） -->
-              <div v-if="fieldErrors[field.fieldKey]" class="field-error-tip">
+              <div v-if="fieldErrors[field.fieldKey]" class="field-error-tip" :data-id="'ca-error-' + field.fieldKey">
                 <i class="el-icon-warning" /> {{ fieldErrors[field.fieldKey] }}
               </div>
             </el-col>
@@ -137,9 +142,10 @@
                 icon="el-icon-upload2"
                 :loading="publishLoading"
                 :disabled="currentSchemas.length === 0"
+                data-id="ca-btn-fabu-peizhi"
                 @click="handlePublish"
               >发布配置</el-button>
-              <el-button icon="el-icon-refresh-left" @click="resetForm">重置</el-button>
+              <el-button icon="el-icon-refresh-left" data-id="ca-btn-chongzhi-form-value" @click="resetForm">重置</el-button>
             </el-form-item>
           </el-col>
         </el-row>
@@ -150,6 +156,7 @@
         title="校验失败详情"
         :visible.sync="errorDialogVisible"
         width="560px"
+        data-id="ca-dialog-10400-cuowu"
       >
         <el-alert
           :title="errorMessage"
@@ -163,14 +170,14 @@
           <el-table-column label="错误信息" prop="message" />
         </el-table>
         <div slot="footer">
-          <el-button type="primary" @click="errorDialogVisible = false">知道了</el-button>
+          <el-button type="primary" data-id="ca-btn-guanbi-10400-dialog" @click="errorDialogVisible = false">知道了</el-button>
         </div>
       </el-dialog>
 
       <!-- 发布历史 -->
       <el-card v-if="showHistory" class="history-card" style="margin-top:16px">
         <div slot="header"><span>发布历史</span></div>
-        <el-table :data="versionList" border size="small" max-height="250">
+        <el-table :data="versionList" border size="small" max-height="250" data-id="ca-table-version-history">
           <el-table-column label="版本号" prop="version" width="80" align="center" />
           <el-table-column label="环境" prop="env" width="90" align="center">
             <template slot-scope="scope">

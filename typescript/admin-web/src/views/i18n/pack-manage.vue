@@ -17,12 +17,12 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="语言包 ID" prop="packID">
-              <el-input-number v-model.number="publishForm.packID" :min="1" controls-position="right" style="width:100%" />
+              <el-input-number v-model.number="publishForm.packID" :min="1" controls-position="right" style="width:100%" data-id="ia-input-pack-id" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="语言码" prop="langCode">
-              <el-select v-model="publishForm.langCode" filterable allow-create placeholder="输入或选择" style="width:100%">
+              <el-select v-model="publishForm.langCode" filterable allow-create placeholder="输入或选择" style="width:100%" data-id="ia-select-yuyanma-pack">
                 <el-option label="简体中文" value="zh-CN" />
                 <el-option label="繁體中文" value="zh-TW" />
                 <el-option label="English" value="en-US" />
@@ -33,7 +33,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="目标环境" prop="env">
-              <el-select v-model="publishForm.env" style="width:100%">
+              <el-select v-model="publishForm.env" style="width:100%" data-id="ia-select-huanjing-pack">
                 <el-option label="开发 (dev)" value="dev" />
                 <el-option label="测试 (test)" value="test" />
                 <el-option label="预发 (staging)" value="staging" />
@@ -51,6 +51,7 @@
                 type="primary"
                 icon="el-icon-upload2"
                 :loading="publishLoading"
+                data-id="ia-btn-fabu-yueyanbao"
                 @click="handlePublish"
               >发布语言包</el-button>
             </el-form-item>
@@ -63,6 +64,7 @@
                 controls-position="right"
                 size="small"
                 style="width:120px;margin-right:8px"
+                data-id="ia-input-huinban-banhao"
               />
               <el-button
                 v-permisaction="['i18n:pack:write']"
@@ -71,6 +73,7 @@
                 icon="el-icon-refresh-left"
                 :disabled="rollbackVersion <= 0"
                 :loading="rollbackLoading"
+                data-id="ia-btn-queren-huinban"
                 @click="handleRollback"
               >回滚</el-button>
             </el-form-item>
@@ -79,7 +82,7 @@
       </el-form>
 
       <!-- 发布结果 -->
-      <el-card v-if="lastPublishResult" class="result-card" style="margin-top:16px">
+      <el-card v-if="lastPublishResult" class="result-card" style="margin-top:16px" data-id="ia-card-fabu-jieguo-pack">
         <div slot="header"><span>最近发布结果</span></div>
         <el-descriptions :column="3" border size="medium">
           <el-descriptions-item label="Pack ID">{{ lastPublishResult.pack_id }}</el-descriptions-item>

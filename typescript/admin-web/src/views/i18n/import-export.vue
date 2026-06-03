@@ -22,7 +22,7 @@
             </div>
             <el-form ref="importForm" :model="importForm" :rules="importRules" label-width="90px" size="medium">
               <el-form-item label="目标 Pack ID" prop="packID">
-                <el-input-number v-model.number="importForm.packID" :min="1" controls-position="right" style="width:100%" />
+                <el-input-number v-model.number="importForm.packID" :min="1" controls-position="right" style="width:100%" data-id="ia-import-input-pack-id" />
               </el-form-item>
               <el-form-item label="选择文件">
                 <el-upload
@@ -34,6 +34,7 @@
                   accept=".csv"
                   drag
                   action=""
+                  data-id="ia-upload-csv-wenjian"
                 >
                   <i class="el-icon-upload" />
                   <div class="el-upload__text">将 CSV 文件拖到此处，或<em>点击上传</em></div>
@@ -47,9 +48,10 @@
                   icon="el-icon-upload2"
                   :loading="importLoading"
                   :disabled="!uploadFile"
+                  data-id="ia-btn-kaishi-daoru"
                   @click="handleImport"
                 >开始导入</el-button>
-                <el-button icon="el-icon-refresh-left" @click="resetImport">重置</el-button>
+                <el-button icon="el-icon-refresh-left" data-id="ia-btn-chongzhi-daoru" @click="resetImport">重置</el-button>
               </el-form-item>
             </el-form>
 
@@ -59,6 +61,7 @@
               <el-result
                 :icon="importResult.fail_count > 0 ? 'warning' : 'success'"
                 :title="importResult.fail_count > 0 ? '部分成功' : '全部成功'"
+                data-id="ia-result-daoru-jieguo"
               >
                 <template slot="subTitle">
                   <p>总行数：<strong>{{ importResult.total_rows }}</strong></p>
@@ -72,6 +75,7 @@
                     border
                     size="mini"
                     max-height="200"
+                    data-id="ia-table-daoru-cuowu"
                   >
                     <el-table-column label="行号" prop="row_num" width="70" align="center" />
                     <el-table-column label="原因" prop="reason" />
@@ -90,7 +94,7 @@
             </div>
             <el-form ref="exportForm" :model="exportForm" :rules="exportRules" label-width="90px" size="medium">
               <el-form-item label="源 Pack ID" prop="packID">
-                <el-input-number v-model.number="exportForm.packID" :min="1" controls-position="right" style="width:100%" />
+                <el-input-number v-model.number="exportForm.packID" :min="1" controls-position="right" style="width:100%" data-id="ia-export-input-pack-id" />
               </el-form-item>
               <el-form-item>
                 <el-button
@@ -98,6 +102,7 @@
                   type="success"
                   icon="el-icon-download"
                   :loading="exportLoading"
+                  data-id="ia-btn-daochu-csv"
                   @click="handleExport"
                 >导出 CSV</el-button>
               </el-form-item>
