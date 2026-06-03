@@ -10,20 +10,24 @@ import (
 	"go-admin/app/admin/config_admin/models"
 )
 
-// SchemaApi Schema 管理 HTTP Handler
 type SchemaApi struct {
 	svc configAdmin.ConfigSchemaService
 }
 
-// NewSchemaApi 创建 Schema API 实例
 func NewSchemaApi(svc configAdmin.ConfigSchemaService) SchemaApi {
 	return SchemaApi{svc: svc}
 }
 
-// GetSchemaList 获取指定模块下所有字段 Schema
-// GET /api/admin/v1/config/schema?module_key=xxx
-// 权限：config:schema:read
+func (e *SchemaApi) requireSvc(c *gin.Context) bool {
+	if e.svc == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"code": 503, "msg": "配置服务未初始化"})
+		return false
+	}
+	return true
+}
+
 func (e SchemaApi) GetSchemaList(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	var req models.ListSchemaReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数绑定失败"})
@@ -37,10 +41,8 @@ func (e SchemaApi) GetSchemaList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "data": items, "msg": "查询成功"})
 }
 
-// CreateSchema 新增字段定义
-// POST /api/admin/v1/config/schema
-// 权限：config:schema:write
 func (e SchemaApi) CreateSchema(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	var req models.CreateSchemaReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数绑定失败"})
@@ -67,10 +69,8 @@ func (e SchemaApi) CreateSchema(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "data": result, "msg": "创建成功"})
 }
 
-// UpdateSchema 更新字段定义
-// PUT /api/admin/v1/config/schema
-// 权限：config:schema:write
 func (e SchemaApi) UpdateSchema(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	var req models.UpdateSchemaReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数绑定失败"})
@@ -96,10 +96,8 @@ func (e SchemaApi) UpdateSchema(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "data": result, "msg": "更新成功"})
 }
 
-// DeleteSchema 软删除字段定义
-// DELETE /api/admin/v1/config/schema?id=xxx
-// 权限：config:schema:delete
 func (e SchemaApi) DeleteSchema(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	idStr := c.Query("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil || id <= 0 {

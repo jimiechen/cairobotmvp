@@ -4,87 +4,37 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/jimiechen/mineplanet/go/services/config/domain"
 	"github.com/jimiechen/mineplanet/go/services/config/repository"
 	"github.com/jimiechen/mineplanet/go/services/config/service"
-	"github.com/jimiechen/mineplanet/go/third_party/redisx"
+	"github.com/jimiechen/mineplanet/go/services/config/testutil"
 )
 
-// mockCache 模拟 redisx.Client（仅记录 Invalidate 调用）
-type mockCache struct {
-	mu          sync.Mutex
-	invalidated []string
-}
-
-func (m *mockCache) Get(_ context.Context, _ string) (string, error)   { return "", nil }
-func (m *mockCache) Set(_ context.Context, _ string, _ any, _ time.Duration) error {
-	return nil
-}
-func (m *mockCache) Delete(_ context.Context, _ ...string) error { return nil }
-func (m *mockCache) Scan(_ context.Context, _ string) ([]string, error) { return nil, nil }
-func (m *mockCache) Invalidate(_ context.Context, pattern string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.invalidated = append(m.invalidated, pattern)
-	return nil
-}
-func (m *mockCache) Ping(_ context.Context) error { return nil }
-func (m *mockCache) Close() error               { return nil }
-
-// mockPubSub 模拟 Pub/Sub 客户端（仅记录 Publish 调用）
-type mockPubSub struct {
-	mu        sync.Mutex
-	published []pubRecord
-}
-
-type pubRecord struct {
-	channel string
-	message string
-}
-
-func (m *mockPubSub) Publish(_ context.Context, channel, message string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.published = append(m.published, pubRecord{channel, message})
-	return nil
-}
-func (m *mockPubSub) Subscribe(_ string, _ redisx.MessageHandler) (redisx.CancelFunc, error) {
-	return func() {}, nil
-}
-func (m *mockPubSub) Close() error { return nil }
-
-// mockAuditWriter 记录审计日志
-type mockAuditWriter struct {
-	mu      sync.Mutex
-	entries []AuditEntry
-}
-
-func (m *mockAuditWriter) Write(_ context.Context, entry AuditEntry) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.entries = append(m.entries, entry)
-	return nil
-}
-
-func newTestService(t *testing.T) (*AdminConfigService, *mockCache, *mockPubSub, *mockAuditWriter) {
+func newTestService(t *testing.T) (*AdminConfigService, *testutil.MockCache, *testutil.MockPubSub, *testutil.MockAuditWriter) {
 	t.Helper()
 	schemaRepo := repository.NewMemSchemaRepo()
 	configRepo := repository.NewMemConfigRepo()
 	innerSchema := service.NewSchemaService(schemaRepo)
-	cache := &mockCache{}
-	ps := &mockPubSub{}
-	audit := &mockAuditWriter{}
+	cache := testutil.NewMockCache()
+	ps := testutil.NewMockPubSub()
+	auditWriter := testutil.NewMockAuditWriter()
 
 	svc := NewAdminConfigService(innerSchema, schemaRepo, configRepo,
 		WithCache(cache),
 		WithPubSub(ps),
-		WithAuditWriter(audit),
+		WithAuditWriter(&auditWrapper{writer: auditWriter}),
 	)
-	return svc, cache, ps, audit
+	return svc, cache, ps, auditWriter
+}
+
+type auditWrapper struct {
+	writer *testutil.MockAuditWriter
+}
+
+func (w *auditWrapper) Write(ctx context.Context, entry AuditEntry) error {
+	return w.writer.Write(ctx, entry)
 }
 
 func TestCreateSchema_HappyPath(t *testing.T) {
@@ -113,17 +63,14 @@ func TestCreateSchema_HappyPath(t *testing.T) {
 		t.Error("新创建的 schema 应默认启用")
 	}
 
-	cache.mu.Lock()
-	if len(cache.invalidated) == 0 {
+	if len(cache.GetInvalidated()) == 0 {
 		t.Error("应触发缓存失效")
 	}
-	cache.mu.Unlock()
 
-	ps.mu.Lock()
-	if len(ps.published) == 0 {
+	if len(ps.GetPublished()) == 0 {
 		t.Error("应触发变更广播")
 	} else {
-		msg := ps.published[0].message
+		msg := ps.GetPublished()[0].Message
 		if !strings.Contains(msg, `"tenant_id"`) {
 			t.Errorf("广播消息应为 JSON 格式且含 tenant_id，实际=%s", msg)
 		}
@@ -131,15 +78,12 @@ func TestCreateSchema_HappyPath(t *testing.T) {
 			t.Errorf("广播消息应包含 module_key=test_mod，实际=%s", msg)
 		}
 	}
-	ps.mu.Unlock()
 
-	audit.mu.Lock()
-	if len(audit.entries) == 0 {
+	if len(audit.GetEntries()) == 0 {
 		t.Error("应写入审计日志")
-	} else if audit.entries[0].Action != "create_schema" {
-		t.Errorf("审计 action 应为 create_schema，实际=%s", audit.entries[0].Action)
+	} else if entry, ok := audit.GetEntries()[0].(AuditEntry); ok && entry.Action != "create_schema" {
+		t.Errorf("审计 action 应为 create_schema，实际=%s", entry.Action)
 	}
-	audit.mu.Unlock()
 }
 
 func TestCreateSchema_空ModuleKey应报错(t *testing.T) {
@@ -182,10 +126,9 @@ func TestUpdateSchema_HappyPath(t *testing.T) {
 		t.Error("描述未正确更新")
 	}
 
-	ps.mu.Lock()
 	found := false
-	for _, p := range ps.published {
-		if strings.Contains(p.message, "up_mod") {
+	for _, p := range ps.GetPublished() {
+		if strings.Contains(p.Message, "up_mod") {
 			found = true
 			break
 		}
@@ -193,7 +136,6 @@ func TestUpdateSchema_HappyPath(t *testing.T) {
 	if !found {
 		t.Error("更新后应广播 up_mod 的失效")
 	}
-	ps.mu.Unlock()
 }
 
 func TestUpdateSchema_无效ID应报错(t *testing.T) {
@@ -225,17 +167,24 @@ func TestDeleteSchema_HappyPath(t *testing.T) {
 		}
 	}
 
-	ps.mu.Lock()
-	if len(ps.published) == 0 {
+	if len(ps.GetPublished()) == 0 {
 		t.Error("删除后应广播失效")
 	}
-	ps.mu.Unlock()
 
-	audit.mu.Lock()
-	if len(audit.entries) == 0 || audit.entries[len(audit.entries)-1].Action != "delete_schema" {
+	if len(audit.GetEntries()) == 0 {
+		t.Fatal("审计条目不应为空")
+	}
+	lastEntry := audit.GetLastEntry()
+	if lastEntry == nil {
+		t.Fatal("最后一条审计条目不应为nil")
+	}
+	entry, ok := lastEntry.(AuditEntry)
+	if !ok {
+		t.Fatalf("审计条目类型错误，期望 AuditEntry")
+	}
+	if entry.Action != "delete_schema" {
 		t.Error("删除操作应产生 delete_schema 审计")
 	}
-	audit.mu.Unlock()
 }
 
 func TestListSchemas_有数据(t *testing.T) {
@@ -297,23 +246,28 @@ func TestPublishValue_HappyPath(t *testing.T) {
 		t.Errorf("期望 FieldCount=1，实际=%d", result.FieldCount)
 	}
 
-	cache.mu.Lock()
-	if len(cache.invalidated) == 0 {
+	if len(cache.GetInvalidated()) == 0 {
 		t.Error("发布配置值后应触发缓存失效")
 	}
-	cache.mu.Unlock()
 
-	ps.mu.Lock()
-	if len(ps.published) == 0 {
+	if len(ps.GetPublished()) == 0 {
 		t.Error("发布配置值后应触发变更广播")
 	}
-	ps.mu.Unlock()
 
-	audit.mu.Lock()
-	if len(audit.entries) == 0 || audit.entries[len(audit.entries)-1].Action != "publish_value" {
+	if len(audit.GetEntries()) == 0 {
+		t.Fatal("审计条目不应为空")
+	}
+	lastEntry := audit.GetLastEntry()
+	if lastEntry == nil {
+		t.Fatal("最后一条审计条目不应为nil")
+	}
+	entry, ok := lastEntry.(AuditEntry)
+	if !ok {
+		t.Fatalf("审计条目类型错误，期望 AuditEntry")
+	}
+	if entry.Action != "publish_value" {
 		t.Error("发布操作应产生 publish_value 审计")
 	}
-	audit.mu.Unlock()
 }
 
 func TestPublishValue_校验失败应返回字段级错误(t *testing.T) {
@@ -374,9 +328,9 @@ func TestNewAdminConfigService_选项注入(t *testing.T) {
 	innerSchema := service.NewSchemaService(schemaRepo)
 
 	svc := NewAdminConfigService(innerSchema, schemaRepo, configRepo,
-		WithCache(&mockCache{}),
-		WithPubSub(&mockPubSub{}),
-		WithAuditWriter(&mockAuditWriter{}),
+		WithCache(testutil.NewMockCache()),
+		WithPubSub(testutil.NewMockPubSub()),
+		WithAuditWriter(&auditWrapper{writer: testutil.NewMockAuditWriter()}),
 	)
 	if svc.cache == nil {
 		t.Error("WithCache 未生效")

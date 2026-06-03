@@ -1,6 +1,8 @@
 package i18n_admin
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/jimiechen/mineplanet/go/services/i18n/admin"
@@ -22,9 +24,6 @@ func I18nAdminRouter(r *gin.Engine, jwtAuth gin.HandlerFunc, casbinHandler gin.H
 }
 
 func registerI18nRoutes(r *gin.RouterGroup) {
-	if adminSvc == nil {
-		return
-	}
 	stringApi := apis.NewStringApi(adminSvc)
 	packApi := apis.NewPackApi(adminSvc)
 	importApi := apis.NewImportExportApi(adminSvc)
@@ -48,4 +47,11 @@ func registerI18nRoutes(r *gin.RouterGroup) {
 		importGroup.POST("/import/csv", importApi.ImportStringsFromCSV)
 		importGroup.GET("/export/csv", importApi.ExportStringsToCSV)
 	}
+}
+
+func serviceUnavailable(c *gin.Context) {
+	c.JSON(http.StatusServiceUnavailable, gin.H{
+		"code": 503,
+		"msg":  "多语言服务未初始化，请检查后端服务配置",
+	})
 }

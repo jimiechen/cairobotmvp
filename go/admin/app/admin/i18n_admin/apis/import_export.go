@@ -11,27 +11,24 @@ import (
 	"go-admin/app/admin/i18n_admin/models"
 )
 
-// ImportExportApi CSV 导入导出 HTTP Handler
 type ImportExportApi struct {
 	svc i18nAdmin.I18nAdminService
 }
 
-// NewImportExportApi 创建 ImportExport API 实例
 func NewImportExportApi(svc i18nAdmin.I18nAdminService) ImportExportApi {
 	return ImportExportApi{svc: svc}
 }
 
-// ImportStringsFromCSV 从 CSV 导入语言字符串（两阶段：dry-run → 事务写入）
-// POST /api/admin/v1/i18n/import/csv?pack_id=xxx
-// Content-Type: multipart/form-data; file=xxx.csv
-// 权限：i18n:string:write
-//
-// 流程：
-// 1. 解析 CSV 头部验证格式
-// 2. dry-run 阶段：逐行调用 ValidateTemplate，收集错误
-// 3. 若 dry-run 有错，返回 10400 + 错误明细（不写入任何数据）
-// 4. 若 dry-run 全通过，事务批量写入（≤100条/事务）
+func (e *ImportExportApi) requireSvc(c *gin.Context) bool {
+	if e.svc == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"code": 503, "msg": "多语言服务未初始化"})
+		return false
+	}
+	return true
+}
+
 func (e ImportExportApi) ImportStringsFromCSV(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	packIDStr := c.Query("pack_id")
 	packID := parseInt64(packIDStr)
 	if packID <= 0 {
@@ -44,8 +41,7 @@ func (e ImportExportApi) ImportStringsFromCSV(c *gin.Context) {
 		return
 	}
 	defer file.Close()
-	reader := io.LimitReader(file, 5*1024*1024) // 限制 5MB
-
+	reader := io.LimitReader(file, 5*1024*1024)
 	operator := c.GetString("x-user-name")
 	result, importErr := e.svc.ImportStringsFromCSV(c.Request.Context(), reader, packID, operator)
 	if importErr != nil {
@@ -70,10 +66,8 @@ func (e ImportExportApi) ImportStringsFromCSV(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// ExportStringsToCSV 导出语言字符串为 CSV
-// GET /api/admin/v1/i18n/export/csv?pack_id=xxx
-// 权限：i18n:string:read
 func (e ImportExportApi) ExportStringsToCSV(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	packIDStr := c.Query("pack_id")
 	packID := parseInt64(packIDStr)
 	if packID <= 0 {
@@ -89,10 +83,9 @@ func (e ImportExportApi) ExportStringsToCSV(c *gin.Context) {
 	encoded := base64.StdEncoding.EncodeToString(data)
 	c.Header("Content-Disposition", `attachment; filename="strings_`+packIDStr+`.csv"`)
 	c.Data(http.StatusOK, "text/csv; charset=utf-8", data)
-	_ = encoded // 同时支持 JSON 响应模式（前端可选用）
+	_ = encoded
 }
 
-// parseInt64 安全解析 int64，解析失败返回 0
 func parseInt64(s string) int64 {
 	n := int64(0)
 	for _, ch := range s {
@@ -101,15 +94,3 @@ func parseInt64(s string) int64 {
 	}
 	return n
 }
-
-// trimSpace 去除首尾空白
-func trimSpace(s string) string {
-	start := 0
-	end := len(s)
-	for start < end && (s[start] == ' ' || s[start] == '\t') { start++ }
-	for end > start && (s[end-1] == ' ' || s[end-1] == '\t') { end-- }
-	return s[start:end]
-}
-
-// hasPrefix 检查前缀
-func hasPrefix(s, prefix string) bool { return len(s) >= len(prefix) && s[:len(prefix)] == prefix }

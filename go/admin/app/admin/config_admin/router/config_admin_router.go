@@ -1,13 +1,14 @@
 package config_admin
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
-	"go-admin/app/admin/config_admin/apis"
 	configAdmin "github.com/jimiechen/mineplanet/go/services/config/admin"
+	"go-admin/app/admin/config_admin/apis"
 )
 
-// AdminServiceHolder 持有 AdminConfigService 实例
 var adminSvc configAdmin.ConfigAdminService
 
 // InitAdminService 注入 AdminConfigService（在 main.go 启动时调用）
@@ -15,11 +16,14 @@ func InitAdminService(svc configAdmin.ConfigAdminService) {
 	adminSvc = svc
 }
 
-// registerConfigAdminRoutes 注册配置管理路由
+// ConfigAdminRouter 返回路由注册函数，供 init_router.go 调用
+func ConfigAdminRouter(r *gin.Engine, jwtAuth gin.HandlerFunc, casbinHandler gin.HandlerFunc) {
+	apiV1 := r.Group("/api/admin/v1/config")
+	authed := apiV1.Use(jwtAuth, casbinHandler)
+	registerConfigAdminRoutes(authed.(*gin.RouterGroup))
+}
+
 func registerConfigAdminRoutes(r *gin.RouterGroup) {
-	if adminSvc == nil {
-		return
-	}
 	schemaApi := apis.NewSchemaApi(adminSvc)
 	valueApi := apis.NewValueApi(adminSvc)
 
@@ -38,9 +42,9 @@ func registerConfigAdminRoutes(r *gin.RouterGroup) {
 	}
 }
 
-// ConfigAdminRouter 返回路由注册函数，供 init_router.go 调用
-func ConfigAdminRouter(r *gin.Engine, jwtAuth gin.HandlerFunc, casbinHandler gin.HandlerFunc) {
-	apiV1 := r.Group("/api/admin/v1/config")
-	authed := apiV1.Use(jwtAuth, casbinHandler)
-	registerConfigAdminRoutes(authed.(*gin.RouterGroup))
+func serviceUnavailable(c *gin.Context) {
+	c.JSON(http.StatusServiceUnavailable, gin.H{
+		"code": 503,
+		"msg":  "配置服务未初始化，请检查后端服务配置",
+	})
 }

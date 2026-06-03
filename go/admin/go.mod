@@ -143,3 +143,9 @@ require (
 //	github.com/go-admin-team/go-admin-core v1.5.2-0.20231103105356-84418ed9252c => ../go-admin-core
 //	github.com/go-admin-team/go-admin-core/sdk v1.5.2-0.20231103105356-84418ed9252c => ../go-admin-core/sdk
 //)
+
+// 消除 SQLite 驱动重复注册冲突：
+// glebarez/sqlite 和 gorm.io/driver/sqlite(modernc.org) 都注册 "sqlite" 驱动名导致 panic
+// 本项目使用 gorm.io/driver/sqlite 作为唯一 SQLite 驱动，此处将 glebarez 重定向到空桩包
+replace github.com/glebarez/sqlite => ./vendor-stub/glebarez-sqlite
+replace github.com/glebarez/go-sqlite => ./vendor-stub/glebarez-go-sqlite

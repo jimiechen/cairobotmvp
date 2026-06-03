@@ -6,34 +6,20 @@ import (
 
 	"github.com/jimiechen/mineplanet/go/services/config/domain"
 	"github.com/jimiechen/mineplanet/go/services/config/repository"
+	"github.com/jimiechen/mineplanet/go/services/config/testutil"
 )
 
 func newMockSchemaRepo() repository.SchemaRepository {
-	return &mockSchemaRepoImpl{schemas: make(map[string][]*domain.FieldSchema)}
-}
-
-type mockSchemaRepoImpl struct {
-	schemas map[string][]*domain.FieldSchema
-}
-
-func (m *mockSchemaRepoImpl) ListByModule(moduleKey string) ([]*domain.FieldSchema, error) {
-	return m.schemas[moduleKey], nil
-}
-
-func (m *mockSchemaRepoImpl) Create(schema *domain.FieldSchema) error   { return nil }
-func (m *mockSchemaRepoImpl) Update(schema *domain.FieldSchema) error   { return nil }
-func (m *mockSchemaRepoImpl) DeleteSoft(id int64) error                { return nil }
-func (m *mockSchemaRepoImpl) FindSchema(_ int64) (*domain.FieldSchema, error) {
-	return nil, nil
+	return testutil.NewMockSchemaRepo()
 }
 
 func TestParseConfigJSON_带schema解析(t *testing.T) {
-	repo := newMockSchemaRepo()
-	repo.(*mockSchemaRepoImpl).schemas["test_mod"] = []*domain.FieldSchema{
-		{FieldKey: "name", FieldType: domain.FieldTypeString},
-		{FieldKey: "count", FieldType: domain.FieldTypeInt},
-		{FieldKey: "active", FieldType: domain.FieldTypeBool},
-	}
+	repo := testutil.NewMockSchemaRepo()
+	repo.AddSchema("test_mod",
+		&domain.FieldSchema{FieldKey: "name", FieldType: domain.FieldTypeString},
+		&domain.FieldSchema{FieldKey: "count", FieldType: domain.FieldTypeInt},
+		&domain.FieldSchema{FieldKey: "active", FieldType: domain.FieldTypeBool},
+	)
 
 	result, err := ParseConfigJSON(`{"name":"hello","count":42,"active":true}`, "test_mod", repo)
 	if err != nil {
@@ -80,10 +66,10 @@ func TestParseConfigJSON_非法JSON应报错(t *testing.T) {
 }
 
 func TestParseConfigJSON_JSON字段保留原始结构(t *testing.T) {
-	repo := newMockSchemaRepo()
-	repo.(*mockSchemaRepoImpl).schemas["json_mod"] = []*domain.FieldSchema{
-		{FieldKey: "meta", FieldType: domain.FieldTypeJSON},
-	}
+	repo := testutil.NewMockSchemaRepo()
+	repo.AddSchema("json_mod",
+		&domain.FieldSchema{FieldKey: "meta", FieldType: domain.FieldTypeJSON},
+	)
 
 	result, _ := ParseConfigJSON(`{"meta":{"k":"v"}}`, "json_mod", repo)
 	raw := result["meta"].JSON()

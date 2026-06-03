@@ -6,68 +6,43 @@ import (
 	"time"
 
 	"github.com/jimiechen/mineplanet/go/services/config/domain"
+	"github.com/jimiechen/mineplanet/go/services/config/testutil"
 )
 
-type mockRedisClient struct {
-	mu         sync.Mutex
-	data       map[string]string
-	handlers   map[string]func(string)
-	cancelFuncs map[string]func()
+type redisClientAdapter struct {
+	client *testutil.MockRedisClient
 }
 
-func newMockRedis() *mockRedisClient {
-	return &mockRedisClient{
-		data:       make(map[string]string),
-		handlers:   make(map[string]func(string)),
-		cancelFuncs: make(map[string]func()),
+func (a *redisClientAdapter) Get(key string) (string, error) {
+	return a.client.Get(key)
+}
+
+func (a *redisClientAdapter) Set(key string, value string, ttlSec int) error {
+	return a.client.Set(key, value, ttlSec)
+}
+
+func (a *redisClientAdapter) Delete(key string) error {
+	return a.client.Delete(key)
+}
+
+func (a *redisClientAdapter) Subscribe(channel string, handler MessageHandler) (CancelFunc, error) {
+	cancel, err := a.client.Subscribe(channel, func(msg string) { handler(msg) })
+	if err != nil {
+		return nil, err
 	}
+	return func() { cancel() }, nil
 }
 
-func (m *mockRedisClient) Get(key string) (string, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.data[key], nil
+func (a *redisClientAdapter) PublishMessage(channel string, message string) {
+	a.client.PublishMessage(channel, message)
 }
 
-func (m *mockRedisClient) Set(key string, value string, ttlSec int) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.data[key] = value
-	return nil
-}
-
-func (m *mockRedisClient) Delete(key string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.data, key)
-	return nil
-}
-
-func (m *mockRedisClient) Subscribe(channel string, handler MessageHandler) (CancelFunc, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.handlers[channel] = handler
-	cancel := func() {
-		m.mu.Lock()
-		defer m.mu.Unlock()
-		delete(m.handlers, channel)
-		delete(m.cancelFuncs, channel)
-	}
-	m.cancelFuncs[channel] = cancel
-	return cancel, nil
-}
-
-func (m *mockRedisClient) publish(channel, msg string) {
-	m.mu.Lock()
-	handler, exists := m.handlers[channel]
-	m.mu.Unlock()
-	if exists {
-		handler(msg)
-	}
+func newTestRedis() *redisClientAdapter {
+	return &redisClientAdapter{client: testutil.NewMockRedisClient()}
 }
 
 func TestPubsubManager_StartStop(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	pm := newPubsubManager(redis, cache, watcher)
@@ -81,7 +56,7 @@ func TestPubsubManager_StartStop(t *testing.T) {
 }
 
 func TestPubsubManager_OnMessage(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	snapshot := &ModuleSnapshot{
@@ -98,7 +73,7 @@ func TestPubsubManager_OnMessage(t *testing.T) {
 		notified = true
 	})
 	pm := newPubsubManager(redis, cache, watcher)
-	redis.publish(pubsubChannel, "test_module")
+	redis.PublishMessage(pubsubChannel, "test_module")
 	time.Sleep(50 * time.Millisecond)
 	_, ok := cache.get("sdk:test_module")
 	if ok {
@@ -113,7 +88,7 @@ func TestPubsubManager_OnMessage(t *testing.T) {
 }
 
 func TestPubsubManager_BatchInvalidate(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	for _, key := range []string{"mod_a", "mod_b"} {
@@ -124,7 +99,7 @@ func TestPubsubManager_BatchInvalidate(t *testing.T) {
 		cache.set("sdk:"+key, snapshot)
 	}
 	pm := newPubsubManager(redis, cache, watcher)
-	redis.publish(pubsubChannel, "mod_a, mod_b")
+	redis.PublishMessage(pubsubChannel, "mod_a, mod_b")
 	time.Sleep(50 * time.Millisecond)
 	for _, key := range []string{"mod_a", "mod_b"} {
 		_, ok := cache.get("sdk:" + key)
@@ -143,7 +118,7 @@ func TestBuildCacheKey(t *testing.T) {
 }
 
 func TestOnMessage_JsonStructured(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	snapshot := &ModuleSnapshot{
@@ -163,7 +138,7 @@ func TestOnMessage_JsonStructured(t *testing.T) {
 	pm := newPubsubManager(redis, cache, watcher)
 
 	jsonPayload := `{"tenant_id":"default","scope":"config","module_keys":["hello_cfg"],"version":1,"timestamp":1716739200}`
-	redis.publish(pubsubChannel, jsonPayload)
+	redis.PublishMessage(pubsubChannel, jsonPayload)
 	time.Sleep(50 * time.Millisecond)
 
 	_, ok := cache.get("sdk:hello_cfg")
@@ -179,7 +154,7 @@ func TestOnMessage_JsonStructured(t *testing.T) {
 }
 
 func TestOnMessage_JsonMissingTenantId_Fallback(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	snapshot := &ModuleSnapshot{
@@ -191,7 +166,7 @@ func TestOnMessage_JsonMissingTenantId_Fallback(t *testing.T) {
 	pm := newPubsubManager(redis, cache, watcher)
 
 	jsonNoTenant := `{"scope":"config","module_keys":["legacy_mod"]}`
-	redis.publish(pubsubChannel, jsonNoTenant)
+	redis.PublishMessage(pubsubChannel, jsonNoTenant)
 	time.Sleep(50 * time.Millisecond)
 
 	_, ok := cache.get("sdk:legacy_mod")
@@ -202,7 +177,7 @@ func TestOnMessage_JsonMissingTenantId_Fallback(t *testing.T) {
 }
 
 func TestOnMessage_LegacyCommaFormat(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	snapshot := &ModuleSnapshot{
@@ -213,7 +188,7 @@ func TestOnMessage_LegacyCommaFormat(t *testing.T) {
 
 	pm := newPubsubManager(redis, cache, watcher)
 
-	redis.publish(pubsubChannel, "old_mod")
+	redis.PublishMessage(pubsubChannel, "old_mod")
 	time.Sleep(50 * time.Millisecond)
 
 	_, ok := cache.get("sdk:old_mod")
@@ -224,7 +199,7 @@ func TestOnMessage_LegacyCommaFormat(t *testing.T) {
 }
 
 func TestOnMessage_InvalidJson_Fallback(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 	snapshot := &ModuleSnapshot{
@@ -235,7 +210,7 @@ func TestOnMessage_InvalidJson_Fallback(t *testing.T) {
 
 	pm := newPubsubManager(redis, cache, watcher)
 
-	redis.publish(pubsubChannel, "{invalid json")
+	redis.PublishMessage(pubsubChannel, "{invalid json")
 	time.Sleep(50 * time.Millisecond)
 
 	_, ok := cache.get("sdk:broken_mod")
@@ -246,13 +221,13 @@ func TestOnMessage_InvalidJson_Fallback(t *testing.T) {
 }
 
 func TestOnMessage_Empty_NoPanic(t *testing.T) {
-	redis := newMockRedis()
+	redis := newTestRedis()
 	cache := newLRUCache(10)
 	watcher := newModuleWatcher()
 
 	pm := newPubsubManager(redis, cache, watcher)
 
-	redis.publish(pubsubChannel, "")
+	redis.PublishMessage(pubsubChannel, "")
 	time.Sleep(50 * time.Millisecond)
 	pm.stop()
 }

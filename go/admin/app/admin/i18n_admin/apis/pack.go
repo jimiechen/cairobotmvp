@@ -9,20 +9,24 @@ import (
 	"go-admin/app/admin/i18n_admin/models"
 )
 
-// PackApi 语言包管理 HTTP Handler
 type PackApi struct {
 	svc i18nAdmin.I18nAdminService
 }
 
-// NewPackApi 创建 Pack API 实例
 func NewPackApi(svc i18nAdmin.I18nAdminService) PackApi {
 	return PackApi{svc: svc}
 }
 
-// PublishPack 发布语言包
-// POST /api/admin/v1/i18n/pack/publish
-// 权限：i18n:pack:write
+func (e *PackApi) requireSvc(c *gin.Context) bool {
+	if e.svc == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"code": 503, "msg": "多语言服务未初始化"})
+		return false
+	}
+	return true
+}
+
 func (e PackApi) PublishPack(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	var req models.PublishPackReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数绑定失败"})
@@ -42,10 +46,8 @@ func (e PackApi) PublishPack(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "data": result, "msg": "发布成功"})
 }
 
-// RollbackPack 回滚语言包到指定版本
-// POST /api/admin/v1/i18n/pack/rollback
-// 权限：i18n:pack:write
 func (e PackApi) RollbackPack(c *gin.Context) {
+	if !e.requireSvc(c) { return }
 	var req models.RollbackPackReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数绑定失败"})
