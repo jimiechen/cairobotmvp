@@ -1,0 +1,1 @@
+{"name": "admin-mvp-e2e", "version": "1.0.0", "private": true, "scripts": {"test": "playwright test", "test:headed": "playwright test --headed", "test:debug": "playwright test --debug", "bidirectional-check": "node utils/data-id-bidirectional-check.mjs", "generate-mock": "node utils/mock-from-dto.mjs"}, "devDependencies": {"@playwright/test": "^1.48.0", "@types/node": "^20.0.0"}}

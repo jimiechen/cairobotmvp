@@ -1,0 +1,62 @@
+{
+  "StringItem": {
+    "id": 1,
+    "pack_id": 1,
+    "string_key": "mock-StringKey",
+    "string_value": "mock-StringValue",
+    "group_name": "mock-GroupName",
+    "template_type": "mock-TemplateType",
+    "operation_type": "mock-OperationType",
+    "version": 1
+  },
+  "CreateStringReq": {
+    "pack_id": 1,
+    "string_key": "mock-StringKey",
+    "string_value": "mock-StringValue",
+    "group_name": "mock-GroupName",
+    "template_type": "mock-TemplateType",
+    "params_schema": "mock-ParamsSchema",
+    "preview_sample": "mock-PreviewSample"
+  },
+  "UpdateStringReq": {
+    "id": 1,
+    "string_value": "mock-StringValue",
+    "group_name": "mock-GroupName",
+    "params_schema": "mock-ParamsSchema",
+    "preview_sample": "mock-PreviewSample"
+  },
+  "DeleteStringReq": {
+    "id": 1
+  },
+  "PackVersion": {
+    "pack_id": 1,
+    "lang_code": "mock-LangCode",
+    "version": 1
+  },
+  "PublishPackReq": {
+    "pack_id": 1,
+    "lang_code": "mock-LangCode",
+    "env": "mock-Env"
+  },
+  "RollbackPackReq": {
+    "pack_id": 1,
+    "target_version": 2
+  },
+  "ImportResultResp": {
+    "code": 42,
+    "message": "mock-Message",
+    "total_rows": 10,
+    "success_count": 8,
+    "fail_count": 2,
+    "errors,omitempty": [
+      {
+        "row_num": 3,
+        "reason": "string_key 不能为空"
+      }
+    ]
+  },
+  "ImportErrorItem": {
+    "row_num": 3,
+    "reason": "mock-Reason"
+  }
+}

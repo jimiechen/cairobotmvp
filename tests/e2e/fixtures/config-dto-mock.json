@@ -1,0 +1,75 @@
+{
+  "SchemaItem": {
+    "id": 1,
+    "module_key": "mock-ModuleKey",
+    "field_key": "mock-FieldKey",
+    "field_type": "mock-FieldType",
+    "default_value": "mock-DefaultValue",
+    "validator": "mock-Validator",
+    "is_required": true,
+    "is_secret": false,
+    "description": "mock-Description",
+    "client_scope": "mock-ClientScope",
+    "sort_order": 42,
+    "is_enabled": true
+  },
+  "CreateSchemaReq": {
+    "module_key": "mock-ModuleKey",
+    "field_key": "mock-FieldKey",
+    "field_type": "mock-FieldType",
+    "default_value": "mock-DefaultValue",
+    "validator": "mock-Validator",
+    "is_required": true,
+    "is_secret": false,
+    "description": "mock-Description",
+    "client_scope": "mock-ClientScope",
+    "sort_order": 42
+  },
+  "UpdateSchemaReq": {
+    "id": 1,
+    "field_type": "mock-FieldType",
+    "default_value": "mock-DefaultValue",
+    "validator": "mock-Validator",
+    "is_required": true,
+    "is_secret": false,
+    "description": "mock-Description",
+    "client_scope": "mock-ClientScope",
+    "sort_order": 42
+  },
+  "DeleteSchemaReq": {
+    "id": 1
+  },
+  "ValueVersion": {
+    "version": 1,
+    "module_key": "mock-ModuleKey",
+    "env": "mock-Env",
+    "field_count": 5
+  },
+  "PublishValueReq": {
+    "module_key": "mock-ModuleKey",
+    "env": "mock-Env",
+    "fields": [
+      {
+        "field_key": "port",
+        "value": 8080
+      },
+      {
+        "field_key": "timeout",
+        "value": 30
+      }
+    ]
+  },
+  "PublishFieldItem": {
+    "field_key": "mock-FieldKey"
+  },
+  "ValidationErrorResp": {
+    "code": 42,
+    "message": "mock-Message",
+    "errors,omitempty": [
+      {
+        "field": "port",
+        "reason": "不能大于 65535"
+      }
+    ]
+  }
+}

@@ -53,3 +53,8 @@ docs/reports/coverage/
 ## 临时文件
 tmp/
 docs/drafts/
+
+## Admin MVP 运行时（PID + 日志，不入库）
+.admin-pids/
+.admin-logs/
+go/admin/go-admin-db.db
