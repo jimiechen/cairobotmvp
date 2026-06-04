@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/jimiechen/mineplanet/go/common-lib"
+	"github.com/jimiechen/mineplanet/go/common-lib/module"
 	"github.com/jimiechen/mineplanet/go/modules/hello"
 	"github.com/jimiechen/mineplanet/go/modules/health"
 	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
@@ -69,6 +70,36 @@ func NewLocalInvoker() *LocalInvoker {
 	}
 }
 
+// buildMinimalDeps 构建最小依赖集，用于 Gateway 单体部署模式的模块初始化
+// 仅提供 no-op 的 Config 和 Logger 实现，I18n/DB/Cache 为 nil
+func buildMinimalDeps() module.Deps {
+	return module.Deps{
+		Config: &noopConfigReader{},
+		Logger: &noopLogger{},
+	}
+}
+
+// noopConfigReader 空实现的 ConfigReader，用于无外部配置中心的本地开发
+type noopConfigReader struct{}
+
+func (n *noopConfigReader) GetString(_ context.Context, _, _ string) (string, error) { return "", nil }
+func (n *noopConfigReader) GetInt(_ context.Context, _, _ string) (int64, error)   { return 0, nil }
+func (n *noopConfigReader) GetBool(_ context.Context, _, _ string) (bool, error)   { return false, nil }
+func (n *noopConfigReader) Watch(_ context.Context, _ string, _ func(string, interface{}, interface{})) error {
+	return nil
+}
+func (n *noopConfigReader) Ping(_ context.Context) error { return nil }
+
+// noopLogger 空实现的 Logger，输出到 stdout（仅用于本地开发联调）
+type noopLogger struct{}
+
+func (l *noopLogger) Info(_ context.Context, v ...interface{})   { /* no-op for local dev */ }
+func (l *noopLogger) Infof(_ context.Context, _ string, _ ...interface{}) {}
+func (l *noopLogger) Error(_ context.Context, v ...interface{})  { /* no-op for local dev */ }
+func (l *noopLogger) Errorf(_ context.Context, _ string, _ ...interface{}) {}
+func (l *noopLogger) Warn(_ context.Context, v ...interface{})   { /* no-op for local dev */ }
+func (l *noopLogger) Debug(_ context.Context, v ...interface{})  { /* no-op for local dev */ }
+
 // Register 注册本地 handler
 func (li *LocalInvoker) Register(key TargetKey, handler LocalHandler) {
 	li.handlers[key.String()] = handler
@@ -90,13 +121,15 @@ func (li *LocalInvoker) Invoke(ctx context.Context, target Target, request []byt
 // Deprecated: 请使用 RegisterModuleHandlers 替代，后者直接使用模块化服务。
 // 此函数保留用于向后兼容，未来版本将移除。
 func RegisterSystemHandlers(invoker *LocalInvoker) {
+	deps := buildMinimalDeps()
+
 	sysAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
-		healthSvc := health.NewService()
+		healthSvc := health.New(deps, nil)
 		return healthSvc.Check(ctx, req)
 	})
 
 	helloAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
-		helloSvc := hello.NewService()
+		helloSvc := hello.New(deps)
 		return helloSvc.SayHello(ctx, req)
 	})
 
@@ -145,8 +178,7 @@ func (h *moduleHandler) Invoke(ctx context.Context, request []byte, extend map[s
 // 每个模块独立注册到对应的 TargetKey，通过 NewModuleHandler 适配接口
 // 替代 RegisterSystemHandlers，推荐新代码使用此函数
 func RegisterModuleHandlers(invoker *LocalInvoker) {
-	helloSvc := hello.NewService()
-	healthSvc := health.NewService()
+	deps := buildMinimalDeps()
 
 	invoker.Register(TargetKey{
 		App:     "CaiRobot",
@@ -154,6 +186,7 @@ func RegisterModuleHandlers(invoker *LocalInvoker) {
 		Servant: "SystemObj",
 		Method:  "HealthCheck",
 	}, NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		healthSvc := health.New(deps, nil)
 		return healthSvc.Check(ctx, req)
 	}))
 
@@ -163,6 +196,7 @@ func RegisterModuleHandlers(invoker *LocalInvoker) {
 		Servant: "SystemObj",
 		Method:  "HelloWorld",
 	}, NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
+		helloSvc := hello.New(deps)
 		return helloSvc.SayHello(ctx, req)
 	}))
 }
