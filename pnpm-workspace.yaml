@@ -1,0 +1,5 @@
+packages:
+  - 'typescript/web'
+  - 'typescript/admin-web'
+  - 'typescript/proto-tester'
+  - 'typescript/packages/*'

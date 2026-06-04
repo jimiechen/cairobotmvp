@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+proto-tester-reports/
+*.webm
+*.png
+coverage/
+!public/proto/.gitkeep
+!tests/**/.gitkeep
+
+# v2.0 新增：CLI 证据产物（不进 git）
+proto-tester-reports/*.png
+proto-tester-reports/*.webm
+proto-tester-reports/**/*.bin
+!proto-tester-reports/.gitkeep

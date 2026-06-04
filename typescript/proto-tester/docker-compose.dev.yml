@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  proto-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      # Gateway 地址（默认指向本地）
+      - VITE_GATEWAY_URL=http://host.docker.internal:8080
+    stdin_open: true
+    tty: true

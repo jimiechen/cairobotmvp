@@ -1,0 +1,15 @@
+name: hello-smoke
+steps:
+  - action: open
+    path: /
+  - action: select-protocol
+    maxType: 2100
+    minType: 2101
+  - action: fill-form
+    field: name
+    value: "Trae"
+  - action: send
+  - action: wait-response
+    timeoutMs: 5000
+  - action: screenshot
+    screenshot: "01-hello-sent"

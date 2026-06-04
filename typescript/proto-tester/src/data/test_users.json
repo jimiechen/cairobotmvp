@@ -1,0 +1,37 @@
+[
+    {
+        "id": "user_001",
+        "name": "管理员张三",
+        "role": "admin",
+        "tokenSource": "fixed",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-admin-token-mock"
+    },
+    {
+        "id": "user_002",
+        "name": "运营李四",
+        "role": "operator",
+        "tokenSource": "fixed",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-operator-token-mock"
+    },
+    {
+        "id": "user_003",
+        "name": "只读王五",
+        "role": "viewer",
+        "tokenSource": "fixed",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-viewer-token-mock"
+    },
+    {
+        "id": "user_004",
+        "name": "普户赵六",
+        "role": "user",
+        "tokenSource": "mock_jwt",
+        "token": ""
+    },
+    {
+        "id": "user_005",
+        "name": "越权测试",
+        "role": "attacker",
+        "tokenSource": "fixed",
+        "token": "expired-token-for-testing-401"
+    }
+]

@@ -1,0 +1,37 @@
+# ============================================
+# proto-tester 开发环境 Dockerfile
+# 多阶段构建：依赖安装 + 开发服务器
+# ============================================
+
+# 阶段 1：安装依赖
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+# 复制 package.json 和 lock 文件
+COPY package.json pnpm-lock.yaml ./
+
+# 安装 pnpm 并安装依赖
+RUN corepack enable && \
+    corepack prepare pnpm@latest --activate && \
+    pnpm install --frozen-lockfile || pnpm install
+
+# 阶段 2：开发环境
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# 安装基础工具
+RUN apk add --no-cache git bash
+
+# 从阶段 1 复制 node_modules
+COPY --from=deps /app/node_modules ./node_modules
+
+# 复制源代码
+COPY . .
+
+# 暴露端口
+EXPOSE 3001
+
+# 开发服务器启动命令
+CMD ["pnpm", "dev"]

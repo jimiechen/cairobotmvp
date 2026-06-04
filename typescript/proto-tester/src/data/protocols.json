@@ -1,0 +1,1480 @@
+{
+  "version": "1",
+  "generatedAt": "2026-06-03T08:38:17.545Z",
+  "protocols": [
+    {
+      "maxType": 2100,
+      "minType": 2097,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/health.proto",
+      "name": "ServiceHealthCheckRequest",
+      "openapi": "/health/check",
+      "status": "已启用",
+      "description": "服务健康检查请求",
+      "requestMessage": "ServiceHealthCheckRequest"
+    },
+    {
+      "maxType": 2100,
+      "minType": 2098,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/health.proto",
+      "name": "ServiceHealthCheckResponse",
+      "openapi": "/health/check",
+      "status": "已启用",
+      "description": "服务健康检查响应",
+      "responseMessage": "ServiceHealthCheckResponse"
+    },
+    {
+      "maxType": 2100,
+      "minType": 2101,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/hello.proto",
+      "name": "HelloWorldRequest",
+      "openapi": "/hello",
+      "status": "草案",
+      "description": "HelloWorld 请求",
+      "requestMessage": "HelloWorldRequest"
+    },
+    {
+      "maxType": 2100,
+      "minType": 2102,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/hello.proto",
+      "name": "HelloWorldResponse",
+      "openapi": "/hello",
+      "status": "草案",
+      "description": "HelloWorld 响应",
+      "responseMessage": "HelloWorldResponse"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6001,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/app_config.proto",
+      "name": "AppConfigsReq",
+      "openapi": "无",
+      "status": "草案",
+      "description": "获取全量应用配置请求",
+      "requestMessage": "AppConfigsReq"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6002,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/app_config.proto",
+      "name": "AppConfigsRsp",
+      "openapi": "无",
+      "status": "草案",
+      "description": "应用配置响应（含 dynamic_modules）",
+      "responseMessage": "AppConfigsRsp"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6003,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLanguageReq",
+      "openapi": "无",
+      "status": "草案",
+      "description": "获取语言元数据请求",
+      "requestMessage": "AppFetchLanguageReq"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6004,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLanguageRsp",
+      "openapi": "无",
+      "status": "草案",
+      "description": "语言元数据响应",
+      "responseMessage": "AppFetchLanguageRsp"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6005,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLangPackReq",
+      "openapi": "无",
+      "status": "草案",
+      "description": "获取全量语言包请求",
+      "requestMessage": "AppFetchLangPackReq"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6006,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLangPackRsp",
+      "openapi": "无",
+      "status": "草案",
+      "description": "全量语言包响应（含模板元信息）",
+      "responseMessage": "AppFetchLangPackRsp"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6007,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLangDifferenceReq",
+      "openapi": "无",
+      "status": "草案",
+      "description": "获取增量语言包请求",
+      "requestMessage": "AppFetchLangDifferenceReq"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6008,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/i18n.proto",
+      "name": "AppFetchLangDifferenceRsp",
+      "openapi": "无",
+      "status": "草案",
+      "description": "增量语言包响应",
+      "responseMessage": "AppFetchLangDifferenceRsp"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6009,
+      "direction": "C->S",
+      "messageType": "Request",
+      "protoFile": "base/app_config.proto",
+      "name": "AppConfigVersionReq",
+      "openapi": "无",
+      "status": "草案",
+      "description": "配置/语言包版本轮询请求",
+      "requestMessage": "AppConfigVersionReq"
+    },
+    {
+      "maxType": 6000,
+      "minType": 6010,
+      "direction": "S->C",
+      "messageType": "Response",
+      "protoFile": "base/app_config.proto",
+      "name": "AppConfigVersionRsp",
+      "openapi": "无",
+      "status": "草案",
+      "description": "版本轮询响应",
+      "responseMessage": "AppConfigVersionRsp"
+    }
+  ],
+  "messageSchemas": {
+    "com.mineplanet.pojo.MessagePacket": {
+      "fullName": "com.mineplanet.pojo.MessagePacket",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/message.proto",
+      "fields": [
+        {
+          "name": "maxType",
+          "number": 1,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "minType",
+          "number": 2,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "extend",
+          "number": 3,
+          "type": "string",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "platform",
+          "number": 4,
+          "type": "Platform",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "data",
+          "number": 5,
+          "type": "bytes",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.hello.HelloWorldRequest": {
+      "fullName": "com.mineplanet.pojo.hello.HelloWorldRequest",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/hello.proto",
+      "fields": [
+        {
+          "name": "name",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "lang_code",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": [
+        {
+          "name": "Type",
+          "fullName": "com.mineplanet.pojo.hello.HelloWorldRequest.Type",
+          "values": {
+            "none": 0,
+            "max": 2100,
+            "min": 2101
+          }
+        }
+      ]
+    },
+    "com.mineplanet.pojo.hello.HelloWorldResponse": {
+      "fullName": "com.mineplanet.pojo.hello.HelloWorldResponse",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/hello.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "message",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "timestamp",
+          "number": 3,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "greeting",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "server_name",
+          "number": 5,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "max_name_length",
+          "number": 6,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": [
+        {
+          "name": "Type",
+          "fullName": "com.mineplanet.pojo.hello.HelloWorldResponse.Type",
+          "values": {
+            "none": 0,
+            "max": 2100,
+            "min": 2102
+          }
+        }
+      ]
+    },
+    "com.mineplanet.pojo.pb.Result": {
+      "fullName": "com.mineplanet.pojo.pb.Result",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/result.proto",
+      "fields": [
+        {
+          "name": "code",
+          "number": 1,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "message",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.pb.PageInfo": {
+      "fullName": "com.mineplanet.pojo.pb.PageInfo",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/result.proto",
+      "fields": [
+        {
+          "name": "pageSize",
+          "number": 1,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "pageToken",
+          "number": 2,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "totalCount",
+          "number": 3,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "nextPageToken",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.pb.ErrorDetail": {
+      "fullName": "com.mineplanet.pojo.pb.ErrorDetail",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/result.proto",
+      "fields": [
+        {
+          "name": "field",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "message",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "code",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.pb.ValidationResult": {
+      "fullName": "com.mineplanet.pojo.pb.ValidationResult",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/result.proto",
+      "fields": [
+        {
+          "name": "errors",
+          "number": 1,
+          "type": "ErrorDetail",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.health.ServiceHealthCheckRequest": {
+      "fullName": "com.mineplanet.pojo.health.ServiceHealthCheckRequest",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/health.proto",
+      "fields": [
+        {
+          "name": "service_name",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "lang_code",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "depth",
+          "number": 3,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": [
+        {
+          "name": "Type",
+          "fullName": "com.mineplanet.pojo.health.ServiceHealthCheckRequest.Type",
+          "values": {
+            "none": 0,
+            "max": 2100,
+            "min": 2097
+          }
+        }
+      ]
+    },
+    "com.mineplanet.pojo.health.ComponentStatus": {
+      "fullName": "com.mineplanet.pojo.health.ComponentStatus",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/health.proto",
+      "fields": [
+        {
+          "name": "name",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "healthy",
+          "number": 2,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "latency_ms",
+          "number": 3,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "error",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.health.ServiceHealthCheckResponse": {
+      "fullName": "com.mineplanet.pojo.health.ServiceHealthCheckResponse",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/health.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "status",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "timestamp",
+          "number": 3,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "version",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "message",
+          "number": 5,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "components",
+          "number": 6,
+          "type": "ComponentStatus",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": [
+        {
+          "name": "Type",
+          "fullName": "com.mineplanet.pojo.health.ServiceHealthCheckResponse.Type",
+          "values": {
+            "none": 0,
+            "max": 2100,
+            "min": 2098
+          }
+        }
+      ]
+    },
+    "com.mineplanet.pojo.AppConfigsReq": {
+      "fullName": "com.mineplanet.pojo.AppConfigsReq",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "env",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "client_scope",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "client_version",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "requested_modules",
+          "number": 4,
+          "type": "string",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppConfigsRsp": {
+      "fullName": "com.mineplanet.pojo.AppConfigsRsp",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "base_cfg",
+          "number": 2,
+          "type": "AppBaseConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "wap_cfg",
+          "number": 3,
+          "type": "AppWapUrlConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "regex_cfg",
+          "number": 4,
+          "type": "AppRegexConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "pay_cfg",
+          "number": 5,
+          "type": "AppPayConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "oss_cfg",
+          "number": 6,
+          "type": "AppOssConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "lang_cfg",
+          "number": 7,
+          "type": "AppLanguageConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "mute_cfg",
+          "number": 8,
+          "type": "AppMuteConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "group_cfg",
+          "number": 9,
+          "type": "AppGroupConfigs",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "dynamic_modules",
+          "number": 100,
+          "type": "DynamicConfigModule",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.DynamicConfigModule": {
+      "fullName": "com.mineplanet.pojo.DynamicConfigModule",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "module_key",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "version",
+          "number": 2,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "fields",
+          "number": 3,
+          "type": "string",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "descriptors",
+          "number": 4,
+          "type": "FieldDescriptor",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.FieldDescriptor": {
+      "fullName": "com.mineplanet.pojo.FieldDescriptor",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "field_key",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "field_type",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "is_required",
+          "number": 3,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "default_val",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppBaseConfigs": {
+      "fullName": "com.mineplanet.pojo.AppBaseConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "domain_root",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "domain_wap",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "sign_rand",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "construct_email",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppWapUrlConfigs": {
+      "fullName": "com.mineplanet.pojo.AppWapUrlConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "user_agreement_url",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "privacy_policy_url",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppRegexConfigs": {
+      "fullName": "com.mineplanet.pojo.AppRegexConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "regex_email",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "regex_password",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "regex_phone",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "regex_nick",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "regex_circle_name",
+          "number": 5,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppPayConfigs": {
+      "fullName": "com.mineplanet.pojo.AppPayConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "circle_pays",
+          "number": 1,
+          "type": "PayMethod",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.PayMethod": {
+      "fullName": "com.mineplanet.pojo.PayMethod",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "method",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "display_name",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "rang_min",
+          "number": 3,
+          "type": "double",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "rang_max",
+          "number": 4,
+          "type": "double",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppOssConfigs": {
+      "fullName": "com.mineplanet.pojo.AppOssConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "oss_host",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "oss_domain",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "cdn_domain",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppLanguageConfigs": {
+      "fullName": "com.mineplanet.pojo.AppLanguageConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "languages",
+          "number": 1,
+          "type": "LanguageMeta",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "lang_code",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.LanguageMeta": {
+      "fullName": "com.mineplanet.pojo.LanguageMeta",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "code",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "name",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "native_name",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "is_default",
+          "number": 4,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppMuteConfigs": {
+      "fullName": "com.mineplanet.pojo.AppMuteConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "durations",
+          "number": 1,
+          "type": "MuteDuration",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.MuteDuration": {
+      "fullName": "com.mineplanet.pojo.MuteDuration",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "label",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "seconds",
+          "number": 2,
+          "type": "int32",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppGroupConfigs": {
+      "fullName": "com.mineplanet.pojo.AppGroupConfigs",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "group_config_pay_notice",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppConfigVersionReq": {
+      "fullName": "com.mineplanet.pojo.AppConfigVersionReq",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "env",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "known_versions",
+          "number": 2,
+          "type": "int64",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "known_lang_packs",
+          "number": 3,
+          "type": "int64",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppConfigVersionRsp": {
+      "fullName": "com.mineplanet.pojo.AppConfigVersionRsp",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/app_config.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "config_versions",
+          "number": 2,
+          "type": "int64",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "lang_pack_versions",
+          "number": 3,
+          "type": "int64",
+          "label": "map",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "has_changes",
+          "number": 4,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLanguageReq": {
+      "fullName": "com.mineplanet.pojo.AppFetchLanguageReq",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "client_version",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLanguageRsp": {
+      "fullName": "com.mineplanet.pojo.AppFetchLanguageRsp",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "languages",
+          "number": 2,
+          "type": "I18nLanguageMeta",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.I18nLanguageMeta": {
+      "fullName": "com.mineplanet.pojo.I18nLanguageMeta",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "code",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "name",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "native_name",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "is_default",
+          "number": 4,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLangPackReq": {
+      "fullName": "com.mineplanet.pojo.AppFetchLangPackReq",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "lang_code",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "client_version",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLangPackRsp": {
+      "fullName": "com.mineplanet.pojo.AppFetchLangPackRsp",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "pack_version",
+          "number": 2,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "strings",
+          "number": 3,
+          "type": "LangStringEntry",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLangDifferenceReq": {
+      "fullName": "com.mineplanet.pojo.AppFetchLangDifferenceReq",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "lang_code",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "since_version",
+          "number": 2,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "client_version",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.AppFetchLangDifferenceRsp": {
+      "fullName": "com.mineplanet.pojo.AppFetchLangDifferenceRsp",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "result",
+          "number": 1,
+          "type": "com.mineplanet.pojo.pb.Result",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "current_version",
+          "number": 2,
+          "type": "int64",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "additions",
+          "number": 3,
+          "type": "LangStringEntry",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "deletions",
+          "number": 4,
+          "type": "string",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.LangStringEntry": {
+      "fullName": "com.mineplanet.pojo.LangStringEntry",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "key",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "value",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "template_type",
+          "number": 3,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "params",
+          "number": 4,
+          "type": "LangParam",
+          "label": "repeated",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "operation_type",
+          "number": 5,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    },
+    "com.mineplanet.pojo.LangParam": {
+      "fullName": "com.mineplanet.pojo.LangParam",
+      "protoFile": "/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/proto/base/i18n.proto",
+      "fields": [
+        {
+          "name": "name",
+          "number": 1,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "type",
+          "number": 2,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "required",
+          "number": 3,
+          "type": "bool",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        },
+        {
+          "name": "default_v",
+          "number": 4,
+          "type": "string",
+          "label": "optional",
+          "oneof": null,
+          "comment": null
+        }
+      ],
+      "nestedTypes": [],
+      "enums": []
+    }
+  }
+}

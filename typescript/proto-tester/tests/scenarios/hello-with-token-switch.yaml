@@ -1,0 +1,18 @@
+name: hello-with-token-switch
+steps:
+  - action: open
+    path: /
+  - action: select-protocol
+    maxType: 2100
+    minType: 2101
+  - action: switch-user
+    userId: user_001
+    screenshot: "01-用户切换完成"
+  - action: fill-form
+    field: name
+    value: "Trae"
+  - action: send
+    screenshot: "02-发送前"
+  - action: wait-response
+    timeoutMs: 5000
+    screenshot: "03-响应已收到"

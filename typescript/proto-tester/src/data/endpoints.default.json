@@ -1,0 +1,1 @@
+{"gateway": {"baseUrl": "http://localhost:8080", "helloPath": "/api/hello"}, "logService": {"baseUrl": "http://localhost:8080", "tracePath": "/api/dev/trace"}}

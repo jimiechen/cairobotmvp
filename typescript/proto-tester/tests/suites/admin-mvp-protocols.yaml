@@ -1,0 +1,44 @@
+name: admin-mvp-protocols
+description: Admin MVP 阶段全协议冒烟
+defaults:
+  env: test
+  user: user_001
+
+cases:
+  # HelloWorld 冒烟
+  - id: hello-001
+    name: HelloWorld 正常请求
+    protocol: [2100, 2101]
+    payload:
+      name: "Trae"
+      langCode: "zh-CN"
+    expect:
+      businessCode: 10200
+
+  # HealthCheck 冒烟
+  - id: health-001
+    name: HealthCheck 正常请求
+    protocol: [2102, 2103]
+    payload: {}
+    expect:
+      businessCode: 10200
+
+  # AppConfigsReq 多模块查询
+  - id: app-config-001
+    name: AppConfigsReq 多模块查询
+    protocol: [6000, 6001]
+    payload:
+      env: "test"
+      clientScope: "proto-tester"
+      clientVersion: "1.0.0"
+      requestedModules: ["hello_cfg", "base_cfg"]
+    expect:
+      businessCode: 10200
+
+  # 无效协议号应返回错误
+  - id: invalid-proto-001
+    name: 无效协议号应返回传输错误
+    protocol: [9999, 9999]
+    payload: {}
+    expect:
+      businessCode: 10501
