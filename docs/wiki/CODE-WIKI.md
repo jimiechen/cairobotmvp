@@ -760,6 +760,54 @@ grep "ValidateSchema\|ValidateValue\|ValidateLangString" \
 # 必须命中
 ```
 
+## 25. proto-tester 协议测试客户端 🆕
+
+### 25.1 架构定位
+
+proto-tester 是研发/QA 团队的**内部协议测试工具**，用于 Protobuf 协议联调场景下的 MessagePacket 构造、发送、响应解析和链路追踪。
+
+```
+开发者 / QA
+    ↓ [Web UI 或 CLI]
+proto-tester（:3001）
+    ↓ [HTTP POST + Bearer Token]
+Gateway（:8080）
+    ↓ [MessagePacket 路由]
+TarsGo 服务
+```
+
+### 25.2 技术选型
+
+| 类别 | 技术 | 说明 |
+|------|------|------|
+| Protobuf 运行时 | google-protobuf 3.21.2 | 与 typescript/web 共享 |
+| JSON 编辑器 | CodeMirror 6 | <250KB，MIT 许可 |
+| UI 框架 | antd 5 | 企业级组件 |
+| 状态管理 | zustand 4.x | Token 100% 内存化 |
+| 本地存储 | idb 8.x | IndexedDB 封装（请求历史） |
+| 构建工具 | vite 5.x | 含覆盖率阈值 |
+
+### 25.3 核心特性
+
+- **元数据驱动**：构建期 `gen-protocols.mjs` 从 .proto 生成 `protocols.json`，运行时零 .proto 依赖
+- **Token 内存化**：不持久化到任何存储，刷新即清空
+- **CSP 硬编码**：`index.html` 内嵌 Content-Security-Policy
+- **CLI 支持**：send / trace / run / capture 四个子命令
+- **5 个预置角色账号**：admin / operator / viewer / user / attacker
+
+### 25.4 安全约束
+
+- ⚠️ **禁止公网部署**
+- 默认绑定 `127.0.0.1:3001`
+- CSP connect-src 仅允许内网 Gateway 地址
+- CLI `--env prod` 在 blocklist 中被拦截
+
+### 25.5 相关文档
+
+- 详细 ADR: [ADR-016](adr/ADR-016-proto-tester.md)
+- 项目 README: `typescript/proto-tester/README.md`
+- 测试覆盖: 100 tests, 81%+ statements coverage
+
 ### 24.5 M0'~M5' 交付清单（2026-05-27 完成）
 
 | 批次 | 层级 | 模块 | 文件数 | 测试数 | 状态 |

@@ -1,0 +1,68 @@
+name: proto-tester
+displayName: Proto Tester（协议测试客户端）
+version: 2.0.0
+description: |
+  自动化执行 MessagePacket + Protobuf 协议联调。
+  支持单次发送、用例集运行、浏览器录屏、traceId 日志聚合四种模式。
+
+commands:
+  - name: send
+    description: 发送单次协议请求
+    args:
+      - name: protocol
+        description: 协议号，格式 maxType/minType（如 2100/2101）
+        required: true
+      - name: payload
+        description: 请求字段 JSON
+        required: true
+      - name: env
+        description: 环境名（dev/test/staging）
+        default: dev
+      - name: user
+        description: 测试用户 ID
+        default: user_001
+    exec: pnpm --filter proto-tester cli send
+
+  - name: run-suite
+    description: 运行测试用例集
+    args:
+      - name: suite
+        description: YAML 用例文件路径
+        required: true
+      - name: env
+        default: dev
+    exec: pnpm --filter proto-tester cli run
+
+  - name: capture
+    description: 浏览器自动化场景执行（含录屏 + 截图）
+    args:
+      - name: scenario
+        description: YAML 场景文件路径
+        required: true
+      - name: video
+        description: 是否录屏（on/off）
+        default: "on"
+    exec: pnpm --filter proto-tester cli capture
+
+  - name: trace
+    description: 根据 traceId 聚合服务端日志
+    args:
+      - name: id
+        description: traceId
+        required: true
+      - name: since
+        description: 时间窗口（如 5m / 1h）
+        default: 5m
+    exec: pnpm --filter proto-tester cli trace
+
+constraints:
+  envBlocklist: ["prod"]
+  maxParallelCases: 4
+  maxCasesPerSuite: 100
+  timeoutSeconds: 600
+  captureMaxParallel: 1
+
+output:
+  format: markdown+junit
+  baseDir: ./proto-tester-reports/
+  retentionDays: 7
