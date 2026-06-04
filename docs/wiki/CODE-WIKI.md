@@ -124,6 +124,7 @@ routes:
 # 6009/6010: 配置与语言包版本轮询
 - request_max: 6000
   request_min: 6009
+  route_key: "6000:6009"
   command_name: AppConfigVersion
   tars_server: ConfigServer
   tars_servant: ConfigObj
@@ -132,6 +133,8 @@ routes:
 # 6003/6004: 语言元数据
 - request_max: 6000
   request_min: 6003
+  route_key: "6000:6003"
+  command_name: GetAppLanguage
   tars_server: I18nServer
   tars_servant: I18nObj
   tars_method: GetAppLanguage
@@ -139,6 +142,8 @@ routes:
 # 6005/6006: 全量语言包
 - request_max: 6000
   request_min: 6005
+  route_key: "6000:6005"
+  command_name: GetLangPack
   tars_server: I18nServer
   tars_servant: I18nObj
   tars_method: GetLangPack
@@ -146,6 +151,8 @@ routes:
 # 6007/6008: 增量语言包
 - request_max: 6000
   request_min: 6007
+  route_key: "6000:6007"
+  command_name: GetLangDifference
   tars_server: I18nServer
   tars_servant: I18nObj
   tars_method: GetLangDifference
