@@ -6,7 +6,7 @@
 -- 前置: 必须先执行 002_s1_mysql_tables.sql
 -- ============================================================
 
-USE cairobot_db;
+USE go_biz;
 
 -- ---- 种子数据：初始配置模块 schema 注册 ----
 INSERT IGNORE INTO sys_config_schema (module_key, field_key, field_type, default_value, description, sort_order) VALUES

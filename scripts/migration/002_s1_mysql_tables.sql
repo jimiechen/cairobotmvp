@@ -8,14 +8,14 @@
 --   - docs/prd/global-config-i18n-implementation-plan.md §5
 --   - ADR-009-config-i18n-schema-template
 -- 目标数据库: MySQL 8.0+
--- 数据库: cairobot_db（由 gateway.local.conf 配置）
+-- 数据库: go-biz（业务库：配置中心 + 多语言管理）
 --
 -- 列名规范：与 SQLite 001 迁移脚本 + Go Domain 类型 + Repository SQL 对齐
 -- ============================================================
 
 -- ---- 前置：确保数据库存在 ----
-CREATE DATABASE IF NOT EXISTS cairobot_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE cairobot_db;
+CREATE DATABASE IF NOT EXISTS go_biz DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE go_biz;
 
 -- ---- 1. sys_config_schema 配置字段元数据注册表 ----
 -- 与 001 SQLite 结构一致，使用 MySQL 类型
