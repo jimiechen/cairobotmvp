@@ -1,0 +1,172 @@
+# E2E Regression Suite — 回归用例集
+#
+# 执行方式：
+#   # 基础回归（无 Token）
+#   npx proto-tester run --suite ./docs/reports/testing/e2e-acceptance/E2E-REGRESSION-SUITE.yaml --env dev
+#
+#   # 含 Token 回归
+#   npx proto-tester run --suite ./docs/reports/testing/e2e-acceptance/E2E-REGRESSION-SUITE.yaml \
+#     --env dev --token "<valid-jwt>"
+#
+# 业务码：10200=SUCCESS / 10400=BAD_REQUEST / 10401=UNAUTHORIZED /
+#         10404=NOT_FOUND / 10500=INTERNAL_ERROR
+#
+# TarsGo 相关用例（REG-033）标记为 BLOCKED，不纳入可执行路径。
+
+name: "E2E Regression Suite"
+description: |
+  回归用例集：data 编码一致性、字段缺失、字段类型错误、服务不可达、
+  超时处理、并发 traceId、边界 payload、TarsGo BLOCKED。
+
+defaults:
+  env: "dev"
+
+cases:
+  # ============================================================
+  # REG-025: MessagePacket data 编码一致性（P0）
+  # ============================================================
+  - id: "E2E-REG-025-a"
+    name: "data 编码一致性 — 6000 段 JSON-bytes 兼容性验证"
+    protocol: [6000, 6001]
+    payload: {}
+    expect:
+      businessCode: 10200
+    notes: "proto-tester 发送 JSON-string-bytes，LocalInvoker 6000 段使用 json.Unmarshal，应兼容"
+
+  - id: "E2E-REG-025-b"
+    name: "data 编码一致性 — 2100 段 protobuf vs JSON 行为差异记录"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10200
+    notes: "Health handler 可能期望 protobuf bytes。若失败关联编码问题则不判 FAIL，记录为 REG-025 观察项"
+
+  # ============================================================
+  # REG-026: 字段缺失边界（P1）
+  # ============================================================
+  - id: "E2E-REG-026-c"
+    name: "字段缺失 — data 为空"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10400
+      errorMessage:
+        matcher: "contains"
+        value: "data is empty"
+    notes: "当前 proto-tester runner 总是序列化 payload 为非空 bytes，此用例可能需 send 命令手动构造空 data"
+
+  # ============================================================
+  # REG-027: 字段类型错误（P1）
+  # ============================================================
+  - id: "E2E-REG-027-b"
+    name: "body 非 Protobuf 二进制 — 纯文本 body"
+    protocol: [2100, 2097]
+    payload:
+      _malformed: true
+    expect:
+      businessCode: 10400
+      errorMessage:
+        matcher: "contains"
+        value: "invalid message packet"
+    notes: "runner 总是通过 encodePacket 生成合法 protobuf，此用例可能需 curl 直接发送"
+
+  # ============================================================
+  # REG-028: 下游服务不可达（P1）
+  # ============================================================
+  - id: "E2E-REG-028-a"
+    name: "LocalInvoker handler 未注册 — 未匹配的 TargetKey"
+    protocol: [7000, 1001]
+    payload: {}
+    expect:
+      businessCode: 10404
+      errorMessage:
+        matcher: "contains"
+        value: "handler not found"
+    notes: "7000 段未在 routes.yaml 中注册，应触发 route not found(10404) 或 handler not found(10404)"
+
+  # ============================================================
+  # REG-029: timeout_ms 超时处理（P2）
+  # ============================================================
+  - id: "E2E-REG-029-a"
+    name: "Health 正常响应在 timeout_ms 内"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10200
+    notes: "routes.yaml Health timeout_ms=3000，正常响应应在 3s 内返回"
+
+  - id: "E2E-REG-029-b"
+    name: "Config 正常响应在 timeout_ms 内"
+    protocol: [6000, 6001]
+    payload: {}
+    expect:
+      businessCode: 10200
+    notes: "routes.yaml Config timeout_ms=5000，正常响应应在 5s 内返回"
+
+  # ============================================================
+  # REG-030: 并发 traceId 不串用（P1）
+  # ============================================================
+  - id: "E2E-REG-030-a"
+    name: "并发请求 — Health × 3 traceId 不重复"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10200
+    notes: "执行时使用 --parallel 3，检查 traces-index.json 中 traceId 互不相同"
+
+  # ============================================================
+  # REG-031: 边界 payload（P2）
+  # ============================================================
+  - id: "E2E-REG-031-a"
+    name: "空 payload {}"
+    protocol: [6000, 6003]
+    payload: {}
+    expect:
+      businessCode: 10200
+
+  - id: "E2E-REG-031-c"
+    name: "特殊字符 payload — unicode/emoji"
+    protocol: [2100, 2101]
+    payload:
+      name: "测试🎯用户_αβγ"
+      memo: "line1\nline2\ttab"
+    expect:
+      businessCode: 10200
+
+  # ============================================================
+  # REG-032: invalidate 事件兼容性（P2）
+  # ============================================================
+  - id: "E2E-REG-032-a"
+    name: "AppConfigVersion 轮询 — 版本检测"
+    protocol: [6000, 6009]
+    payload:
+      env: "dev"
+      known_versions: {}
+    expect:
+      businessCode: 10200
+
+  - id: "E2E-REG-032-b"
+    name: "GetLangDifference 增量获取"
+    protocol: [6000, 6007]
+    payload:
+      lang_code: "zh-CN"
+      since_version: 0
+      client_version: "1.0.0"
+      env: "dev"
+    expect:
+      businessCode: 10200
+
+  # ============================================================
+  # REG-034: Method Not Allowed（P1）
+  # ============================================================
+  # 注意：runner 只发送 POST 请求。GET/PUT 测试需用 curl。
+  # 此处仅作为 suite 结构占位，实际执行建议用 wrapper 脚本。
+  - id: "E2E-REG-034-note"
+    name: "[占位] Method Not Allowed — 需 curl 手动执行"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10400
+    notes: "GET /api/hello 应返回 405。proto-tester runner 仅支持 POST，需单独 curl 验证"
+    blocked: true
+    blockReason: "proto-tester runner 不支持非 POST 方法，需 wrapper 脚本或 curl 补充"

@@ -1,0 +1,55 @@
+# E2E MVP Suite — Token Part（需要 Bearer Token 的路由）
+#
+# 执行方式：
+#   npx proto-tester run --suite ./docs/reports/testing/e2e-acceptance/E2E-MVP-SUITE-TOKEN.yaml \
+#     --env dev --token "<valid-jwt>"
+#
+# 注意：proto-tester runner 当前在 suite 级别传递 token（opts.token），
+#       所有 case 共享同一 token。如需测试缺失/错误 token，请使用 send 命令。
+
+name: "E2E MVP Suite — With Token"
+description: |
+  MVP 必选用例集 Part B：需要 Bearer Token 的路由。
+  包含 Config 正向、I18n 有 auth 正向。
+  对应 caseId: E2E-MVP-004, E2E-MVP-008
+
+defaults:
+  env: "dev"
+
+cases:
+  # ============================================================
+  # E2E-MVP-004: GetAppConfigs 正向（有效 Token，P0）
+  # ============================================================
+  - id: "E2E-MVP-004"
+    name: "GetAppConfigs 正向 — 有效 Bearer Token 6000:6001"
+    protocol: [6000, 6001]
+    payload: {}
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "maxType"
+          matcher: "exact"
+          value: 6000
+        - field: "minType"
+          matcher: "exact"
+          value: 6002
+
+  # ============================================================
+  # E2E-MVP-008: GetLangPack 正向（有效 Token，P0）
+  # ============================================================
+  - id: "E2E-MVP-008"
+    name: "GetLangPack 正向 — 需要 Token 6000:6005"
+    protocol: [6000, 6005]
+    payload:
+      lang_code: "zh-CN"
+      client_version: "1.0.0"
+      env: "dev"
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "maxType"
+          matcher: "exact"
+          value: 6000
+        - field: "minType"
+          matcher: "exact"
+          value: 6006

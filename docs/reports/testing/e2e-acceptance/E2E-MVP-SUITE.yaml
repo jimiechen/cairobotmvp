@@ -1,0 +1,110 @@
+# E2E MVP Suite — proto-tester run 可执行用例集
+#
+# 执行方式：
+#   # 无 Token 用例集（Health / Hello / I18n 无 auth / 路由不存在）
+#   npx proto-tester run --suite ./docs/reports/testing/e2e-acceptance/E2E-MVP-SUITE.yaml --env dev
+#
+#   # 有 Token 用例集（Config / I18n 需 auth）
+#   npx proto-tester run --suite ./docs/reports/testing/e2e-acceptance/E2E-MVP-SUITE-TOKEN.yaml --env dev --token "<valid-jwt>"
+#
+#   # 负向 Token 用例（缺失/错误 Token）需通过 send 命令单独执行：
+#   npx proto-tester send --max 6000 --min 6001              # 缺失 Token（MVP-005）
+#   npx proto-tester send --max 6000 --min 6001 --token "bad"  # 错误 Token（MVP-006）
+#
+# 业务码定义（errors.ts）：
+#   10200 = SUCCESS    | 10400 = BAD_REQUEST
+#   10401 = UNAUTHORIZED | 10404 = NOT_FOUND
+#   10500 = INTERNAL_ERROR
+#
+# YAML Schema 符合 schema.ts SuiteSchema 定义
+
+name: "E2E MVP Suite — No Token"
+description: |
+  MVP 必选用例集 Part A：无需 Bearer Token 的路由。
+  包含 Health 正向、Hello 正向、I18n 无 auth 正向、路由未找到。
+  对应 caseId: E2E-MVP-002, E2E-MVP-003, E2E-MVP-007, E2E-MVP-009, E2E-MVP-010
+
+defaults:
+  env: "dev"
+
+cases:
+  # ============================================================
+  # E2E-MVP-002: ServiceHealthCheck 正向（已启用协议，P0）
+  # ============================================================
+  - id: "E2E-MVP-002"
+    name: "ServiceHealthCheck 正向 — 已启用协议 2100:2097"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "maxType"
+          matcher: "exact"
+          value: 2100
+        - field: "minType"
+          matcher: "exact"
+          value: 2098
+
+  # ============================================================
+  # E2E-MVP-003: HelloWorld 正向（草案协议，P1）
+  # ============================================================
+  - id: "E2E-MVP-003"
+    name: "HelloWorld 正向 — 草案协议 2100:2101"
+    protocol: [2100, 2101]
+    payload:
+      name: "e2e-tester"
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "maxType"
+          matcher: "exact"
+          value: 2100
+        - field: "minType"
+          matcher: "exact"
+          value: 2102
+
+  # ============================================================
+  # E2E-MVP-007: GetAppLanguage 正向（无需 Token，P0）
+  # ============================================================
+  - id: "E2E-MVP-007"
+    name: "GetAppLanguage 正向 — 无需 Token 6000:6003"
+    protocol: [6000, 6003]
+    payload:
+      client_version: "1.0.0"
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "maxType"
+          matcher: "exact"
+          value: 6000
+        - field: "minType"
+          matcher: "exact"
+          value: 6004
+
+  # ============================================================
+  # E2E-MVP-009: 路由未找到（P0）
+  # ============================================================
+  - id: "E2E-MVP-009"
+    name: "路由未找到 — 不存在的 maxType/minType 9999:9999"
+    protocol: [9999, 9999]
+    payload:
+      test: "route_not_found"
+    expect:
+      businessCode: 10404
+      errorMessage:
+        matcher: "contains"
+        value: "not found"
+
+  # ============================================================
+  # E2E-MVP-010: traceId 贯穿验证（P1）
+  # ============================================================
+  - id: "E2E-MVP-010"
+    name: "traceId 全链路贯穿 — 请求/响应 traceId 一致"
+    protocol: [2100, 2097]
+    payload: {}
+    expect:
+      businessCode: 10200
+      responseFields:
+        - field: "extend.traceId"
+          matcher: "exists"
+          value: null
