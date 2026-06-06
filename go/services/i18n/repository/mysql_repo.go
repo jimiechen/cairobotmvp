@@ -51,7 +51,7 @@ func NewMySQLRepo(cfg *config.MySQLConfig) (*MySQLRepo, error) {
 // GetPackByLangCode 根据语言代码查询语言包
 func (r *MySQLRepo) GetPackByLangCode(langCode string, env string) (*domain.LangPack, error) {
 	query := `
-		SELECT id, lang_code, lang_name, env, version, created_at, updated_at
+		SELECT id, pack_name, lang_code, env, version, description, is_published, published_at, published_by, created_at, updated_at
 		FROM sys_lang_pack
 		WHERE lang_code = ? AND env = ?
 		LIMIT 1
@@ -63,9 +63,11 @@ func (r *MySQLRepo) GetPackByLangCode(langCode string, env string) (*domain.Lang
 // GetStringsByPackID 根据语言包 ID 查询所有字符串
 func (r *MySQLRepo) GetStringsByPackID(packID int64) ([]domain.LangString, error) {
 	query := `
-		SELECT id, pack_id, string_key, string_value, param_schema, operation_type, version, create_by, update_by, created_at, updated_at
+		SELECT id, pack_id, string_key, string_value, group_name, version,
+		       operation_type, prev_value, template_type, params_schema, preview_sample,
+		       create_by, update_by, created_at, updated_at
 		FROM sys_lang_string
-		WHERE pack_id = ? AND operation_type != 'DEL'
+		WHERE pack_id = ? AND operation_type != 'DELETE'
 		ORDER BY string_key
 	`
 	rows, err := r.db.Query(query, packID)
@@ -88,9 +90,11 @@ func (r *MySQLRepo) GetStringsByPackID(packID int64) ([]domain.LangString, error
 // GetDiffSince 查询指定版本之后的增量变更
 func (r *MySQLRepo) GetDiffSince(packID int64, sinceVersion int) ([]domain.LangString, error) {
 	query := `
-		SELECT id, pack_id, string_key, string_value, param_schema, operation_type, version, create_by, update_by, created_at, updated_at
+		SELECT id, pack_id, string_key, string_value, group_name, version,
+		       operation_type, prev_value, template_type, params_schema, preview_sample,
+		       create_by, update_by, created_at, updated_at
 		FROM sys_lang_string
-		WHERE pack_id = ? AND version > ? AND operation_type != 'DEL'
+		WHERE pack_id = ? AND version > ? AND operation_type != 'DELETE'
 		ORDER BY version ASC, string_key
 	`
 	rows, err := r.db.Query(query, packID, sinceVersion)
@@ -113,7 +117,7 @@ func (r *MySQLRepo) GetDiffSince(packID int64, sinceVersion int) ([]domain.LangS
 // ListPacks 列出所有已发布的语言包
 func (r *MySQLRepo) ListPacks(env string) ([]domain.LangPack, error) {
 	query := `
-		SELECT id, lang_code, lang_name, env, version, created_at, updated_at
+		SELECT id, pack_name, lang_code, env, version, description, is_published, published_at, published_by, created_at, updated_at
 		FROM sys_lang_pack
 		WHERE env = ?
 		ORDER BY lang_code
@@ -135,16 +139,21 @@ func (r *MySQLRepo) ListPacks(env string) ([]domain.LangPack, error) {
 	return packs, rows.Err()
 }
 
-// scanLangPack 从 sql.Row 扫描 LangPack
+// scanLangPack 从 sql.Row 扫描 LangPack（与 GetPackByLangCode SELECT 对齐）
 func scanLangPack(row *sql.Row) (*domain.LangPack, error) {
 	var pack domain.LangPack
-	var langName string
+	var publishedAt sql.NullTime
+	var publishedBy sql.NullInt64
 	err := row.Scan(
 		&pack.ID,
+		&pack.PackName,
 		&pack.LangCode,
-		&langName,
 		&pack.Env,
 		&pack.Version,
+		&pack.Description,
+		&pack.IsPublished,
+		&publishedAt,
+		&publishedBy,
 		&pack.CreatedAt,
 		&pack.UpdatedAt,
 	)
@@ -154,53 +163,84 @@ func scanLangPack(row *sql.Row) (*domain.LangPack, error) {
 		}
 		return nil, fmt.Errorf("扫描语言包失败: %w", err)
 	}
-	pack.PackName = langName
+	if publishedAt.Valid {
+		pack.PublishedAt = &publishedAt.Time
+	}
+	if publishedBy.Valid {
+		pack.PublishedBy = publishedBy.Int64
+	}
 	return &pack, nil
 }
 
-// scanLangPackRows 从 sql.Rows 扫描 LangPack
+// scanLangPackRows 从 sql.Rows 扫描 LangPack（与 ListPacks SELECT 对齐）
 func scanLangPackRows(rows *sql.Rows) (*domain.LangPack, error) {
 	var pack domain.LangPack
-	var langName string
+	var publishedAt sql.NullTime
+	var publishedBy sql.NullInt64
 	err := rows.Scan(
 		&pack.ID,
+		&pack.PackName,
 		&pack.LangCode,
-		&langName,
 		&pack.Env,
 		&pack.Version,
+		&pack.Description,
+		&pack.IsPublished,
+		&publishedAt,
+		&publishedBy,
 		&pack.CreatedAt,
 		&pack.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("扫描语言包失败: %w", err)
 	}
-	pack.PackName = langName
+	if publishedAt.Valid {
+		pack.PublishedAt = &publishedAt.Time
+	}
+	if publishedBy.Valid {
+		pack.PublishedBy = publishedBy.Int64
+	}
 	return &pack, nil
 }
 
-// scanLangString 从 sql.Rows 扫描 LangString
+// scanLangString 从 sql.Rows 扫描 LangString（与 GetStringsByPackID SELECT 对齐）
 func scanLangString(rows *sql.Rows) (*domain.LangString, error) {
 	var s domain.LangString
-	var paramSchema sql.NullString
+	var prevValue, paramsSchema, previewSample, createBy, updateBy sql.NullString
+	var templateType sql.NullString
 
 	err := rows.Scan(
 		&s.ID,
 		&s.PackID,
 		&s.StringKey,
 		&s.StringValue,
-		&paramSchema,
-		&s.OperationType,
+		&s.GroupName,
 		&s.Version,
+		&s.OperationType,
+		&prevValue,
+		&templateType,
+		&paramsSchema,
+		&previewSample,
+		&createBy,
+		&updateBy,
 		&s.CreatedAt,
 		&s.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("扫描语言字符串失败: %w", err)
 	}
-
-	if paramSchema.Valid {
-		s.ParamsSchema = paramSchema.String
+	if prevValue.Valid {
+		s.PrevValue = &prevValue.String
 	}
+	if templateType.Valid {
+		s.TemplateType = domain.TemplateType(templateType.String)
+	}
+	if paramsSchema.Valid {
+		s.ParamsSchema = paramsSchema.String
+	}
+	if previewSample.Valid {
+		s.PreviewSample = previewSample.String
+	}
+	// create_by / update_by 不映射到 Domain（Domain 无此字段）
 
 	return &s, nil
 }
@@ -231,7 +271,7 @@ func (r *MySQLRepo) SaveString(s *domain.LangString) error {
 
 // DeleteString 标记删除一条语言字符串
 func (r *MySQLRepo) DeleteString(id int64) error {
-	query := `UPDATE sys_lang_string SET operation_type='DEL', updated_at=NOW() WHERE id=?`
+	query := `UPDATE sys_lang_string SET operation_type='DELETE', updated_at=NOW() WHERE id=?`
 	_, err := r.db.Exec(query, id)
 	return err
 }
@@ -247,25 +287,31 @@ func (r *MySQLRepo) PublishPack(packID int64, version int) error {
 func (r *MySQLRepo) FindStringByKey(packID int64, key domain.StringKey) (*domain.LangString, error) {
 	query := `SELECT id, pack_id, string_key, string_value, group_name, version,
 	          operation_type, prev_value, template_type, params_schema, preview_sample,
-	          created_at, updated_at FROM sys_lang_string WHERE pack_id=? AND string_key=? AND operation_type!='DEL' LIMIT 1`
+	          created_at, updated_at FROM sys_lang_string WHERE pack_id=? AND string_key=? AND operation_type!='DELETE' LIMIT 1`
 	row := r.db.QueryRow(query, packID, key)
 	var s domain.LangString
-	var prevValue *string
-	var previewSample *string
-	var createdAtStr, updatedAtStr *string
-	var groupName *string
-	var paramsSchema *string
-	err := row.Scan(&s.ID, &s.PackID, &s.StringKey, &s.StringValue, &groupName,
-		&s.Version, &s.OperationType, &prevValue, &s.TemplateType, &paramsSchema,
-		&previewSample, &createdAtStr, &updatedAtStr)
+	var prevValue, paramsSchema, previewSample sql.NullString
+	var templateType sql.NullString
+	err := row.Scan(&s.ID, &s.PackID, &s.StringKey, &s.StringValue, &s.GroupName,
+		&s.Version, &s.OperationType, &prevValue, &templateType, &paramsSchema,
+		&previewSample, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
-	if groupName != nil { s.GroupName = *groupName }
-	if prevValue != nil { s.PrevValue = prevValue }
-	if paramsSchema != nil { s.ParamsSchema = *paramsSchema }
-	if previewSample != nil { s.PreviewSample = *previewSample }
-	if createdAtStr != nil && *createdAtStr != "" { s.CreatedAt, _ = time.Parse(timeLayout, *createdAtStr) }
-	if updatedAtStr != nil && *updatedAtStr != "" { s.UpdatedAt, _ = time.Parse(timeLayout, *updatedAtStr) }
+	if prevValue.Valid {
+		s.PrevValue = &prevValue.String
+	}
+	if templateType.Valid {
+		s.TemplateType = domain.TemplateType(templateType.String)
+	}
+	if paramsSchema.Valid {
+		s.ParamsSchema = paramsSchema.String
+	}
+	if previewSample.Valid {
+		s.PreviewSample = previewSample.String
+	}
 	return &s, nil
 }

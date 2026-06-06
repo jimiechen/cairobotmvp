@@ -74,7 +74,7 @@ SELECT id, 'greeting.welcome', 'Welcome {name}, you have {count} new messages', 
 FROM sys_lang_pack WHERE lang_code = 'en-US' AND env = 'dev';
 
 -- ---- 种子数据：示例配置版本 ----
-INSERT IGNORE INTO sys_config_version (module_key, env, version, config_data, is_published, publisher, published_at)
+INSERT IGNORE INTO sys_config_version (module_key, env, version, config_json, is_published, publisher, published_at)
 VALUES ('base_config', 'dev', 1,
         '{"app_name":"CaiRobot","debug":true,"max_connections":100,"domain_root":"","sign_salt":""}',
         1, 'system', NOW());

@@ -1,14 +1,16 @@
 -- ============================================================
 -- 迁移脚本: 002_s1_mysql_tables.sql
 -- 用途: S1 阶段 MySQL 表结构（从 001 SQLite 版本适配）
--- 版本: v1.0
+-- 版本: v1.1
 -- 日期: 2026-06-05
 -- 关联文档:
 --   - docs/superpowers/specs/2026-06-05-s1-real-services-auth-design.md §3
 --   - docs/prd/global-config-i18n-implementation-plan.md §5
 --   - ADR-009-config-i18n-schema-template
 -- 目标数据库: MySQL 8.0+
--- 数据库: cairobot_db (由 gateway.local.conf 配置)
+-- 数据库: cairobot_db（由 gateway.local.conf 配置）
+--
+-- 列名规范：与 SQLite 001 迁移脚本 + Go Domain 类型 + Repository SQL 对齐
 -- ============================================================
 
 -- ---- 前置：确保数据库存在 ----
@@ -16,7 +18,9 @@ CREATE DATABASE IF NOT EXISTS cairobot_db DEFAULT CHARACTER SET utf8mb4 COLLATE 
 USE cairobot_db;
 
 -- ---- 1. sys_config_schema 配置字段元数据注册表 ----
--- 与 001 迁移结构一致，使用 MySQL 类型
+-- 与 001 SQLite 结构一致，使用 MySQL 类型
+-- 对应 go/services/config/domain/schema.go FieldSchema
+-- 对应 repository.SchemaRepository 接口
 CREATE TABLE IF NOT EXISTS sys_config_schema (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     module_key    VARCHAR(64) NOT NULL,
@@ -39,14 +43,16 @@ CREATE TABLE IF NOT EXISTS sys_config_schema (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配置字段元数据注册表';
 
 -- ---- 2. sys_config_version 应用配置版本主表 ----
--- config_data 使用 JSON 类型存储完整配置快照
+-- config_json 使用 TEXT 类型（与 SQLite 001 一致，domain.ConfigVersion.ConfigJSON）
+-- 对应 go/services/config/domain/version.go ConfigVersion
+-- 对应 repository.ConfigRepository 接口 + MySQLConfigRepo
 CREATE TABLE IF NOT EXISTS sys_config_version (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     module_key    VARCHAR(64) NOT NULL,
     env           VARCHAR(16) NOT NULL DEFAULT 'dev',
     version       BIGINT NOT NULL DEFAULT 1,
-    config_data   JSON NOT NULL COMMENT '配置内容 JSON',
-    is_published TINYINT(1) NOT NULL DEFAULT 0,
+    config_json   TEXT NOT NULL COMMENT '配置内容 JSON（与 domain.ConfigJSON 字段对应）',
+    is_published  TINYINT(1) NOT NULL DEFAULT 0,
     published_at  DATETIME DEFAULT NULL,
     publisher     VARCHAR(64) DEFAULT NULL,
     created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -59,6 +65,8 @@ CREATE TABLE IF NOT EXISTS sys_config_version (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用配置版本快照表';
 
 -- ---- 3. sys_lang_pack 语言包主表 ----
+-- pack_name 与 SQLite 001 一致（MySQL repo 中 SELECT lang_name 需同步修正为 pack_name）
+-- 对应 go/services/i18n/domain/lang_pack.go LangPack
 CREATE TABLE IF NOT EXISTS sys_lang_pack (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     pack_name     VARCHAR(64) NOT NULL DEFAULT '',
@@ -77,6 +85,9 @@ CREATE TABLE IF NOT EXISTS sys_lang_pack (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='语言包主表';
 
 -- ---- 4. sys_lang_string 语言字符串明细表（含参数化模板支持）----
+-- 对应 go/services/i18n/domain/lang_string.go LangString
+-- params_schema 与 SQLite 001 + Domain.ParamsSchema 一致
+-- create_by / update_by 为 MySQL repo GetStringsByPackID 所需
 CREATE TABLE IF NOT EXISTS sys_lang_string (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
     pack_id        BIGINT NOT NULL,
@@ -87,8 +98,10 @@ CREATE TABLE IF NOT EXISTS sys_lang_string (
     operation_type ENUM('ADD','UPDATE','DELETE') NOT NULL DEFAULT 'ADD',
     prev_value     TEXT,
     template_type  ENUM('plain','named','icu') DEFAULT 'plain' COMMENT '参数化模板类型',
-    params_schema JSON DEFAULT NULL COMMENT '参数定义 JSON Schema',
+    params_schema  JSON DEFAULT NULL COMMENT '参数定义 JSON Schema（与 Domain.ParamsSchema 对应）',
     preview_sample TEXT DEFAULT NULL,
+    create_by      VARCHAR(64) DEFAULT NULL,
+    update_by      VARCHAR(64) DEFAULT NULL,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_pack_string_key (pack_id, string_key),
