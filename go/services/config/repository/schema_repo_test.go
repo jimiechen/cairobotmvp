@@ -97,3 +97,9 @@ func TestSQLiteSchemaRepo_ListByModule_空模块应返回空列表(t *testing.T)
 		t.Errorf("空模块应返回空列表, 实际 %d", len(list))
 	}
 }
+
+// TestMySQLSchemaRepo_InterfaceVerify 编译期接口满足性验证
+// 如果 MySQLSchemaRepo 未实现 SchemaRepository 全部方法，编译将失败
+func TestMySQLSchemaRepo_InterfaceVerify(t *testing.T) {
+	var _ SchemaRepository = (*MySQLSchemaRepo)(nil)
+}
