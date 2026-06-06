@@ -42,19 +42,19 @@ func buildDefaultCheckers(deps module.Deps, extra []health.Checker) []health.Che
 
 	var db mysqlx.DB
 	if deps.DB != nil {
-		if v, ok := deps.DB.(mysqlx.DB); ok {
+		if v, ok := deps.DB.(mysqlx.DB); ok && v != nil {
 			db = v
+			checkers = append(checkers, NewMySQLChecker(db))
 		}
 	}
-	checkers = append(checkers, NewMySQLChecker(db))
 
 	var cache redisx.Client
 	if deps.Cache != nil {
-		if v, ok := deps.Cache.(redisx.Client); ok {
+		if v, ok := deps.Cache.(redisx.Client); ok && v != nil {
 			cache = v
+			checkers = append(checkers, NewRedisChecker(cache))
 		}
 	}
-	checkers = append(checkers, NewRedisChecker(cache))
 
 	checkers = append(checkers, extra...)
 
