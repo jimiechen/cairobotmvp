@@ -142,7 +142,7 @@ func TestRegisterModuleHandlers(t *testing.T) {
 
 func TestModuleHandlerAdapter(t *testing.T) {
 	t.Run("模块服务成功时返回 10200", func(t *testing.T) {
-		svc := hello.NewService()
+		svc := hello.New(buildMinimalDeps())
 		handler := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
 			return svc.SayHello(ctx, req)
 		})

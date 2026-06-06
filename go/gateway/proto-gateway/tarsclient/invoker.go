@@ -10,6 +10,8 @@ import (
 	"github.com/jimiechen/mineplanet/go/modules/hello"
 	"github.com/jimiechen/mineplanet/go/modules/health"
 	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
+	configdomain "github.com/jimiechen/mineplanet/go/services/config/domain"
+	i18ndomain "github.com/jimiechen/mineplanet/go/services/i18n/domain"
 	i18nservice "github.com/jimiechen/mineplanet/go/services/i18n/service"
 )
 
@@ -99,6 +101,54 @@ func (l *noopLogger) Error(_ context.Context, v ...interface{})  { /* no-op for 
 func (l *noopLogger) Errorf(_ context.Context, _ string, _ ...interface{}) {}
 func (l *noopLogger) Warn(_ context.Context, v ...interface{})   { /* no-op for local dev */ }
 func (l *noopLogger) Debug(_ context.Context, v ...interface{})  { /* no-op for local dev */ }
+
+// noopConfigService 空实现的 ConfigService，用于无外部依赖的本地开发模式
+// 返回空配置响应，不连接 SQLite / 外部配置中心
+type noopConfigService struct{}
+
+func (s *noopConfigService) GetAppConfigs(req *configservice.AppConfigRequest) (*configservice.AppConfigResponse, error) {
+	return &configservice.AppConfigResponse{
+		StaticModules:   make(map[string]map[string]*configdomain.TypedValue),
+		DynamicModules: []*configservice.DynamicModuleView{},
+	}, nil
+}
+
+func (s *noopConfigService) GetVersionInfo(env string, knownVersions map[string]int64) (*configservice.VersionInfoResponse, error) {
+	return &configservice.VersionInfoResponse{
+		ConfigVersions: make(map[string]int64),
+		HasChanges:     false,
+	}, nil
+}
+
+// noopI18nService 空实现的 I18nService，用于无外部依赖的本地开发模式
+// 返回默认语言列表和空语言包，不连接 SQLite
+type noopI18nService struct{}
+
+func (s *noopI18nService) GetLanguages(clientVersion string) ([]i18nservice.LanguageMeta, error) {
+	return []i18nservice.LanguageMeta{
+		{Code: "zh-CN", Name: "简体中文", NativeName: "简体中文", IsDefault: true},
+		{Code: "en-US", Name: "English", NativeName: "English", IsDefault: false},
+	}, nil
+}
+
+func (s *noopI18nService) GetLangPack(langCode, clientVersion, env string) (*i18nservice.LangPackResponse, error) {
+	return &i18nservice.LangPackResponse{
+		PackVersion: 1,
+		Strings:     []i18nservice.LangStringEntry{},
+	}, nil
+}
+
+func (s *noopI18nService) GetLangDifference(langCode string, sinceVersion int64, clientVersion, env string) (*i18nservice.LangDiffResponse, error) {
+	return &i18nservice.LangDiffResponse{
+		CurrentVersion: sinceVersion,
+		Additions:      []i18nservice.LangStringEntry{},
+		Deletions:      []string{},
+	}, nil
+}
+
+func (s *noopI18nService) ValidateTemplate(value string, templateType i18ndomain.TemplateType, params []i18ndomain.LangParam) error {
+	return nil // noop: always pass
+}
 
 // Register 注册本地 handler
 func (li *LocalInvoker) Register(key TargetKey, handler LocalHandler) {
@@ -325,4 +375,12 @@ func RegisterConfigI18nHandlers(invoker *LocalInvoker, configSvc configservice.C
 		}
 		return json.Marshal(resp)
 	}))
+}
+
+// RegisterAllLocalHandlers 注册所有本地 handler（System + Config + I18n）
+// 使用 noop stub 作为 Config/I18n 服务实现，无需外部依赖
+// Gateway 单体部署模式（local）启动时调用此函数即可完成全部注册
+func RegisterAllLocalHandlers(invoker *LocalInvoker) {
+	RegisterSystemHandlers(invoker)
+	RegisterConfigI18nHandlers(invoker, &noopConfigService{}, &noopI18nService{})
 }

@@ -35,8 +35,8 @@ func main() {
 	var invoker tarsclient.TarsInvoker
 	if mode == "local" {
 		invoker = tarsclient.NewLocalInvoker()
-		tarsclient.RegisterSystemHandlers(invoker.(*tarsclient.LocalInvoker))
-		tars.TLOG.Info("invoker mode=local (monolith TarsGo adapter)")
+		tarsclient.RegisterAllLocalHandlers(invoker.(*tarsclient.LocalInvoker))
+		tars.TLOG.Info("invoker mode=local (monolith TarsGo adapter) | handlers=System+Config+I18n")
 	} else if mode == "tars" {
 		tars.TLOG.Error("tars microservice invoker is not implemented yet")
 		os.Exit(1)
