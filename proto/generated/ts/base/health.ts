@@ -10,12 +10,20 @@ export namespace com.mineplanet.pojo.health {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
             service_name?: string;
+            lang_code?: string;
+            depth?: number;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("service_name" in data && data.service_name != undefined) {
                     this.service_name = data.service_name;
+                }
+                if ("lang_code" in data && data.lang_code != undefined) {
+                    this.lang_code = data.lang_code;
+                }
+                if ("depth" in data && data.depth != undefined) {
+                    this.depth = data.depth;
                 }
             }
         }
@@ -25,21 +33,49 @@ export namespace com.mineplanet.pojo.health {
         set service_name(value: string) {
             pb_1.Message.setField(this, 1, value);
         }
+        get lang_code() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set lang_code(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get depth() {
+            return pb_1.Message.getFieldWithDefault(this, 3, 0) as number;
+        }
+        set depth(value: number) {
+            pb_1.Message.setField(this, 3, value);
+        }
         static fromObject(data: {
             service_name?: string;
+            lang_code?: string;
+            depth?: number;
         }): ServiceHealthCheckRequest {
             const message = new ServiceHealthCheckRequest({});
             if (data.service_name != null) {
                 message.service_name = data.service_name;
+            }
+            if (data.lang_code != null) {
+                message.lang_code = data.lang_code;
+            }
+            if (data.depth != null) {
+                message.depth = data.depth;
             }
             return message;
         }
         toObject() {
             const data: {
                 service_name?: string;
+                lang_code?: string;
+                depth?: number;
             } = {};
             if (this.service_name != null) {
                 data.service_name = this.service_name;
+            }
+            if (this.lang_code != null) {
+                data.lang_code = this.lang_code;
+            }
+            if (this.depth != null) {
+                data.depth = this.depth;
             }
             return data;
         }
@@ -49,6 +85,10 @@ export namespace com.mineplanet.pojo.health {
             const writer = w || new pb_1.BinaryWriter();
             if (this.service_name.length)
                 writer.writeString(1, this.service_name);
+            if (this.lang_code.length)
+                writer.writeString(2, this.lang_code);
+            if (this.depth != 0)
+                writer.writeInt32(3, this.depth);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -60,6 +100,12 @@ export namespace com.mineplanet.pojo.health {
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.service_name = reader.readString();
+                        break;
+                    case 2:
+                        message.lang_code = reader.readString();
+                        break;
+                    case 3:
+                        message.depth = reader.readInt32();
                         break;
                     default: reader.skipField();
                 }
@@ -80,15 +126,154 @@ export namespace com.mineplanet.pojo.health {
             min = 2097
         }
     }
+    export class ComponentStatus extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            name?: string;
+            healthy?: boolean;
+            latency_ms?: number;
+            error?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("name" in data && data.name != undefined) {
+                    this.name = data.name;
+                }
+                if ("healthy" in data && data.healthy != undefined) {
+                    this.healthy = data.healthy;
+                }
+                if ("latency_ms" in data && data.latency_ms != undefined) {
+                    this.latency_ms = data.latency_ms;
+                }
+                if ("error" in data && data.error != undefined) {
+                    this.error = data.error;
+                }
+            }
+        }
+        get name() {
+            return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+        }
+        set name(value: string) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        get healthy() {
+            return pb_1.Message.getFieldWithDefault(this, 2, false) as boolean;
+        }
+        set healthy(value: boolean) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get latency_ms() {
+            return pb_1.Message.getFieldWithDefault(this, 3, 0) as number;
+        }
+        set latency_ms(value: number) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        get error() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set error(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        static fromObject(data: {
+            name?: string;
+            healthy?: boolean;
+            latency_ms?: number;
+            error?: string;
+        }): ComponentStatus {
+            const message = new ComponentStatus({});
+            if (data.name != null) {
+                message.name = data.name;
+            }
+            if (data.healthy != null) {
+                message.healthy = data.healthy;
+            }
+            if (data.latency_ms != null) {
+                message.latency_ms = data.latency_ms;
+            }
+            if (data.error != null) {
+                message.error = data.error;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                name?: string;
+                healthy?: boolean;
+                latency_ms?: number;
+                error?: string;
+            } = {};
+            if (this.name != null) {
+                data.name = this.name;
+            }
+            if (this.healthy != null) {
+                data.healthy = this.healthy;
+            }
+            if (this.latency_ms != null) {
+                data.latency_ms = this.latency_ms;
+            }
+            if (this.error != null) {
+                data.error = this.error;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.name.length)
+                writer.writeString(1, this.name);
+            if (this.healthy != false)
+                writer.writeBool(2, this.healthy);
+            if (this.latency_ms != 0)
+                writer.writeInt64(3, this.latency_ms);
+            if (this.error.length)
+                writer.writeString(4, this.error);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ComponentStatus {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ComponentStatus();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.name = reader.readString();
+                        break;
+                    case 2:
+                        message.healthy = reader.readBool();
+                        break;
+                    case 3:
+                        message.latency_ms = reader.readInt64();
+                        break;
+                    case 4:
+                        message.error = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): ComponentStatus {
+            return ComponentStatus.deserialize(bytes);
+        }
+    }
     export class ServiceHealthCheckResponse extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
             result?: dependency_1.com.mineplanet.pojo.pb.Result;
             status?: string;
             timestamp?: number;
+            version?: string;
+            message?: string;
+            components?: ComponentStatus[];
         }) {
             super();
-            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [6], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("result" in data && data.result != undefined) {
                     this.result = data.result;
@@ -98,6 +283,15 @@ export namespace com.mineplanet.pojo.health {
                 }
                 if ("timestamp" in data && data.timestamp != undefined) {
                     this.timestamp = data.timestamp;
+                }
+                if ("version" in data && data.version != undefined) {
+                    this.version = data.version;
+                }
+                if ("message" in data && data.message != undefined) {
+                    this.message = data.message;
+                }
+                if ("components" in data && data.components != undefined) {
+                    this.components = data.components;
                 }
             }
         }
@@ -122,10 +316,31 @@ export namespace com.mineplanet.pojo.health {
         set timestamp(value: number) {
             pb_1.Message.setField(this, 3, value);
         }
+        get version() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set version(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        get message() {
+            return pb_1.Message.getFieldWithDefault(this, 5, "") as string;
+        }
+        set message(value: string) {
+            pb_1.Message.setField(this, 5, value);
+        }
+        get components() {
+            return pb_1.Message.getRepeatedWrapperField(this, ComponentStatus, 6) as ComponentStatus[];
+        }
+        set components(value: ComponentStatus[]) {
+            pb_1.Message.setRepeatedWrapperField(this, 6, value);
+        }
         static fromObject(data: {
             result?: ReturnType<typeof dependency_1.com.mineplanet.pojo.pb.Result.prototype.toObject>;
             status?: string;
             timestamp?: number;
+            version?: string;
+            message?: string;
+            components?: ReturnType<typeof ComponentStatus.prototype.toObject>[];
         }): ServiceHealthCheckResponse {
             const message = new ServiceHealthCheckResponse({});
             if (data.result != null) {
@@ -137,6 +352,15 @@ export namespace com.mineplanet.pojo.health {
             if (data.timestamp != null) {
                 message.timestamp = data.timestamp;
             }
+            if (data.version != null) {
+                message.version = data.version;
+            }
+            if (data.message != null) {
+                message.message = data.message;
+            }
+            if (data.components != null) {
+                message.components = data.components.map(item => ComponentStatus.fromObject(item));
+            }
             return message;
         }
         toObject() {
@@ -144,6 +368,9 @@ export namespace com.mineplanet.pojo.health {
                 result?: ReturnType<typeof dependency_1.com.mineplanet.pojo.pb.Result.prototype.toObject>;
                 status?: string;
                 timestamp?: number;
+                version?: string;
+                message?: string;
+                components?: ReturnType<typeof ComponentStatus.prototype.toObject>[];
             } = {};
             if (this.result != null) {
                 data.result = this.result.toObject();
@@ -153,6 +380,15 @@ export namespace com.mineplanet.pojo.health {
             }
             if (this.timestamp != null) {
                 data.timestamp = this.timestamp;
+            }
+            if (this.version != null) {
+                data.version = this.version;
+            }
+            if (this.message != null) {
+                data.message = this.message;
+            }
+            if (this.components != null) {
+                data.components = this.components.map((item: ComponentStatus) => item.toObject());
             }
             return data;
         }
@@ -166,6 +402,12 @@ export namespace com.mineplanet.pojo.health {
                 writer.writeString(2, this.status);
             if (this.timestamp != 0)
                 writer.writeInt64(3, this.timestamp);
+            if (this.version.length)
+                writer.writeString(4, this.version);
+            if (this.message.length)
+                writer.writeString(5, this.message);
+            if (this.components.length)
+                writer.writeRepeatedMessage(6, this.components, (item: ComponentStatus) => item.serialize(writer));
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -183,6 +425,15 @@ export namespace com.mineplanet.pojo.health {
                         break;
                     case 3:
                         message.timestamp = reader.readInt64();
+                        break;
+                    case 4:
+                        message.version = reader.readString();
+                        break;
+                    case 5:
+                        message.message = reader.readString();
+                        break;
+                    case 6:
+                        reader.readMessage(message.components, () => pb_1.Message.addToRepeatedWrapperField(message, 6, ComponentStatus.deserialize(reader), ComponentStatus));
                         break;
                     default: reader.skipField();
                 }

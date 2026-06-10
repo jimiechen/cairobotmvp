@@ -10,12 +10,16 @@ export namespace com.mineplanet.pojo.hello {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
             name?: string;
+            lang_code?: string;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("name" in data && data.name != undefined) {
                     this.name = data.name;
+                }
+                if ("lang_code" in data && data.lang_code != undefined) {
+                    this.lang_code = data.lang_code;
                 }
             }
         }
@@ -25,21 +29,35 @@ export namespace com.mineplanet.pojo.hello {
         set name(value: string) {
             pb_1.Message.setField(this, 1, value);
         }
+        get lang_code() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set lang_code(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
         static fromObject(data: {
             name?: string;
+            lang_code?: string;
         }): HelloWorldRequest {
             const message = new HelloWorldRequest({});
             if (data.name != null) {
                 message.name = data.name;
+            }
+            if (data.lang_code != null) {
+                message.lang_code = data.lang_code;
             }
             return message;
         }
         toObject() {
             const data: {
                 name?: string;
+                lang_code?: string;
             } = {};
             if (this.name != null) {
                 data.name = this.name;
+            }
+            if (this.lang_code != null) {
+                data.lang_code = this.lang_code;
             }
             return data;
         }
@@ -49,6 +67,8 @@ export namespace com.mineplanet.pojo.hello {
             const writer = w || new pb_1.BinaryWriter();
             if (this.name.length)
                 writer.writeString(1, this.name);
+            if (this.lang_code.length)
+                writer.writeString(2, this.lang_code);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -60,6 +80,9 @@ export namespace com.mineplanet.pojo.hello {
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.name = reader.readString();
+                        break;
+                    case 2:
+                        message.lang_code = reader.readString();
                         break;
                     default: reader.skipField();
                 }
@@ -86,6 +109,9 @@ export namespace com.mineplanet.pojo.hello {
             result?: dependency_1.com.mineplanet.pojo.pb.Result;
             message?: string;
             timestamp?: number;
+            greeting?: string;
+            server_name?: string;
+            max_name_length?: number;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -98,6 +124,15 @@ export namespace com.mineplanet.pojo.hello {
                 }
                 if ("timestamp" in data && data.timestamp != undefined) {
                     this.timestamp = data.timestamp;
+                }
+                if ("greeting" in data && data.greeting != undefined) {
+                    this.greeting = data.greeting;
+                }
+                if ("server_name" in data && data.server_name != undefined) {
+                    this.server_name = data.server_name;
+                }
+                if ("max_name_length" in data && data.max_name_length != undefined) {
+                    this.max_name_length = data.max_name_length;
                 }
             }
         }
@@ -122,10 +157,31 @@ export namespace com.mineplanet.pojo.hello {
         set timestamp(value: number) {
             pb_1.Message.setField(this, 3, value);
         }
+        get greeting() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set greeting(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        get server_name() {
+            return pb_1.Message.getFieldWithDefault(this, 5, "") as string;
+        }
+        set server_name(value: string) {
+            pb_1.Message.setField(this, 5, value);
+        }
+        get max_name_length() {
+            return pb_1.Message.getFieldWithDefault(this, 6, 0) as number;
+        }
+        set max_name_length(value: number) {
+            pb_1.Message.setField(this, 6, value);
+        }
         static fromObject(data: {
             result?: ReturnType<typeof dependency_1.com.mineplanet.pojo.pb.Result.prototype.toObject>;
             message?: string;
             timestamp?: number;
+            greeting?: string;
+            server_name?: string;
+            max_name_length?: number;
         }): HelloWorldResponse {
             const message = new HelloWorldResponse({});
             if (data.result != null) {
@@ -137,6 +193,15 @@ export namespace com.mineplanet.pojo.hello {
             if (data.timestamp != null) {
                 message.timestamp = data.timestamp;
             }
+            if (data.greeting != null) {
+                message.greeting = data.greeting;
+            }
+            if (data.server_name != null) {
+                message.server_name = data.server_name;
+            }
+            if (data.max_name_length != null) {
+                message.max_name_length = data.max_name_length;
+            }
             return message;
         }
         toObject() {
@@ -144,6 +209,9 @@ export namespace com.mineplanet.pojo.hello {
                 result?: ReturnType<typeof dependency_1.com.mineplanet.pojo.pb.Result.prototype.toObject>;
                 message?: string;
                 timestamp?: number;
+                greeting?: string;
+                server_name?: string;
+                max_name_length?: number;
             } = {};
             if (this.result != null) {
                 data.result = this.result.toObject();
@@ -153,6 +221,15 @@ export namespace com.mineplanet.pojo.hello {
             }
             if (this.timestamp != null) {
                 data.timestamp = this.timestamp;
+            }
+            if (this.greeting != null) {
+                data.greeting = this.greeting;
+            }
+            if (this.server_name != null) {
+                data.server_name = this.server_name;
+            }
+            if (this.max_name_length != null) {
+                data.max_name_length = this.max_name_length;
             }
             return data;
         }
@@ -166,6 +243,12 @@ export namespace com.mineplanet.pojo.hello {
                 writer.writeString(2, this.message);
             if (this.timestamp != 0)
                 writer.writeInt64(3, this.timestamp);
+            if (this.greeting.length)
+                writer.writeString(4, this.greeting);
+            if (this.server_name.length)
+                writer.writeString(5, this.server_name);
+            if (this.max_name_length != 0)
+                writer.writeInt32(6, this.max_name_length);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -183,6 +266,15 @@ export namespace com.mineplanet.pojo.hello {
                         break;
                     case 3:
                         message.timestamp = reader.readInt64();
+                        break;
+                    case 4:
+                        message.greeting = reader.readString();
+                        break;
+                    case 5:
+                        message.server_name = reader.readString();
+                        break;
+                    case 6:
+                        message.max_name_length = reader.readInt32();
                         break;
                     default: reader.skipField();
                 }

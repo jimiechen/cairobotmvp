@@ -18,11 +18,11 @@
  * - Token 验证逻辑
  */
 import React, { useCallback, useMemo } from 'react';
-import { Button, Space, Alert, Typography, Tooltip } from 'antd';
+import { Button, Space, Alert, Typography, Tooltip, Tag, message } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
-  LoadIcon,
+  DownloadOutlined,
   ClearOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
@@ -148,7 +148,7 @@ export default function TokenInjector(_props: TokenInjectorProps) {
       <Space wrap>
         <Tooltip title="从当前选中用户的配置中装载 Token">
           <Button
-            icon={<LoadOutlined />}
+            icon={<DownloadOutlined />}
             onClick={handleLoad}
             disabled={!selectedUserId}
           >

@@ -12,11 +12,11 @@
  */
 
 import { create } from 'zustand';
-import type { ProtocolMeta } from './protoMetadata';
+import type { ProtocolMeta } from '../lib/protoMetadata';
 import {
   getAllProtocols as fetchAllProtocols,
   searchProtocols as searchFromMetadata,
-} from './protoMetadata';
+} from '../lib/protoMetadata';
 
 /** Protocols Store 状态定义 */
 interface ProtocolsState {

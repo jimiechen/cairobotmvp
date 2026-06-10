@@ -1,1 +1,1 @@
-{"private": true}
+{"private":true,"dependencies":{"google-protobuf":"^4.0.2"}}
