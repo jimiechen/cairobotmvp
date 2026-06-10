@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/jimiechen/mineplanet/go/common-lib/config"
-	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/config"
+	gatewaycfg "github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/config"
+	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/middleware"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/server"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/tarsclient"
+	"github.com/jimiechen/mineplanet/go/tars/auth"
 )
 
 func main() {
@@ -25,7 +28,7 @@ func main() {
 	}
 	tars.ServerConfigPath = configPath
 
-	cfg, err := config.LoadRoutesWithEnv("configs/gateway/routes.yaml")
+	cfg, err := gatewaycfg.LoadRoutesWithEnv("configs/gateway/routes.yaml")
 	if err != nil {
 		tars.TLOG.Error("load routes failed: " + err.Error())
 		os.Exit(1)
@@ -35,6 +38,7 @@ func main() {
 	tars.TLOG.Info("route table loaded, count=" + fmt.Sprintf("%d", len(cfg.Routes)))
 
 	var invoker tarsclient.TarsInvoker
+	var authMw *middleware.AuthMiddleware
 	if mode == "local" {
 		invoker = tarsclient.NewLocalInvoker()
 		tarsclient.RegisterAllLocalHandlers(invoker.(*tarsclient.LocalInvoker))
@@ -50,9 +54,14 @@ func main() {
 			tars.TLOG.Error("BuildRealServices failed: " + err.Error())
 			os.Exit(1)
 		}
+		// S1: 初始化 JWT Auth 中间件
+		jwtSecret := []byte(getEnv("JWT_SECRET", "cairobot-s1-default-secret-change-in-production"))
+		authSvc := auth.NewAuthService(jwtSecret, "cairobot", 24*time.Hour)
+		authMw = middleware.NewAuthMiddleware(authSvc)
+
 		invoker = tarsclient.NewLocalInvoker()
 		tarsclient.RegisterRealHandlers(invoker.(*tarsclient.LocalInvoker), svc)
-		tars.TLOG.Info("invoker mode=mysql (real services from go_biz) | handlers=System+Config+I18n (MySQL)")
+		tars.TLOG.Info("invoker mode=mysql (real services from go_biz) | handlers=System+Config+I18n (MySQL) | auth=JWT enabled")
 	} else if mode == "tars" {
 		tars.TLOG.Error("tars microservice invoker is not implemented yet")
 		os.Exit(1)
@@ -62,7 +71,7 @@ func main() {
 	}
 
 	mux := &tars.TarsHttpMux{}
-	gs := server.NewGatewayServer(rt, invoker, mode)
+	gs := server.NewGatewayServer(rt, invoker, mode, authMw)
 	mux.Handle("/api/hello", gs)
 
 	svrCfg := tars.GetServerConfig()

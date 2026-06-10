@@ -50,7 +50,7 @@ func TestGatewayServer_ServeHTTP(t *testing.T) {
 
 	t.Run("GET returns 405", func(t *testing.T) {
 		invoker := &mockInvoker{returnCode: 10200, response: []byte("ok")}
-		gs := NewGatewayServer(r, invoker, "local")
+		gs := NewGatewayServer(r, invoker, "local", nil)
 		req := httptest.NewRequest(http.MethodGet, "/api/hello", nil)
 		rec := httptest.NewRecorder()
 		gs.ServeHTTP(rec, req)
@@ -61,7 +61,7 @@ func TestGatewayServer_ServeHTTP(t *testing.T) {
 
 	t.Run("wrong Content-Type", func(t *testing.T) {
 		invoker := &mockInvoker{returnCode: 10200, response: []byte("ok")}
-		gs := NewGatewayServer(r, invoker, "local")
+		gs := NewGatewayServer(r, invoker, "local", nil)
 		req := httptest.NewRequest(http.MethodPost, "/api/hello", bytes.NewReader([]byte("test")))
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
@@ -73,7 +73,7 @@ func TestGatewayServer_ServeHTTP(t *testing.T) {
 
 	t.Run("empty body", func(t *testing.T) {
 		invoker := &mockInvoker{returnCode: 10200, response: []byte("ok")}
-		gs := NewGatewayServer(r, invoker, "local")
+		gs := NewGatewayServer(r, invoker, "local", nil)
 		req := httptest.NewRequest(http.MethodPost, "/api/hello", bytes.NewReader([]byte{}))
 		req.Header.Set("Content-Type", "application/octet-stream")
 		rec := httptest.NewRecorder()
@@ -85,7 +85,7 @@ func TestGatewayServer_ServeHTTP(t *testing.T) {
 
 	t.Run("invalid message packet", func(t *testing.T) {
 		invoker := &mockInvoker{returnCode: 10200, response: []byte("ok")}
-		gs := NewGatewayServer(r, invoker, "local")
+		gs := NewGatewayServer(r, invoker, "local", nil)
 		req := httptest.NewRequest(http.MethodPost, "/api/hello", bytes.NewReader([]byte("invalid")))
 		req.Header.Set("Content-Type", "application/octet-stream")
 		rec := httptest.NewRecorder()
@@ -146,9 +146,9 @@ func TestGatewayServer_E2E_HealthCheck(t *testing.T) {
 	r := router.NewRouteTable(cfg)
 
 	invoker := tarsclient.NewLocalInvoker()
-	tarsclient.RegisterSystemHandlers(invoker)
+	tarsclient.RegisterModuleHandlers(invoker)
 
-	gs := NewGatewayServer(r, invoker, "local")
+	gs := NewGatewayServer(r, invoker, "local", nil)
 
 	reqPacket := &adapter.MessagePacket{
 		MaxType:  2100,

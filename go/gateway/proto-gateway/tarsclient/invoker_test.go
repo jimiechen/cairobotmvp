@@ -95,9 +95,9 @@ func TestLocalInvoker(t *testing.T) {
 	})
 }
 
-func TestRegisterSystemHandlers(t *testing.T) {
+func TestSystemHandlers_Smoke(t *testing.T) {
 	invoker := NewLocalInvoker()
-	RegisterSystemHandlers(invoker)
+	RegisterModuleHandlers(invoker)
 
 	tests := []struct {
 		name   string

@@ -8,6 +8,7 @@ import (
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/jimiechen/mineplanet/go/common-lib"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/adapter"
+	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/middleware"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/internal/router"
 	"github.com/jimiechen/mineplanet/go/gateway/proto-gateway/tarsclient"
 )
@@ -15,17 +16,20 @@ import (
 // GatewayServer TarsGo HTTP Servant，作为 proto-gateway 的唯一 HTTP 入口
 // 通过 tars.AddHttpServant 注册到 TarsGo 框架
 type GatewayServer struct {
-	routeTable *router.RouteTable
-	invoker    tarsclient.TarsInvoker
-	mode       string
+	routeTable     *router.RouteTable
+	invoker        tarsclient.TarsInvoker
+	mode           string
+	authMiddleware *middleware.AuthMiddleware // S1: JWT 鉴权中间件（可选）
 }
 
 // NewGatewayServer 创建 GatewayServer
-func NewGatewayServer(rt *router.RouteTable, invoker tarsclient.TarsInvoker, mode string) *GatewayServer {
+// authMiddleware 可选，传入 nil 时不启用鉴权（local noop 模式）
+func NewGatewayServer(rt *router.RouteTable, invoker tarsclient.TarsInvoker, mode string, authMiddleware *middleware.AuthMiddleware) *GatewayServer {
 	return &GatewayServer{
-		routeTable: rt,
-		invoker:    invoker,
-		mode:       mode,
+		routeTable:     rt,
+		invoker:        invoker,
+		mode:           mode,
+		authMiddleware: authMiddleware,
 	}
 }
 
@@ -88,6 +92,15 @@ func (gs *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tars.TLOG.Info("route matched: " + routeKey + " -> " + route.CommandName)
+
+	// S1: Auth 中间件拦截（在 Invoker.Invoke 之前执行 Token 校验）
+	if gs.authMiddleware != nil {
+		if authResult := gs.authMiddleware.Intercept(packet, route.AuthRequired); authResult != nil {
+			tars.TLOG.Warn("auth rejected ["+route.CommandName+"]: code=" + authResult.ResponsePacket.Extend["code"])
+			writePacket(w, authResult.ResponsePacket)
+			return
+		}
+	}
 
 	extend := adapter.BuildTarsExtend(packet, route.RouteKey, route.RequestProto, route.ResponseProto, route.AuthRequired, route.AuditRequired)
 

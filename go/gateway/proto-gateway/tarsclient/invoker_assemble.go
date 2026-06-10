@@ -61,6 +61,6 @@ func BuildRealServices(cfg *config.MySQLConfig, env string) (*RealServices, erro
 // RegisterRealHandlers 使用真实服务注册所有 handler（System + Config + I18n）
 // 与 RegisterAllLocalHandlers 的区别：使用 MySQL 真实服务替代 noop stub
 func RegisterRealHandlers(invoker *LocalInvoker, svc *RealServices) {
-	RegisterSystemHandlers(invoker)
+	RegisterModuleHandlers(invoker)
 	RegisterConfigI18nHandlers(invoker, svc.ConfigSvc, svc.I18nSvc)
 }

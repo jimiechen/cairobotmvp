@@ -42,7 +42,7 @@ func TestGateway_E2E_Modules_HealthCheck(t *testing.T) {
 	invoker := tarsclient.NewLocalInvoker()
 	tarsclient.RegisterModuleHandlers(invoker) // 🎯 使用新模块化注册
 
-	gs := NewGatewayServer(r, invoker, "local")
+	gs := NewGatewayServer(r, invoker, "local", nil)
 
 	t.Run("正常 HealthCheck 请求返回有效 Protobuf 响应", func(t *testing.T) {
 		reqPacket := &adapter.MessagePacket{
@@ -156,7 +156,7 @@ func TestGateway_E2E_Modules_HelloWorld(t *testing.T) {
 	invoker := tarsclient.NewLocalInvoker()
 	tarsclient.RegisterModuleHandlers(invoker) // 🎯 使用新模块化注册
 
-	gs := NewGatewayServer(r, invoker, "local")
+	gs := NewGatewayServer(r, invoker, "local", nil)
 
 	t.Run("带名称的 Hello 请求返回正确问候语", func(t *testing.T) {
 		reqPacket := &adapter.MessagePacket{
@@ -266,7 +266,7 @@ func TestGateway_E2E_Modules_ErrorHandling(t *testing.T) {
 	invoker := tarsclient.NewLocalInvoker()
 	tarsclient.RegisterModuleHandlers(invoker)
 
-	gs := NewGatewayServer(r, invoker, "local")
+	gs := NewGatewayServer(r, invoker, "local", nil)
 
 	t.Run("无效 Protobuf Data 返回业务错误", func(t *testing.T) {
 		reqPacket := &adapter.MessagePacket{

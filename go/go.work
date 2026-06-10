@@ -9,6 +9,7 @@ use (
 	./modules/hello
 	./services/config
 	./services/i18n
+	./tars/auth
 	./tars/config
 	./tars/i18n
 	./tars/system

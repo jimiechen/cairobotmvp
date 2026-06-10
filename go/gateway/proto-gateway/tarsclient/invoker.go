@@ -165,39 +165,6 @@ func (li *LocalInvoker) Invoke(ctx context.Context, target Target, request []byt
 	return handler.Invoke(ctx, request, extend)
 }
 
-// RegisterSystemHandlers 注册 System 模块的本地 TarsGo servant handler
-// Gateway 单体部署模式启动时必须调用，注册 HealthCheck 和 HelloWorld
-//
-// Deprecated: 请使用 RegisterModuleHandlers 替代，后者直接使用模块化服务。
-// 此函数保留用于向后兼容，未来版本将移除。
-func RegisterSystemHandlers(invoker *LocalInvoker) {
-	deps := buildMinimalDeps()
-
-	sysAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
-		healthSvc := health.New(deps, nil)
-		return healthSvc.Check(ctx, req)
-	})
-
-	helloAdapter := NewModuleHandler(func(ctx context.Context, req []byte) ([]byte, error) {
-		helloSvc := hello.New(deps)
-		return helloSvc.SayHello(ctx, req)
-	})
-
-	invoker.Register(TargetKey{
-		App:     "CaiRobot",
-		Server:  "SystemServer",
-		Servant: "SystemObj",
-		Method:  "HealthCheck",
-	}, sysAdapter)
-
-	invoker.Register(TargetKey{
-		App:     "CaiRobot",
-		Server:  "SystemServer",
-		Servant: "SystemObj",
-		Method:  "HelloWorld",
-	}, helloAdapter)
-}
-
 // ModuleInvokeFunc 模块服务调用函数签名
 // 业务模块统一使用 Protobuf bytes 作为输入输出，不依赖 MessagePacket
 //
@@ -226,7 +193,7 @@ func (h *moduleHandler) Invoke(ctx context.Context, request []byte, extend map[s
 
 // RegisterModuleHandlers 注册模块化业务服务的本地 handler
 // 每个模块独立注册到对应的 TargetKey，通过 NewModuleHandler 适配接口
-// 替代 RegisterSystemHandlers，推荐新代码使用此函数
+// 注册 System 模块（HealthCheck + HelloWorld）的本地 handler
 func RegisterModuleHandlers(invoker *LocalInvoker) {
 	deps := buildMinimalDeps()
 
@@ -381,6 +348,6 @@ func RegisterConfigI18nHandlers(invoker *LocalInvoker, configSvc configservice.C
 // 使用 noop stub 作为 Config/I18n 服务实现，无需外部依赖
 // Gateway 单体部署模式（local）启动时调用此函数即可完成全部注册
 func RegisterAllLocalHandlers(invoker *LocalInvoker) {
-	RegisterSystemHandlers(invoker)
+	RegisterModuleHandlers(invoker)
 	RegisterConfigI18nHandlers(invoker, &noopConfigService{}, &noopI18nService{})
 }

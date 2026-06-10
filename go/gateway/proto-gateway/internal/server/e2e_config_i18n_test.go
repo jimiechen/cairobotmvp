@@ -49,7 +49,7 @@ func TestE2E_GetAppConfigs_FullChain(t *testing.T) {
 	tarsclient.RegisterModuleHandlers(invoker)
 	tarsclient.RegisterConfigI18nHandlers(invoker, configSvc, i18nSvc)
 
-	gs := NewGatewayServer(rt, invoker, "local")
+	gs := NewGatewayServer(rt, invoker, "local", nil)
 
 	t.Run("GetAppConfigs 返回动态模块配置", func(t *testing.T) {
 		reqPacket := &adapter.MessagePacket{
@@ -124,7 +124,7 @@ func TestE2E_GetLangPack_FullChain(t *testing.T) {
 	tarsclient.RegisterModuleHandlers(invoker)
 	tarsclient.RegisterConfigI18nHandlers(invoker, configSvc, i18nSvc)
 
-	gs := NewGatewayServer(rt, invoker, "local")
+	gs := NewGatewayServer(rt, invoker, "local", nil)
 
 	t.Run("GetLangPack 返回语言包数据", func(t *testing.T) {
 		reqPacket := &adapter.MessagePacket{
@@ -192,7 +192,7 @@ func TestE2E_NewFieldWithoutCodeChange(t *testing.T) {
 	tarsclient.RegisterModuleHandlers(invoker)
 	tarsclient.RegisterConfigI18nHandlers(invoker, configSvc, i18nSvc)
 
-	gs := NewGatewayServer(rt, invoker, "local")
+	gs := NewGatewayServer(rt, invoker, "local", nil)
 
 	newModuleKey := fmt.Sprintf("test_dynamic_module_%d", time.Now().UnixNano())
 
@@ -422,39 +422,54 @@ func loadConfigI18nRoutes() *config.RoutesConfig {
 	return &config.RoutesConfig{
 		Routes: []config.Route{
 			{
-				RequestMax:    6000, RequestMin:    6001, RouteKey:      "6000:6001",
-				CommandName:   "GetAppConfigs",
-				ResponseMax:   6000, ResponseMin:   6002,
+				RequestMax: 6000, RequestMin: 6001, RouteKey: "6000:6001",
+				CommandName: "GetAppConfigs",
+				ResponseMax: 6000, ResponseMin: 6002,
 				TarsApp: "CaiRobot", TarsServer: "ConfigServer", TarsServant: "ConfigObj",
-				TarsMethod: "GetAppConfigs",
+				TarsModule: "CaiRobotConfigApp", TarsInterface: "ConfigObj", TarsMethod: "GetAppConfigs",
+				RequestProto: "com.mineplanet.pojo.AppConfigsReq", ResponseProto: "com.mineplanet.pojo.AppConfigsRsp",
+				TarsRequestType: "vector<byte>", TarsResponseType: "vector<byte>", TimeoutMs: 5000,
+				AuthRequired: true, AuditRequired: false,
 			},
 			{
-				RequestMax:    6000, RequestMin:    6009, RouteKey:      "6000:6009",
-				CommandName:   "AppConfigVersion",
-				ResponseMax:   6000, ResponseMin:   6010,
+				RequestMax: 6000, RequestMin: 6009, RouteKey: "6000:6009",
+				CommandName: "AppConfigVersion",
+				ResponseMax: 6000, ResponseMin: 6010,
 				TarsApp: "CaiRobot", TarsServer: "ConfigServer", TarsServant: "ConfigObj",
-				TarsMethod: "AppConfigVersion",
+				TarsModule: "CaiRobotConfigApp", TarsInterface: "ConfigObj", TarsMethod: "AppConfigVersion",
+				RequestProto: "com.mineplanet.pojo.AppConfigVersionReq", ResponseProto: "com.mineplanet.pojo.AppConfigVersionRsp",
+				TarsRequestType: "vector<byte>", TarsResponseType: "vector<byte>", TimeoutMs: 3000,
+				AuthRequired: true, AuditRequired: false,
 			},
 			{
-				RequestMax:    6000, RequestMin:    6003, RouteKey:      "6000:6003",
-				CommandName:   "GetAppLanguage",
-				ResponseMax:   6000, ResponseMin:   6004,
+				RequestMax: 6000, RequestMin: 6003, RouteKey: "6000:6003",
+				CommandName: "GetAppLanguage",
+				ResponseMax: 6000, ResponseMin: 6004,
 				TarsApp: "CaiRobot", TarsServer: "I18nServer", TarsServant: "I18nObj",
-				TarsMethod: "GetAppLanguage",
+				TarsModule: "CaiRobotI18nApp", TarsInterface: "I18nObj", TarsMethod: "GetAppLanguage",
+				RequestProto: "com.mineplanet.pojo.AppFetchLanguageReq", ResponseProto: "com.mineplanet.pojo.AppFetchLanguageRsp",
+				TarsRequestType: "vector<byte>", TarsResponseType: "vector<byte>", TimeoutMs: 3000,
+				AuthRequired: false, AuditRequired: false,
 			},
 			{
-				RequestMax:    6000, RequestMin:    6005, RouteKey:      "6000:6005",
-				CommandName:   "GetLangPack",
-				ResponseMax:   6000, ResponseMin:   6006,
+				RequestMax: 6000, RequestMin: 6005, RouteKey: "6000:6005",
+				CommandName: "GetLangPack",
+				ResponseMax: 6000, ResponseMin: 6006,
 				TarsApp: "CaiRobot", TarsServer: "I18nServer", TarsServant: "I18nObj",
-				TarsMethod: "GetLangPack",
+				TarsModule: "CaiRobotI18nApp", TarsInterface: "I18nObj", TarsMethod: "GetLangPack",
+				RequestProto: "com.mineplanet.pojo.AppFetchLangPackReq", ResponseProto: "com.mineplanet.pojo.AppFetchLangPackRsp",
+				TarsRequestType: "vector<byte>", TarsResponseType: "vector<byte>", TimeoutMs: 5000,
+				AuthRequired: true, AuditRequired: false,
 			},
 			{
-				RequestMax:    6000, RequestMin:    6007, RouteKey:      "6000:6007",
-				CommandName:   "GetLangDifference",
-				ResponseMax:   6000, ResponseMin:   6008,
+				RequestMax: 6000, RequestMin: 6007, RouteKey: "6000:6007",
+				CommandName: "GetLangDifference",
+				ResponseMax: 6000, ResponseMin: 6008,
 				TarsApp: "CaiRobot", TarsServer: "I18nServer", TarsServant: "I18nObj",
-				TarsMethod: "GetLangDifference",
+				TarsModule: "CaiRobotI18nApp", TarsInterface: "I18nObj", TarsMethod: "GetLangDifference",
+				RequestProto: "com.mineplanet.pojo.AppFetchLangDiffReq", ResponseProto: "com.mineplanet.pojo.AppFetchLangDiffRsp",
+				TarsRequestType: "vector<byte>", TarsResponseType: "vector<byte>", TimeoutMs: 5000,
+				AuthRequired: true, AuditRequired: false,
 			},
 		},
 	}
