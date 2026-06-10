@@ -1,0 +1,11 @@
+panic: http servant obj name not found: ..GatewayHttpObj
+
+goroutine 1 [running]:
+github.com/TarsCloud/TarsGo/tars.(*application).AddHttpServantWithExceptionStatusChecker(0xc0001742c0, {0xa497e20, 0xc000169930}, {0xc000013da0, 0x10}, 0xa48e850)
+	/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/go/third_party/TarsGo/TarsGo-1.4.6/tars/servanthandle.go:81 +0x6a5
+github.com/TarsCloud/TarsGo/tars.AddHttpServantWithExceptionStatusChecker(...)
+	/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/go/third_party/TarsGo/TarsGo-1.4.6/tars/servanthandle.go:30
+github.com/TarsCloud/TarsGo/tars.AddHttpServant(...)
+	/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/go/third_party/TarsGo/TarsGo-1.4.6/tars/servanthandle.go:25
+main.main()
+	/Volumes/MacintoshHD/Users/jemoo/git/traeMVP/cairobotmvp/go/gateway/proto-gateway/cmd/server/main.go:54 +0x53f
