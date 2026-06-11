@@ -1,9 +1,10 @@
 .PHONY: help bootstrap proto proto-check lint test unit integration coverage build package \
         docs rules testcase-check comment-check ci clean \
-        gateway-build gateway-start gateway-stop gateway-test gateway-smoke gateway-verify \
+        gateway-build gateway-start gateway-stop gateway-restart gateway-test gateway-smoke gateway-verify \
         go-all common-lib-test modules-test tars-test gateway-e2e \
         admin-dev admin-start admin-stop admin-backend admin-frontend admin-status admin-restart \
 admin-migrate \
+        proto-tester-dev proto-tester-stop proto-tester-restart proto-tester-status \
         e2e-admin e2e-config e2e-i18n e2e-all e2e-install e2e-report
 
 PROJECT_ROOT := $(shell pwd)
@@ -136,7 +137,11 @@ help: ## 显示帮助信息
 	@echo ""
 	@echo "━━━ Admin MVP E2E 端到端测试 ━━━"
 	@grep -E '^(e2e-)[a-z].*?## ' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
+	@echo ""
+	@echo "━━━ Proto Tester（协议测试前端） ━━━"
+	@grep -E '^(proto-tester-)[a-z].*?## ' $(MAKEFILE_LIST) | sort | \
+	awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
 
 bootstrap: ## 初始化开发环境（检查工具链 + 安装依赖）
 	@echo "==> 检查开发工具链..."
@@ -507,6 +512,86 @@ admin-restart: ## 重启 Admin MVP 前后端
 	@$(MAKE) admin-stop
 	@sleep 2
 	@$(MAKE) admin-dev
+
+# ============================================================
+# Proto Tester（协议测试前端）启动/停止命令
+# 前端: proto-tester (React + Vite, port 3002)
+# ============================================================
+
+PROTO_TESTER_PID := /tmp/proto-tester.pid
+PROTO_TESTER_LOG := /tmp/proto-tester.log
+PROTO_TESTER_PORT := 3002
+
+proto-tester-dev: ## 启动 Proto Tester 开发服务器（Vite HMR, port 3002）
+	@echo "=========================================="
+	@echo "  Proto Tester 开发环境启动"
+	@echo "  前端: React + Vite (port $(PROTO_TESTER_PORT))"
+	@echo "=========================================="
+	@if [ ! -f typescript/proto-tester/package.json ]; then \
+		echo "❌ typescript/proto-tester/package.json 不存在"; exit 1; \
+	fi
+	@cd typescript/proto-tester && npm install --silent 2>/dev/null
+	@if [ -f $(PROTO_TESTER_PID) ] && kill -0 $$(cat $(PROTO_TESTER_PID)) 2>/dev/null; then \
+		echo "⚠️  Proto Tester 已在运行 (PID $$(cat $(PROTO_TESTER_PID)), port $(PROTO_TESTER_PORT))"; \
+	else \
+		cd typescript/proto-tester && nohup npx vite --port $(PROTO_TESTER_PORT) --host > $(PROTO_TESTER_LOG) 2>&1 & echo $$! > $(PROTO_TESTER_PID); \
+		sleep 3; \
+		if kill -0 $$(cat $(PROTO_TESTER_PID)) 2>/dev/null && lsof -i :$(PROTO_TESTER_PORT) >/dev/null 2>&1; then \
+			echo "✅ Proto Tester 已启动"; \
+			echo "    地址: http://localhost:$(PROTO_TESTER_PORT)"; \
+			echo "    PID: $$(cat $(PROTO_TESTER_PID))"; \
+			echo "    日志: $(PROTO_TESTER_LOG)"; \
+			echo "    停止: make proto-tester-stop"; \
+		else \
+			echo "❌ 启动失败，查看日志:"; tail -20 $(PROTO_TESTER_LOG); rm -f $(PROTO_TESTER_PID); exit 1; \
+		fi; \
+	fi
+
+proto-tester-stop: ## 停止 Proto Tester 开发服务器
+	@echo "==> 停止 Proto Tester..."
+	@if [ -f $(PROTO_TESTER_PID) ]; then \
+		TPID=$$(cat $(PROTO_TESTER_PID)); \
+		if kill -0 $$TPID 2>/dev/null; then \
+			kill $$TPID 2>/dev/null; sleep 1; \
+			if kill -0 $$TPID 2>/dev/null; then kill -9 $$TPID 2>/dev/null; fi; \
+			echo "✅ Proto Tester 已停止 (PID $$TPID)"; \
+		else \
+			echo "⚠️  进程不存在 (stale PID $$TPID)"; \
+		fi; \
+		rm -f $(PROTO_TESTER_PID); \
+	else \
+		echo "⚪ PID 文件不存在"; \
+	fi
+	@pkill -9 -f "vite.*proto-tester" 2>/dev/null || true
+	@sleep 1
+	@if lsof -i :$(PROTO_TESTER_PORT) >/dev/null 2>&1; then \
+		echo "⚠️  端口 $(PROTO_TESTER_PORT) 仍被占用，强制清理..."; \
+		lsof -i :$(PROTO_TESTER_PORT) -t 2>/dev/null | xargs kill -9 2>/dev/null || true; \
+	fi
+	@echo "==> Proto Tester 已全部停止"
+
+proto-tester-restart: ## 重启 Proto Tester
+	@$(MAKE) proto-tester-stop
+	@sleep 2
+	@$(MAKE) proto-tester-dev
+
+proto-tester-status: ## 查看 Proto Tester 运行状态
+	@echo "━━━ Proto Tester 运行状态 ━━━"
+	@if lsof -i :$(PROTO_TESTER_PORT) >/dev/null 2>&1; then \
+		echo "  Proto Tester: ✅ 运行中 (port $(PROTO_TESTER_PORT))"; \
+		if [ -f $(PROTO_TESTER_PID) ]; then \
+			echo "  PID: $$(cat $(PROTO_TESTER_PID))"; \
+		fi; \
+	else \
+		if [ -f $(PROTO_TESTER_PID) ]; then \
+			echo "  Proto Tester: ❌ 进程已退出 (stale PID $$(cat $(PROTO_TESTER_PID)))"; \
+		else \
+			echo "  Proto Tester: ⚪ 未启动"; \
+		fi; \
+	fi
+	@echo "  地址: http://localhost:$(PROTO_TESTER_PORT)"
+	@echo "  日志: $(PROTO_TESTER_LOG)"
+	@echo ""
 
 # ============================================================
 # Admin MVP E2E 端到端测试（Playwright + Chromium）

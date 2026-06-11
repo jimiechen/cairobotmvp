@@ -72,7 +72,9 @@ func main() {
 
 	mux := &tars.TarsHttpMux{}
 	gs := server.NewGatewayServer(rt, invoker, mode, authMw)
-	mux.Handle("/api/hello", gs)
+	// 包装 CORS 中间件，解决前端跨域访问（Proto Tester 在 3002 端口，Gateway 在 8080 端口）
+	corsMw := middleware.NewCORSMiddleware(gs)
+	mux.Handle("/api/hello", corsMw)
 
 	svrCfg := tars.GetServerConfig()
 	objName := svrCfg.App + "." + svrCfg.Server + ".GatewayHttpObj"

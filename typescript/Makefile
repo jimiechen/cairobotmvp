@@ -1,8 +1,8 @@
-.PHONY: install proto lint unit coverage build package clean help
+.PHONY: install proto lint unit coverage build package clean help proto-tester-dev proto-tester-stop
 
 help: ## 显示 TypeScript 子模块帮助
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
 install: ## 安装 pnpm workspace 依赖
 	@echo "[ts] ==> 安装依赖..."
@@ -76,3 +76,28 @@ clean: ## 清理 TypeScript 构建产物
 	@rm -rf web/dist admin-web/dist node_modules coverage
 	@find . -name ".vite" -type d -exec rm -rf {} + 2>/dev/null || true
 	@echo "[ts] 清理完成"
+
+proto-tester-dev: ## 启动 Proto Tester 开发服务器（端口 3002）
+	@echo "[ts] ==> 启动 Proto Tester 开发服务器..."
+	@if [ ! -f proto-tester/package.json ]; then \
+		echo "[ts] 错误：proto-tester 目录不存在"; \
+		exit 1; \
+	fi
+	@cd proto-tester && npm install --silent 2>/dev/null
+	@if [ -f /tmp/proto-tester.pid ] && kill -0 $(cat /tmp/proto-tester.pid) 2>/dev/null; then \
+		echo "[ts] Proto Tester 已在运行（PID $(cat /tmp/proto-tester.pid)）"; \
+	else \
+		cd proto-tester && nohup npx vite --port 3002 --host > /tmp/proto-tester.log 2>&1 & echo $$! > /tmp/proto-tester.pid; \
+		sleep 2; \
+		echo "[ts] Proto Tester 已启动: http://localhost:3002 (PID $(cat /tmp/proto-tester.pid))"; \
+	fi
+
+proto-tester-stop: ## 停止 Proto Tester 开发服务器
+	@echo "[ts] ==> 停止 Proto Tester..."
+	@if [ -f /tmp/proto-tester.pid ] && kill -0 $(cat /tmp/proto-tester.pid) 2>/dev/null; then \
+		kill $(cat /tmp/proto-tester.pid) 2>/dev/null; \
+		rm -f /tmp/proto-tester.pid; \
+		echo "[ts] Proto Tester 已停止"; \
+	else \
+		echo "[ts] Proto Tester 未在运行"; \
+	fi

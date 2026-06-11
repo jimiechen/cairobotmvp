@@ -83,6 +83,26 @@ function throwByBusinessCode(businessCode: number, traceId?: string): never {
   }
 }
 
+/**
+ * 根据业务码抛出对应的自定义异常（携带服务端错误消息）
+ */
+function throwByBusinessCodeWithMessage(businessCode: number, traceId: string, message: string): never {
+  switch (businessCode) {
+    case CODE_BAD_REQUEST:
+      throw new ProtoTesterError(400, businessCode, traceId, `BadRequestError: ${message}`);
+    case CODE_UNAUTHORIZED:
+      throw new UnauthorizedError(businessCode, traceId);
+    case CODE_NOT_FOUND:
+      throw new NotFoundError(businessCode, traceId);
+    case CODE_INTERNAL_ERROR:
+      throw new InternalError(businessCode, traceId);
+    case CODE_NOT_IMPLEMENTED:
+      throw new NotImplementedError(businessCode, traceId);
+    default:
+      throw new ProtoTesterError(0, businessCode, traceId, `${message} (业务码: ${businessCode})`);
+  }
+}
+
 const DEFAULT_GATEWAY_URL = 'http://localhost:8080';
 const DEFAULT_TIMEOUT_MS = 10000;
 
@@ -130,8 +150,28 @@ export async function sendRequest(req: SendRequest): Promise<SendResponse> {
       if (error.code === 'ECONNABORTED') {
         throw new ProtoTesterError(0, undefined, undefined, `请求超时 (${timeoutMs}ms)`);
       }
+      // 非 2xx 响应也可能携带 protobuf 错误包体，尝试解析真实业务码
       if (error.response) {
-        throw new InternalError(undefined, undefined);
+        const errData = new Uint8Array(error.response.data);
+        const errParsed = decodePacket(errData);
+        if (errParsed) {
+          const errCodeStr = errParsed.extend.get('code');
+          const errBusinessCode = errCodeStr ? parseInt(errCodeStr, 10) : CODE_INTERNAL_ERROR;
+          const errTraceId = errParsed.extend.get('traceId') || '';
+          const errMsg = errParsed.extend.get('message') || `HTTP ${error.response.status}`;
+          throwByBusinessCodeWithMessage(errBusinessCode, errTraceId, errMsg);
+        }
+        // 无法解析包体时，按 HTTP 状态码映射
+        if (error.response.status >= 500) {
+          throw new InternalError(undefined, undefined);
+        }
+        if (error.response.status === 401) {
+          throw new UnauthorizedError(undefined, undefined);
+        }
+        if (error.response.status === 404) {
+          throw new NotFoundError(undefined, undefined);
+        }
+        throw new BadRequestError(undefined, undefined);
       }
       throw new ProtoTesterError(0, undefined, undefined, `网络不可达: ${error.message}`);
     }

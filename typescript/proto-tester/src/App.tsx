@@ -41,6 +41,7 @@ import { addHistory } from './store/history';
 import { getAllProtocols, getMessageSchema, type ProtocolMeta } from './lib/protoMetadata';
 import { buildFormSchema, type FormFieldDef } from './lib/protoFormBuilder';
 import { sendRequest } from './lib/apiClient';
+import { encodePayload, decodePayload } from './lib/protoPayload';
 import type { ProtoTesterError } from './lib/errors';
 
 // 路由页面
@@ -145,22 +146,45 @@ function SenderPage() {
         finalExtend.token = token;
       }
 
+      // 将表单值编码为 Protobuf payload
+      const payload = selectedProtocol.requestMessage
+        ? encodePayload(selectedProtocol.requestMessage, formValues)
+        : undefined;
+
       const response = await sendRequest({
         maxType: selectedProtocol.maxType,
         minType: selectedProtocol.minType,
+        payload,
         extend: finalExtend,
         gatewayUrl,
       });
 
-      // 显示响应数据
-      const respText = new TextDecoder().decode(response.responseData);
+      // 显示响应数据（按 MessagePacket 协议扁平化展示）
+      const packet = response.responsePacket;
+      const respName = selectedProtocol.responseMessage;
+      console.log('[App] respName:', respName, 'packet.data len:', packet?.data?.length);
+      let dataDisplay: any = null;
+      if (packet?.data && packet.data.length > 0 && respName) {
+        dataDisplay = decodePayload(respName, packet.data);
+      } else if (packet?.data && packet.data.length > 0) {
+        const raw = new TextDecoder().decode(packet.data);
+        dataDisplay = { _raw: raw, _hex: Array.from(packet.data).map(b => b.toString(16).padStart(2, '0')).join(' ') };
+      }
       setResponseData(
         JSON.stringify(
           {
-            code: response.businessCode,
-            traceId: response.traceId,
-            durationMs: response.durationMs,
-            data: respText ? JSON.parse(respText) : null,
+            _meta: {
+              code: response.businessCode,
+              traceId: response.traceId,
+              durationMs: response.durationMs,
+              httpStatus: response.status,
+            },
+            // MessagePacket 平级字段（与协议定义一致）
+            maxType: packet?.maxType,
+            minType: packet?.minType,
+            platform: packet?.platform,
+            extend: packet?.extend ? Object.fromEntries(packet.extend) : null,
+            data: dataDisplay,
           },
           null,
           2,

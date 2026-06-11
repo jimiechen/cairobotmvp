@@ -201,13 +201,14 @@ gateway-start: ## 启动 proto-gateway（local 模式，TarsGo HTTP on :8080）
 	@if [ -f $(GATEWAY_PID_FILE) ] && kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
 		echo "[gateway] ⚠️  Gateway 已在运行 (pid=$$(cat $(GATEWAY_PID_FILE)))"; \
 	else \
-		cd $(GATEWAY_DIR) && GATEWAY_INVOKER_MODE=local nohup $(GATEWAY_BIN) >../../build/gateway.log 2>&1 & echo $$! >$(GATEWAY_PID_FILE); \
-		sleep 1; \
+		cd $(GATEWAY_DIR) && setsid env GATEWAY_INVOKER_MODE=local $(GATEWAY_BIN) >../../build/gateway.log 2>&1 & echo $$! >$(GATEWAY_PID_FILE); \
+		sleep 2; \
 		if kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
 			echo "[gateway] ✅ 已启动 (pid=$$(cat $(GATEWAY_PID_FILE))) 监听 :8080"; \
 			echo "[gateway] 日志: build/gateway.log | TarsGo日志: /tmp/cairobot/logs/gateway/"; \
 		else \
-			echo "[gateway] ❌ 启动失败，查看 build/gateway.log"; \
+			echo "[gateway] ❌ 启动失败，查看 build/gateway.log:"; \
+			cat ../../build/gateway.log 2>/dev/null || true; \
 			rm -f $(GATEWAY_PID_FILE); \
 			exit 1; \
 		fi; \
@@ -224,9 +225,23 @@ gateway-stop: ## 停止 proto-gateway
 		fi; \
 		rm -f $(GATEWAY_PID_FILE); \
 	else \
-		echo "[gateway] 未找到 PID 文件，尝试 pkill..."; \
-		pkill -f "proto-gateway-server" 2>/dev/null || echo "[gateway] 无运行中的 gateway 进程"; \
+		echo "[gateway] 未找到 PID 文件，尝试 lsof+kill..."; \
+		for pid in $$(lsof -ti :8080 2>/dev/null); do \
+			kill $$pid 2>/dev/null && echo "[gateway] ✅ 已停止 (pid=$$pid)" || true; \
+		done; \
+		if [ -z "$$(lsof -ti :8080 2>/dev/null)" ]; then \
+			echo "[gateway] ✅ 端口 :8080 已释放"; \
+		else \
+			echo "[gateway] ⚠️ 仍有进程占用 :8080"; \
+		fi; \
 	fi
+
+gateway-restart: ## 重启 proto-gateway（停止 + 重新编译 + 启动，:8080）
+	@echo "[gateway] ==> 重启 proto-gateway..."
+	@$(MAKE) gateway-stop
+	@sleep 1
+	@$(MAKE) gateway-build
+	@$(MAKE) gateway-start
 
 gateway-test: ## 运行 proto-gateway 全部测试
 	@echo "[gateway] ==> 运行 proto-gateway 测试..."
