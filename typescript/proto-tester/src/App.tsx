@@ -12,8 +12,8 @@
  * - 状态持久化（由各 store 负责）
  */
 import { useEffect, useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Typography, Card, Select, Button, Space, Spin, Tag, Alert, Collapse, Input, message, Divider, Empty } from 'antd';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Layout, Menu, Typography, Card, Button, Space, Tag, Alert, Collapse, Input, message, Divider, Empty } from 'antd';
 import {
   SendOutlined,
   HistoryOutlined,
@@ -55,7 +55,6 @@ const { Title, Text, Paragraph } = Typography;
 
 /** 首页：协议发送器 */
 function SenderPage() {
-  const navigate = useNavigate();
   const { token, gatewayUrl } = useSessionStore();
   const {
     protocols,
@@ -161,8 +160,12 @@ function SenderPage() {
 
       // 显示响应数据（按 MessagePacket 协议扁平化展示）
       const packet = response.responsePacket;
-      const respName = selectedProtocol.responseMessage;
-      console.log('[App] respName:', respName, 'packet.data len:', packet?.data?.length);
+      // 查找响应消息名：当前选中的是 Request 协议，需匹配同 maxType 的 Response 协议
+      const respProto = protocols.find(
+        p => p.maxType === selectedProtocol.maxType && p.direction === 'S->C' && p.responseMessage,
+      );
+      const respName = respProto?.responseMessage || selectedProtocol.responseMessage;
+      console.log('[App] selectedProtocol:', selectedProtocol.name, 'respName:', respName, 'respProto:', respProto?.name);
       let dataDisplay: any = null;
       if (packet?.data && packet.data.length > 0 && respName) {
         dataDisplay = decodePayload(respName, packet.data);

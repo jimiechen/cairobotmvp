@@ -15,7 +15,8 @@ import { com as healthCom } from '@proto/base/health';
 import { com as helloCom } from '@proto/base/hello';
 import { com as configCom } from '@proto/base/app_config';
 import { com as i18nCom } from '@proto/base/i18n';
-import type { Message } from 'google-protobuf';
+// 使用与 protoc-gen-ts 生成代码一致的导入方式（避免触发类型声明缺失错误）
+import * as pb from 'google-protobuf';
 
 // 从各命名空间提取请求消息类
 // 注意：protoc-gen-ts 生成的命名空间路径取决于 .proto 的 package 声明
@@ -26,7 +27,7 @@ const ConfigMessages = configCom.mineplanet.pojo;
 const I18nMessages = i18nCom.mineplanet.pojo;
 
 /** 消息名称 → Protobuf 类构造函数的注册表（请求消息） */
-const messageRegistry: Record<string, new (data?: any) => Message> = {
+const messageRegistry: Record<string, new (data?: any) => pb.Message> = {
   // System 模块
   ServiceHealthCheckRequest: HealthMessages.ServiceHealthCheckRequest,
   HelloWorldRequest: HelloMessages.HelloWorldRequest,
@@ -42,7 +43,7 @@ const messageRegistry: Record<string, new (data?: any) => Message> = {
 };
 
 /** 响应消息名称 → Protobuf 类（用于反序列化） */
-const responseRegistry: Record<string, { deserialize(bytes: Uint8Array): Message }> = {
+const responseRegistry: Record<string, { deserialize(bytes: Uint8Array): pb.Message }> = {
   // System 模块
   ServiceHealthCheckResponse: HealthMessages.ServiceHealthCheckResponse,
   HelloWorldResponse: HelloMessages.HelloWorldResponse,
