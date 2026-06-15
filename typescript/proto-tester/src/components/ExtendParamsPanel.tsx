@@ -12,8 +12,61 @@
 import { useState } from 'react';
 import { Input, Button, Space, Tag, Typography, Divider } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import styled from 'styled-components';
+import { theme } from '../styles/theme';
 
 const { Text } = Typography;
+
+// ==================== styled-components ====================
+
+/** 面板根容器 */
+const PanelRoot = styled.div`
+  padding: ${theme.spacing.sm} 0;
+`;
+
+/** 键值对行 */
+const KvRow = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+  margin-bottom: 4px;
+  align-items: center;
+`;
+
+/** 新增输入行 */
+const AddRow = styled(KvRow)`
+  margin-top: ${theme.spacing.sm};
+`;
+
+/** Key 输入框固定宽度 */
+const KeyInputWidth = '140px';
+
+/** 全局默认标签容器 */
+const GlobalTagsContainer = styled.div`
+  margin-top: 4px;
+`;
+
+/** 分割线间距 */
+const StyledDivider = styled(Divider)`
+  && {
+    margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
+  }
+`;
+
+/** 全局默认说明文字 */
+const GlobalLabel = styled(Text)`
+  && {
+    font-size: ${theme.fontSize.sm};
+  }
+`;
+
+/** 标签底部间距 */
+const GlobalTag = styled(Tag)`
+  && {
+    margin-bottom: 4px;
+  }
+`;
+
+// ==================== 组件属性 ====================
 
 /** ExtendParamsPanel 组件属性 */
 interface ExtendParamsPanelProps {
@@ -24,6 +77,8 @@ interface ExtendParamsPanelProps {
   /** 全局默认 extend 参数（只读参考） */
   globalValues?: Record<string, string>;
 }
+
+// ==================== 组件实现 ====================
 
 /**
  * MessagePacket extend 参数编辑面板
@@ -60,14 +115,14 @@ export function ExtendParamsPanel({
   const entries = Object.entries(values).filter(([, v]) => v !== '');
 
   return (
-    <div data-id="pt-extend-panel" style={{ padding: '8px 0' }}>
+    <PanelRoot data-id="pt-extend-panel">
       {/* 可编辑的键值对列表 */}
       {entries.map(([key, val]) => (
-        <div key={key} style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
+        <KvRow key={key}>
           <Input
             value={key}
             disabled
-            style={{ width: 140 }}
+            style={{ width: KeyInputWidth }}
             size="small"
           />
           <Input
@@ -83,17 +138,17 @@ export function ExtendParamsPanel({
             onClick={() => handleDelete(key)}
             size="small"
           />
-        </div>
+        </KvRow>
       ))}
 
       {/* 新增键值对输入区 */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+      <AddRow>
         <Input
           placeholder="新 Key"
           value={newKey}
           onChange={(e) => setNewKey(e.target.value)}
           size="small"
-          style={{ width: 140 }}
+          style={{ width: KeyInputWidth }}
           onPressEnter={handleAdd}
         />
         <Input
@@ -112,22 +167,22 @@ export function ExtendParamsPanel({
         >
           添加
         </Button>
-      </div>
+      </AddRow>
 
       {/* 全局默认参数参考区 */}
       {globalValues && Object.keys(globalValues).length > 0 && (
         <>
-          <Divider style={{ margin: '12px 0 8px' }} />
-          <Text type="secondary" style={{ fontSize: 12 }}>全局默认参数（只读参考）</Text>
-          <div style={{ marginTop: 4 }}>
+          <StyledDivider />
+          <GlobalLabel type="secondary">全局默认参数（只读参考）</GlobalLabel>
+          <GlobalTagsContainer>
             {Object.entries(globalValues).map(([key, val]) => (
-              <Tag key={key} color="blue" style={{ marginBottom: 4 }}>
+              <GlobalTag key={key} color="blue">
                 {key}: {val}
-              </Tag>
+              </GlobalTag>
             ))}
-          </div>
+          </GlobalTagsContainer>
         </>
       )}
-    </div>
+    </PanelRoot>
   );
 }

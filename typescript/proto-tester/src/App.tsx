@@ -11,7 +11,7 @@
  * - HTTP 请求细节（由 apiClient 负责）
  * - 状态持久化（由各 store 负责）
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Layout, Menu, Typography, Card, Button, Space, Tag, Alert, Collapse, Input, message, Divider, Empty } from 'antd';
 import {
@@ -24,6 +24,7 @@ import {
   CloseCircleOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
+import styled from 'styled-components';
 
 // 组件
 import { ProtoFormRenderer } from './components/ProtoFormRenderer';
@@ -48,8 +49,98 @@ import type { ProtoTesterError } from './lib/errors';
 import HistoryPage from './routes/history';
 import TracePage from './routes/trace';
 
-const { Header, Content, Sider, Footer } = Layout;
+// 样式组件
+import { theme } from './styles/theme';
+import {
+  MainLayout,
+  ProtocolSider,
+  RightSider,
+  ProtocolCard,
+  ProtocolName,
+  ProtocolMetaInfo,
+  ResponsePre,
+} from './styles/common';
+
+const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
+
+// ==================== styled-components (App.tsx 私有) ====================
+
+/** 搜索框容器 */
+const SearchContainer = styled.div`
+  padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.sm};
+`;
+
+/** 协议列表滚动区域 */
+const ProtocolListScroll = styled.div`
+  overflow-y: auto;
+  height: calc(100% - 48px);
+`;
+
+/** 中间内容区 Layout */
+const ContentLayout = styled(Layout)`
+  flex: 1;
+  background: ${theme.colors.background};
+`;
+
+/** 内容区域 */
+const ContentArea = styled(Content)`
+  padding: ${theme.spacing.lg};
+  overflow-y: auto;
+`;
+
+/** Header 样式化 */
+const StyledHeader = styled(Header)`
+  background: ${theme.colors.headerBg};
+  padding: 0 ${theme.spacing.xxl};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+/** Header 标题 */
+const HeaderTitle = styled(Title).withConfig({
+  shouldForwardProp: (prop) => prop !== '$as',
+})`
+  && {
+    color: #fff;
+    margin: 0;
+  }
+`;
+
+/** Header 导航菜单 */
+const HeaderMenu = styled(Menu)`
+  && {
+    background: transparent;
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 200px;
+  }
+`;
+
+/** Footer 样式化 */
+const StyledFooter = styled(Footer)`
+  text-align: center;
+  padding: ${theme.spacing.lg} ${theme.spacing.xxl};
+`;
+
+/** Footer 文字 */
+const FooterText = styled(Text).withConfig({
+  shouldForwardProp: (prop) => prop !== '$as',
+})`
+  && {
+    font-size: ${theme.fontSize.sm};
+  }
+`;
+
+/** Token 截断显示 */
+const TokenCodeText = styled(Text).withConfig({
+  shouldForwardProp: (prop) => prop !== '$as',
+})`
+  && {
+    font-size: ${theme.fontSize.xs};
+  }
+`;
 
 // ==================== 子页面组件 ====================
 
@@ -240,7 +331,7 @@ function SenderPage() {
     } finally {
       setSending(false);
     }
-  }, [selectedProtocol, formValues, extendValues, token, gatewayUrl]);
+  }, [selectedProtocol, formValues, extendValues, token, gatewayUrl, protocols]);
 
   // 过滤后的协议列表
   const filteredProtocols = getFilteredProtocols();
@@ -248,10 +339,10 @@ function SenderPage() {
   const requestProtocols = filteredProtocols.filter((p) => p.messageType === 'Request');
 
   return (
-    <div style={{ display: 'flex', gap: 16, height: '100%' }}>
+    <MainLayout>
       {/* 左侧：协议列表 */}
-      <Sider width={280} theme="light" style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
-        <div style={{ padding: '12px 12px 8px' }}>
+      <ProtocolSider width={280} theme="light">
+        <SearchContainer>
           <Input
             placeholder="搜索协议..."
             prefix={<SearchOutlined />}
@@ -260,35 +351,25 @@ function SenderPage() {
             allowClear
             size="small"
           />
-        </div>
-        <div style={{ overflowY: 'auto', height: 'calc(100% - 48px)' }}>
+        </SearchContainer>
+        <ProtocolListScroll>
           {requestProtocols.map((p) => (
-            <div
+            <ProtocolCardItem
               key={`${p.maxType}-${p.minType}`}
-              onClick={() => handleSelectProtocol(p)}
-              style={{
-                padding: '8px 12px',
-                cursor: 'pointer',
-                borderBottom: '1px solid #f5f5f5',
-                background: selectedProtocol?.maxType === p.maxType && selectedProtocol?.minType === p.minType ? '#e6f4ff' : 'transparent',
-              }}
-            >
-              <Text strong style={{ fontSize: 13 }}>{p.name}</Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                {p.maxType}:{p.minType} | {p.description}
-              </Text>
-            </div>
+              protocol={p}
+              isSelected={selectedProtocol?.maxType === p.maxType && selectedProtocol?.minType === p.minType}
+              onSelect={handleSelectProtocol}
+            />
           ))}
           {requestProtocols.length === 0 && (
             <Empty description="无匹配协议" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 40 }} />
           )}
-        </div>
-      </Sider>
+        </ProtocolListScroll>
+      </ProtocolSider>
 
       {/* 中间：表单 + 响应 */}
-      <Layout style={{ flex: 1, background: '#fff' }}>
-        <Content style={{ padding: 16, overflowY: 'auto' }}>
+      <ContentLayout>
+        <ContentArea>
           {/* 协议信息头部 */}
           {selectedProtocol && (
             <Card size="small" style={{ marginBottom: 16 }} title={
@@ -371,17 +452,15 @@ function SenderPage() {
               {responseError ? (
                 <Alert type="error" message={responseError} showIcon />
               ) : (
-                <pre style={{ background: '#f6f8fa', padding: 12, borderRadius: 6, fontSize: 12, maxHeight: 400, overflow: 'auto' }}>
-                  {responseData}
-                </pre>
+                <ResponsePre>{responseData}</ResponsePre>
               )}
             </Card>
           )}
-        </Content>
-      </Layout>
+        </ContentArea>
+      </ContentLayout>
 
       {/* 右侧：Extend 参数 + 用户/TOKEN */}
-      <Sider width={300} theme="light" style={{ background: '#fafafa', borderLeft: '1px solid #f0f0f0', padding: 12, overflowY: 'auto' }}>
+      <RightSider width={300} theme="light">
         <Collapse defaultActiveKey={['user', 'extend']} size="small">
           <Collapse.Panel header="测试用户 & Token" key="user">
             <div style={{ marginBottom: 12 }}>
@@ -408,44 +487,56 @@ function SenderPage() {
             <Divider style={{ margin: '8px 0' }} />
             <Text type="secondary" style={{ fontSize: 12 }}>当前 Token:</Text>
             <br />
-            <Text code style={{ fontSize: 11 }}>
+            <TokenCodeText code>
               {token ? `${token.slice(0, 8)}***...` : '(未设置)'}
-            </Text>
+            </TokenCodeText>
           </Collapse.Panel>
         </Collapse>
-      </Sider>
-    </div>
+      </RightSider>
+    </MainLayout>
   );
 }
+
+// ==================== 性能优化：memo 化协议卡片 ====================
+
+interface ProtocolCardItemProps {
+  protocol: ProtocolMeta;
+  isSelected: boolean;
+  onSelect: (protocol: ProtocolMeta) => void;
+}
+
+const ProtocolCardItem = memo(function ProtocolCardItem({ protocol, isSelected, onSelect }: ProtocolCardItemProps) {
+  return (
+    <ProtocolCard $selected={isSelected} onClick={() => onSelect(protocol)}>
+      <ProtocolName strong>{protocol.name}</ProtocolName>
+      <ProtocolMetaInfo type="secondary">
+        {protocol.maxType}:{protocol.minType} | {protocol.description}
+      </ProtocolMetaInfo>
+    </ProtocolCard>
+  );
+});
 
 // ==================== 主布局组件 ====================
 
 function AppLayout() {
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        background: '#001529',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <Title level={4} style={{ color: '#fff', margin: 0 }}>
+      <StyledHeader>
+        <HeaderTitle level={4}>
           <ApiOutlined style={{ marginRight: 8 }} />
           proto-tester
-        </Title>
-        <Menu
+        </HeaderTitle>
+        <HeaderMenu
           theme="dark"
           mode="horizontal"
           selectable={false}
-          style={{ background: 'transparent', flex: 1, justifyContent: 'flex-end', minWidth: 200 }}
           items={[
             { key: 'sender', icon: <SendOutlined />, label: <Link to="/">协议发送</Link> },
             { key: 'history', icon: <HistoryOutlined />, label: <Link to="/history">历史记录</Link> },
             { key: 'trace', icon: <ClockCircleOutlined />, label: <Link to="/trace">链路追踪</Link> },
           ]}
         />
-      </Header>
+      </StyledHeader>
       <Layout>
         <Content style={{ margin: 0, height: 'calc(100vh - 64px)' }}>
           <Routes>
@@ -455,11 +546,11 @@ function AppLayout() {
           </Routes>
         </Content>
       </Layout>
-      <Footer style={{ textAlign: 'center', padding: '12px 24px' }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
+      <StyledFooter>
+        <FooterText type="secondary">
           proto-tester v2.0 &copy; CaiRobot MVP &mdash; 内网研发工具，禁止公网部署
-        </Text>
-      </Footer>
+        </FooterText>
+      </StyledFooter>
     </Layout>
   );
 }

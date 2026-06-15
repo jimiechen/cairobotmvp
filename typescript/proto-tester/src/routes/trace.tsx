@@ -12,7 +12,6 @@
  * - 后端 API 日志查询（当前为 stub，待接入）
  * - 历史数据存储（由 store/history.ts 负责）
  */
-
 import { useState } from 'react';
 import {
   Input,
@@ -25,11 +24,51 @@ import {
   Empty,
   Typography,
 } from 'antd';
+import styled from 'styled-components';
 import dayjs from 'dayjs';
 import { getHistoryByTraceId, type HistoryRecord } from '../store/history';
 import { formatTraceDuration } from '../utils/traceId';
+import { theme } from '../styles/theme';
+import { PageContainer, SearchBarWrapper } from '../styles/common';
 
 const { Text, Paragraph } = Typography;
+
+// ==================== styled-components ====================
+
+/** 时间线卡片 */
+const TraceCard = styled(Card).withConfig({
+  shouldForwardProp: (prop) => prop !== '$as',
+})`
+  && {
+    margin-bottom: ${theme.spacing.sm};
+  }
+`;
+
+/** 时间线内容区全宽容器 */
+const TimelineContent = styled(Space)`
+  && {
+    width: 100%;
+  }
+`;
+
+/** Payload 预览区域 */
+const PayloadParagraph = styled(Paragraph).withConfig({
+  shouldForwardProp: (prop) => prop !== '$as',
+})`
+  && {
+    margin-bottom: 4px;
+  }
+`;
+
+/** JSON pre 标签 */
+const JsonPre = styled.pre`
+  font-size: ${theme.fontSize.sm};
+`;
+
+/** 搜索输入框宽度 */
+const SearchInputWidth = '400px';
+
+// ==================== 页面逻辑 ====================
 
 /** 时间线节点颜色映射（根据 HTTP 状态码） */
 function timelineColor(status: number): string {
@@ -109,8 +148,8 @@ export default function TracePage() {
         color={timelineColor(record.responseSummary.status)}
         label={dayjs(record.timestamp).format('MM-DD HH:mm:ss')}
       >
-        <Card size="small" style={{ marginBottom: 8 }}>
-          <Space direction="vertical" size={4} style={{ width: '100%' }}>
+        <TraceCard size="small">
+          <TimelineContent direction="vertical" size={4}>
             <div>
               <Text strong>{record.protocolName}</Text>
               <Tag style={{ marginLeft: 8 }}>
@@ -126,48 +165,49 @@ export default function TracePage() {
             </div>
 
             {/* 请求 Payload */}
-            <Paragraph
+            <PayloadParagraph
               ellipsis={{ rows: 2, expandable: true }}
-              style={{ marginBottom: 4 }}
             >
-              <pre style={{ fontSize: 12 }}>
+              <JsonPre>
                 {JSON.stringify(record.requestPayload, null, 2)}
-              </pre>
-            </Paragraph>
+              </JsonPre>
+            </PayloadParagraph>
 
             {/* 错误信息 */}
             {hasError && (
               <Text type="danger">{record.responseSummary.error}</Text>
             )}
-          </Space>
-        </Card>
+          </TimelineContent>
+        </TraceCard>
       </Timeline.Item>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <PageContainer>
       <h2>traceId 检索</h2>
 
       {/* 输入区 */}
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search
-          placeholder="请输入 traceId"
-          value={traceIdInput}
-          onChange={(e) => setTraceIdInput(e.target.value)}
-          onSearch={handleSearch}
-          enterButton="查询"
-          loading={loading}
-          style={{ width: 400 }}
-          allowClear
-        />
-        {(searchedId || traceIdInput.trim()) && (
-          <Button onClick={handleCopyTraceId}>复制 traceId</Button>
-        )}
-        {records.length > 0 && (
-          <Button onClick={handleServerLogJump}>服务端日志</Button>
-        )}
-      </Space>
+      <SearchBarWrapper>
+        <Space wrap>
+          <Input.Search
+            placeholder="请输入 traceId"
+            value={traceIdInput}
+            onChange={(e) => setTraceIdInput(e.target.value)}
+            onSearch={handleSearch}
+            enterButton="查询"
+            loading={loading}
+            style={{ width: SearchInputWidth }}
+            allowClear
+          />
+          {(searchedId || traceIdInput.trim()) && (
+            <Button onClick={handleCopyTraceId}>复制 traceId</Button>
+          )}
+          {records.length > 0 && (
+            <Button onClick={handleServerLogJump}>服务端日志</Button>
+          )}
+        </Space>
+      </SearchBarWrapper>
 
       {/* 结果展示区 */}
       {records.length > 0 ? (
@@ -177,6 +217,6 @@ export default function TracePage() {
       ) : searchedId && !loading ? (
         <Empty description={`未找到 traceId "${searchedId}" 的相关记录`} />
       ) : null}
-    </div>
+    </PageContainer>
   );
 }

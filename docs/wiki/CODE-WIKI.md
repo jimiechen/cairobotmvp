@@ -635,6 +635,7 @@ github.com/jimiechen/mineplanet/go/...
 - [ADR-0014-message-packet-data-format-protobuf-bytes](../adr/ADR-0014-message-packet-data-format-protobuf-bytes.md)
 - [ADR-009-config-i18n-schema-template](../adr/ADR-009-config-i18n-schema-template.md)
 - [ADR-010-admin-boundary-sdk](../adr/ADR-010-admin-boundary-sdk.md)
+- [ADR-social-data-level-and-cache-strategy](../adr/ADR-social-data-level-and-cache-strategy.md)
 
 **API 规范**：
 - [protobuf规范](../api/protobuf规范.md)
@@ -651,8 +652,8 @@ github.com/jimiechen/mineplanet/go/...
 
 | 日期 | 变更内容 |
 |---|---|
-| 2026-05-26 | **M0' 阶段 Admin 管理后台升级**：废弃 tars/provider-admin（Gin），迁移至 go/admin（go-admin v2.2.0 框架）；新增 typescript/admin-web（go-admin-ui v2.0.9 Vue2 前端）；新增 redisx.Invalidate 分批删除 API；pub/sub payload 升级为 JSON InvalidateEvent 格式；DSN 加密存储（AES-256-CBC）；provider-admin 源码归档至 archive/provider-admin-v0 分支（保留至 2026-11）
-| 2026-05-21 | **Go 多模块重构**：新增 common-lib、modules/hello、modules/health 独立 go.mod；实现 LocalInvoker 模块注册机制（ModuleHandler + Adapter）；迁移 localhandler → adapter/deprecated（标记废弃）；**TS E2E 集成**：集成 proto/generated/ts 官方 Protobuf 类型；新增 tests/e2e/gateway-modules.test.ts 全链路测试；抽取 src/utils/proto-client.ts 工具函数库；目录规范化为 tests/unit + tests/e2e 分层结构；Makefile 多语言工具链自动发现 Go/Python/Node.js 路径；全量测试 89/89 PASS |
+| 2026-06-15 | **社交域 Social Domain 新增**：完成社交 App MVP 全套需求文档；新增 PRD-social-app-mvp（16 章节完整 PRD，含 22 个协议对（44 个编号）、11 张数据表、7 个权限能力、16 个正常+16 个异常测试用例）；新增 ADR-social-data-level-and-cache-strategy（1级/2级数据分级治理、Cache Aside vs 事件驱动缓存策略、高权限操作四件套流水线、14 个领域事件）；新增 social-openapi.yaml（22 个协议对（44 个编号）的完整 OpenAPI 映射含 dataLevel/cachePolicy/events/permission 元数据）；更新协议编号注册表（新增 §4.1/§4.2/§4.3 三个协议组共 22 对 Request/Response 协议登记，遵循奇数Request/偶数Response编号规则）；更新 CODE-WIKI 新增 §26 社交域章节（架构定位/协议组/数据等级/数据模型/缓存Key/权限服务/事件清单/预留模块关系） |
+| 2026-05-26 | **M0' 阶段 Admin 管理后台升级**：废弃 tars/provider-admin（Gin），迁移至 go/admin（go-admin v2.2.0 框架）；新增 typescript/admin-web（go-admin-ui v2.0.9 Vue2 前端）；新增 redisx.Invalidate 分批删除 API；pub/sub payload 升级为 JSON InvalidateEvent 格式；DSN 加密存储（AES-256-CBC）；provider-admin 源码归档至 archive/provider-admin-v0 分支（保留至 2026-11） | 2026-05-21 | **Go 多模块重构**：新增 common-lib、modules/hello、modules/health 独立 go.mod；实现 LocalInvoker 模块注册机制（ModuleHandler + Adapter）；迁移 localhandler → adapter/deprecated（标记废弃）；**TS E2E 集成**：集成 proto/generated/ts 官方 Protobuf 类型；新增 tests/e2e/gateway-modules.test.ts 全链路测试；抽取 src/utils/proto-client.ts 工具函数库；目录规范化为 tests/unit + tests/e2e 分层结构；Makefile 多语言工具链自动发现 Go/Python/Node.js 路径；全量测试 89/89 PASS |
 | 2026-05-20 | **架构口径修正**：local 模式不是"不使用 Tars"，而是 TarsGo 单体部署模式（monolith）；LocalInvoker 是本进程 TarsGo servant adapter，非绕过 Tars 的普通 Go 调用；proto-gateway 改造为基于 TarsGo HTTP 模块（TarsHttpMux / AddHttpServant / Run）的 TarsGo HTTP Servant；引入 TarsCloud/TarsGo v1.4.6 技术基线到 go/third_party/TarsGo/ |
 | 2026-05-19 | 按 ADR-0012 重构多语言 monorepo 目录布局：Go 进 go/、Python 进 python/、TypeScript 进 typescript/；删除根目录 Makefile；go.work 移至 go/ |
 | 2026-05-19 | 恢复根目录 Makefile，采用三层结构（总控 + 子 Makefile + scripts）；新增 16 个 target；新增 CI 规范检查脚本；建立测试用例注册表；新增中文注释规范 |
@@ -760,7 +761,189 @@ grep "ValidateSchema\|ValidateValue\|ValidateLangString" \
 # 必须命中
 ```
 
-## 25. proto-tester 协议测试客户端 🆕
+## 26. 社交域（Social Domain）🆕
+
+> **2026-06-15 新增**：社交 App MVP 模块，支持用户注册、付费群组、帖子阅读、关注圈主、圈主管理粉丝和成员。
+
+### 26.1 社交域架构定位
+
+```
+Client / App / Admin Web
+        ↓
+POST /api/hello
+        ↓
+MessagePacket (maxType: 1000|2000|3000)
+        ↓
+routes.yaml → TarsCloud Routing Layer
+        ↓
+go/modules/social/
+  ├── member/          # 成员协议组 (maxType=1000)
+  │   ├── handler.go    # Protobuf decode/encode
+  │   ├── service.go    # 成员业务逻辑
+  │   ├── usecase.go    # 注册/登录/资料/关注流程编排
+  │   └── repository.go # users/user_follows 数据访问
+  ├── group/           # 群组协议组 (maxType=2000)
+  │   ├── handler.go
+  │   ├── service.go
+  │   ├── usecase.go
+  │   └── repository.go # groups/group_members/group_plans/group_orders
+  ├── topic/           # 主题协议组 (maxType=3000)
+  │   ├── handler.go
+  │   ├── service.go
+  │   ├── usecase.go
+  │   └── repository.go # topics/topic_comments/topic_reactions/topic_read_records
+  ├── permission/      # 统一权限服务（只查1级数据）
+  │   └── service.go   # CanViewGroup/CanJoinGroup/CanReadTopic/...
+  ├── cache/           # 缓存策略层
+  │   ├── keys.go      # 缓存 Key 命名常量
+  │   ├── invalidator.go  # 按1级/2级策略执行失效
+  │   └── policy.go   # TTL 策略配置
+  └── event/           # 领域事件
+      ├── publisher.go
+      ├── subscriber.go
+      └── events.go
+        ↓
+MySQL (1级数据) + Redis (2级数据)
+```
+
+### 26.2 协议组划分
+
+| 协议组 | maxType | 职责 | Proto 文件 | Tars Server |
+|-------|---------|------|-----------|-------------|
+| 成员协议组 | **1000** | 注册、登录、资料、关注、粉丝、成员状态 | `proto/social/member.proto` | MemberServer |
+| 群组协议组 | **2000** | 群组 CRUD、入群、付费方案、订单、圈主管理 | `proto/social/group.proto` | GroupServer |
+| 主题协议组 | **3000** | 帖子 CRUD、阅读记录、评论、互动、内容审核 | `proto/social/topic.proto` | TopicServer |
+
+完整 minType 分配见 [协议编号注册表 §4](../api/协议编号注册表.md)。
+
+### 26.3 数据等级规范
+
+详见 [ADR-social-data-level-and-cache-strategy](../adr/ADR-social-data-level-and-cache-strategy.md)。
+
+**核心规则**：
+
+```text
+1级数据 = 业务事实，强一致，MySQL 事务写入，Cache Aside + 主动失效
+2级数据 = 派生统计，最终一致，Redis 缓存，事件驱动更新，可从1级重建
+
+铁律：权限判断只能基于1级数据，禁止依赖2级统计缓存
+铁律：高权限操作必须执行 权限校验→审计日志→1级更新→事件+缓存失效+通知 四件套
+```
+
+### 26.4 基础数据模型
+
+基于已有 basemodel.md 中的三张基础表扩展：
+
+| 已有表 | 用途 | 数据等级 |
+|-------|------|---------|
+| users | 用户身份主表 | 1级（不堆砌社交关系） |
+| groups | 群组/圈子主表 | 1级（不保存动态关系） |
+| topics | 帖子主表 | 1级（阅读权限由关联表判断） |
+
+新增 8 张表：
+
+| 新增表 | 用途 | 数据等级 |
+|-------|------|---------|
+| user_follows | 关注/粉丝关系 | 1级 |
+| group_members | 群组成员关系 | 1级 |
+| group_plans | 付费方案 | 1级 |
+| group_orders | 付费订单 | 1级 |
+| topic_read_records | 阅读记录 | 2级行为数据 |
+| topic_comments | 评论 | 1级 UGC |
+| topic_reactions | 点赞/收藏/分享 | 1级关系 |
+| group_admin_actions | 圈主管理审计日志 | 1级审计 |
+
+可选 3 张统计快照表：member_stats / group_stats / topic_stats（均为 2级，可重建）。
+
+### 26.5 缓存 Key 规范
+
+```
+# 成员域（1级 Cache Aside）
+member:profile:{userId}          TTL 10-30min
+follow:rel:{fid}:{tid}            TTL 5-10min
+
+# 成员域（2级 事件驱动）
+member:stats:{userId}            TTL 30-120min
+member:followers:{uid}:{page}     TTL 1-10min
+member:followings:{uid}:{page}    TTL 1-10min
+
+# 群组域（1级 Cache Aside）
+group:detail:{gid}               TTL 5-15min
+group:member:{gid}:{uid}          TTL 5-10min
+group:plans:{gid}                 TTL 10-30min
+
+# 群组域（2级 事件驱动）
+group:stats:{gid}                TTL 10-60min
+group:members:{gid}:{page}        TTL 1-10min
+owner:dashboard:{oid}             TTL 1-10min
+
+# 主题域（1级 Cache Aside）
+topic:detail:{tid}                TTL 5-15min
+
+# 主题域（2级 事件驱动）
+topic:stats:{tid}                 TTL 5-30min
+topic:read:{uid}:{tid}            TTL 可较长
+group:topics:{gid}:{page}         TTL 1-5min
+topic:hot:{gid}                   TTL 1-5min
+```
+
+### 26.6 统一权限服务
+
+位于 `go/modules/social/permission/service.go`。**不允许各 handler 散写权限判断。**
+
+| 能力方法 | 核心判断依据（仅1级数据） |
+|---------|---------------------|
+| CanViewGroup | groups.visibility + groups.status + group_members |
+| CanJoinGroup | groups.join_mode + groups.status + groups.max_members |
+| CanReadTopic | topics.visibility + group_members.status + group_members.expired_at |
+| CanManageGroup | group_members.role IN (owner, admin) |
+| CanManageMember | operator.role >= target.role + operator ≠ target(除非 owner) |
+| CanPublishTopic | group_members.status=active + muted_until < now() |
+| CanAuditContent | 用户角色包含平台管理员/审核员 |
+
+### 26.7 领域事件清单（核心 14 个）
+
+| 事件 | 触发 | 驱动的2级数据变更 |
+|-----|------|------------------|
+| MemberRegistered | 注册 | 初始化 member_stats |
+| MemberFollowed | 关注 | 粉丝数+1 / 关注数+1 |
+| MemberUnfollowed | 取关 | 粉丝数-1 / 关注数-1 |
+| GroupCreated | 创建群组 | 初始化 group_stats |
+| GroupJoined | 加入群组 | 成员数+1 |
+| GroupLeft | 退出群组 | 成员数-1 |
+| GroupMemberRemoved | 移除成员 | 成员数-1 + 清缓存 |
+| GroupOrderPaid | 支付确认 | 付费成员数+1 + 开通权益 |
+| TopicCreated | 发帖 | 群组帖子数+1 / 作者发帖数+1 |
+| TopicDeleted | 删帖 | 群组帖子数-1 |
+| TopicCommentCreated | 评论 | 评论数+1 |
+| TopicReacted | 互动 | 点赞/收藏数+1 |
+| TopicAudited | 审核 | 帖子状态缓存刷新 |
+| UserStatusChanged | 禁用/恢复用户 | 用户资料缓存刷新 |
+
+### 26.8 与预留模块的关系
+
+CODE-WIKI 中 MVP2 预留的 `modules/users`、`modules/auth`、`modules/groups`、`modules/topics` 与社交域的关系：
+
+| 预留模块 | 与 social 的关系 | 处理策略 |
+|---------|--------------|---------|
+| modules/users | social/member 依赖其用户身份能力 | social 通过接口调用 users |
+| modules/auth | social 全依赖其 Token 校验 | 通过 extend.token 走 auth 校验 |
+| modules/groups | 功能高度重叠 | **合并入 social/group 子包** |
+| modules/topics | 功能高度重叠 | **合并入 social/topic 子包** |
+
+### 26.9 相关文档
+
+| 文档 | 路径 |
+|-----|------|
+| PRD | [PRD-social-app-mvp](../prd/PRD-social-app-mvp.md) |
+| ADR | [ADR-social-data-level-and-cache-strategy](../adr/ADR-social-data-level-and-cache-strategy.md) |
+| OpenAPI | [social-openapi.yaml](../api/social-openapi.yaml) |
+| 协议注册表 | [协议编号注册表](../api/协议编号注册表.md) §4 |
+| 基础模型 | [basemodel.md](../tabbit/inbox/2026/06/basemodel.md) |
+
+---
+
+## 27. proto-tester 协议测试客户端 🆕
 
 ### 25.1 架构定位
 
