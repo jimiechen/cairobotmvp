@@ -58,3 +58,4 @@ docs/drafts/
 .admin-pids/
 .admin-logs/
 go/admin/go-admin-db.db
+go/gateway/proto-gateway/cmd/server/__debug_bin1360420036

@@ -189,7 +189,7 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 Client                    Gateway              Social Service           MySQL          Redis
   |                          |                      |                     |             |
   |-- FollowMember ---------->|                      |                     |             |
-  | (maxType=1000,min=1011)   |                      |                     |             |
+  | (maxType=1000,min=1010)   |                      |                     |             |
   |                          |-- routes.yaml ------->|                     |             |
   |                          |                      |-- BEGIN TX -------->|             |
   |                          |                      |-- INSERT user_follows            |
@@ -213,13 +213,13 @@ Client                    Gateway              Social Service           MySQL   
 Client                    Gateway              Social Service           MySQL          Redis
   |                          |                      |                     |             |
   |-- CreateGroupOrder ----->|                      |                     |             |
-  | (maxType=2000,min=2019)   |                      |                     |             |
+  | (maxType=2000,min=2030)   |                      |                     |             |
   |                          |                      |-- INSERT group_orders            |
   |                          |                      | (status=pending)     |             |
   |<-- OrderCreated ---------|<----------------------|                     |             |
   |                          |                      |                     |             |
   |-- ConfirmGroupPayment -->|                      |                     |             |
-  | (maxType=2000,min=2021)   |                      |                     |             |
+  | (maxType=2000,min=2031)   |                      |                     |             |
   |                          |                      |-- BEGIN TX -------->|             |
   |                          |                      |-- UPDATE orders      |             |
   |                          |                      |   status=paid        |             |
@@ -256,7 +256,7 @@ Client                    Gateway              Social Service         Permission
   |<-- TopicDetail ----------|<-- (with can_read flag)                   |                |
   |                          |                      |                                |
   |-- [async] MarkTopicRead ->|                      |                   |                |
-  | (maxType=3000,min=3011)   |                      |-- async write ---->|--> 2级写入     |
+  | (maxType=3000,min=3010)   |                      |-- async write ---->|--> 2级写入     |
   |                          |                      |   topic_read_records |                |
 ```
 
