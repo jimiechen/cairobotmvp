@@ -16,7 +16,7 @@
 
 CaiRobot MVP 是一个运营管理综合平台，当前已完成系统基础能力（HealthCheck、HelloWorld）、全局配置服务（Config）、多语言服务（I18n）和 Admin 管理后台。项目采用单网关 + MessagePacket + Protobuf + TarsCloud/TarsGo 的统一架构。
 
-平台需要扩展社交 App 能力，支持用户注册登录、付费群组、帖子阅读、用户关注圈主、圈主管理粉丝和成员等核心社交功能。这些功能将基于已有的 `users`、`groups`、`topics` 三张基础数据表进行扩展。
+平台需要扩展社交 App 能力，支持用户注册登录、付费群组、帖子阅读、加入群组、圈主管理成员等核心社交功能。这些功能将基于已有的 `users`、`groups`、`topics` 三张基础数据表进行扩展。
 
 ### 1.2 目标
 
@@ -87,15 +87,15 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 
 ### 3.1 产品定位
 
-一个以"圈子/群组"为核心的内容型社交产品。普通用户可以注册账号、浏览圈子、加入免费群组或购买付费群组权限；圈主可以创建和运营自己的群组，发布帖子，管理粉丝、成员、内容和付费方案；运营后台可以管理用户、群组、帖子、订单、举报、审核和平台配置。
+一个以"圈子/群组"为核心的内容型社交产品。普通用户可以注册账号、浏览圈子、加入免费群组或购买付费群组权限；圈主可以创建和运营自己的群组，发布帖子，管理成员、内容和付费方案；运营后台可以管理用户、群组、帖子、订单、举报、审核和平台配置。
 
 ### 3.2 用户角色
 
 | 角色    | 核心能力                        | 数据边界             |
 | ----- | --------------------------- | ---------------- |
 | 游客    | 浏览公开圈子、查看公开帖子摘要、注册登录        | 不能访问付费内容         |
-| 普通用户  | 注册登录、加入群组、阅读帖子、评论互动、关注圈主    | 只能访问自己有权限的内容     |
-| 圈主    | 创建/管理群组、发布帖子、管理成员和粉丝、配置付费方案 | 只能管理自己拥有或授权管理的群组 |
+| 普通用户  | 注册登录、加入群组、阅读帖子、评论互动    | 只能访问自己有权限的内容     |
+| 圈主    | 创建/管理群组、发布帖子、管理成员、配置付费方案 | 只能管理自己拥有或授权管理的群组 |
 | 平台管理员 | 用户管理、群组审核、帖子审核、订单管理、风控配置    | 通过运营后台管理全局数据     |
 
 ### 3.3 核心概念区分
@@ -104,7 +104,6 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 
 | 概念    | 含义         | 数据表                                                       | 协议组        |
 | ----- | ---------- | --------------------------------------------------------- | ---------- |
-| 关注关系  | 用户→用户的社交关注 | user\_follows                                             | 成员协议组 1000 |
 | 群成员关系 | 用户→群组的加入关系 | group\_members                                            | 群组协议组 2000 |
 | 付费权益  | 用户→群组的交易权益 | group\_orders + group\_members.expired\_at                | 群组协议组 2000 |
 | 内容互动  | 用户→帖子的行为   | topic\_reactions / topic\_comments / topic\_read\_records | 主题协议组 3000 |
@@ -120,13 +119,6 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 ```
 游客 → 输入注册信息 → MemberRegister → 创建 users 记录 → 返回 token 和用户资料
 已注册用户 → 输入凭据 → MemberLogin → 校验凭证 → 返回 token 和用户资料
-```
-
-#### 场景 2：用户关注圈主
-
-```
-普通用户 → 进入圈主主页 → 点击关注 → FollowMember → 写入 user_follows(1级)
-→ 发布 MemberFollowed 事件 → 更新粉丝数(2级) → 通知圈主
 ```
 
 #### 场景 3：用户加入付费群组
@@ -170,8 +162,7 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 | 发布帖子             | P0  | 必须       |
 | 帖子列表/详情          | P0  | 必须       |
 | 付费帖子阅读权限判断       | P0  | 必须       |
-| 用户关注/取关圈主        | P0  | 必须       |
-| 圈主查看粉丝与群成员       | P0  | 必须       |
+| 圈主查看群组成员列表       | P0  | 必须       |
 | 圈主管理成员（禁言/移除/恢复） | P1  | 建议       |
 | 评论/点赞/收藏         | P1  | 建议       |
 | 阅读记录             | P1  | 建议       |
@@ -183,29 +174,25 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 
 ## 5. 核心业务流程
 
-### 5.1 用户关注圈主流程
+### 5.1 用户加入免费群组流程
 
 ```text
 Client                    Gateway              Social Service           MySQL          Redis
   |                          |                      |                     |             |
-  |-- FollowMember ---------->|                      |                     |             |
-  | (maxType=1000,min=1010)   |                      |                     |             |
-  |                          |-- routes.yaml ------->|                     |             |
+  |-- JoinGroup ------------>|                      |                     |             |
+  | (maxType=2000,min=2011)   |                      |                     |             |
   |                          |                      |-- BEGIN TX -------->|             |
-  |                          |                      |-- INSERT user_follows            |
+  |                          |                      |-- INSERT group_members            |
   |                          |                      |<-- TX OK -----------|             |
   |                          |                      |-- publish Event ----|--> update  |
-  |                          |                      |   MemberFollowed     |    stats    |
-  |                          |                      |-- DEL cache key ----------------->|
-  |                          |                      |   follow:rel:{f}:{t}               |
+  |                          |                      |   GroupJoined        |    stats    |
   |<-- Response -------------|<-- encode protobuf ---|                     |             |
 ```
 
 **数据等级标注**：
-
-- INSERT user\_follows → **1级数据**（强一致事务写入）
-- 更新粉丝数缓存 → **2级数据**（事件驱动异步更新）
-- 删除关注关系缓存 → Cache Aside 主动失效
+- INSERT group_members → **1级数据**（强一致事务写入）
+- 更新成员数缓存 → **2级数据**（事件驱动异步更新）
+- 删除成员关系缓存 → Cache Aside 主动失效
 
 ### 5.2 用户加入付费群组流程
 
@@ -310,7 +297,7 @@ Operator                  Gateway            Social Service        Perm Svc     
 | created\_at       | bigint          | 创建时间                           | 1级   |
 | updated\_at       | bigint          | 更新时间                           | 1级   |
 
-**不在 users 中增加的字段**：followers\_count、following\_count、group\_count 等频繁变化统计字段。
+**不在 users 中增加的字段**：group\_count 等频繁变化统计字段。
 
 #### groups — 群组/圈子主表
 
@@ -380,27 +367,19 @@ Operator                  Gateway            Social Service        Perm Svc     
 
 ### 6.2 新增数据表
 
-#### 6.2.1 user\_follows — 用户关注/粉丝关系表（1级）
+#### 6.2.1 社交关系设计说明
 
-表达用户对用户的单向关注关系，服务于粉丝体系、圈主主页、推荐分发。
+MVP 阶段不建立独立的 user_follows 关注表。所有社交关系通过 group_members 表表达：
+- **关注圈主** = 加入圈主的公开免费群组（join_source = 'follow'）
+- **取关圈主** = 退出对应群组
+- **粉丝列表** = 群组成员列表（按 join_source = 'follow' 过滤）
 
-```sql
-CREATE TABLE `user_follows` (
-  `id` char(32) NOT NULL COMMENT '主键 UUID',
-  `follower_id` char(32) NOT NULL COMMENT '关注者 ID',
-  `following_id` char(32) NOT NULL COMMENT '被关注者 ID（通常是圈主/作者）',
-  `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '1=active 2=cancelled 3=blocked',
-  `source` varchar(30) DEFAULT NULL COMMENT '来源: group/topic/profile/search',
-  `created_at` bigint(20) NOT NULL COMMENT '关注时间',
-  `updated_at` bigint(20) NOT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_follow` (`follower_id`, `following_id`) COMMENT '防重复关注',
-  KEY `idx_following_status_time` (`following_id`, `status`, `created_at`),
-  KEY `idx_follower_status_time` (`follower_id`, `status`, `created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户关注/粉丝关系表（1级数据）';
-```
+这样设计的优势：
+1. 减少一张关系表和对应的 CRUD 协议链路
+2. 圈主只有一个管理面："我的群组成员"
+3. 权限判断统一走 CanManageGroup/CanManageMember
 
-**注意**：圈主的"粉丝"来自 user\_follows，圈主的"群成员"来自 group\_members，两者不可混用。
+> 后续迭代如需支持"关注但不入群"的轻量订阅场景，可再引入 user_follows 轻量表。
 
 #### 6.2.2 group\_members — 群组成员关系表（1级）
 
@@ -563,11 +542,10 @@ CREATE TABLE `group_admin_actions` (
 以下三张表用于存储 2级统计快照，支持从 1级数据重建：
 
 ```sql
--- member_stats：成员统计快照（粉丝数/关注数/发帖数）
+-- member_stats：成员统计快照（发帖数）
 CREATE TABLE `member_stats` (
   `user_id` char(32) NOT NULL PRIMARY KEY,
-  `followers_count` int(11) NOT NULL DEFAULT '0',
-  `followings_count` int(11) NOT NULL DEFAULT '0',
+
   `topics_count` int(11) NOT NULL DEFAULT '0',
   `updated_at` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='成员统计快照表（2级，可重建）';
@@ -597,8 +575,7 @@ CREATE TABLE `topic_stats` (
 ### 6.3 ER 关系总览
 
 ```
-users ──1:N──┬── user_follows（关注关系）
-           ├── group_members（群成员关系）
+users ──1:N──┬── group_members（群成员关系）
            ├── topic_reactions（互动关系）
            ├── topic_read_records（阅读记录）
            ├── topic_comments（评论）
@@ -634,7 +611,6 @@ group_plans ──1:N── group_orders（订单）
 | users                 | 全部字段                                  | 强一致，事务写入 | MemberRegister/UpdateMemberProfile/UpdateMemberStatus            |
 | groups                | 除 members\_count/topics\_count 外的全部字段 | 强一致，事务写入 | CreateGroup/UpdateGroup/AuditGroup                               |
 | topics                | 全部字段                                  | 强一致，事务写入 | CreateTopic/UpdateTopic/DeleteTopic/AuditTopic                   |
-| user\_follows         | 关注关系记录                                | 强一致，事务写入 | FollowMember/UnfollowMember                                      |
 | group\_members        | 成员关系记录                                | 强一致，事务写入 | JoinGroup/LeaveGroup/UpdateGroupMemberStatus/ConfirmGroupPayment |
 | group\_plans          | 付费方案记录                                | 强一致，事务写入 | CreateGroupPlan/UpdateGroupPlan                                  |
 | group\_orders         | 订单记录                                  | 强一致，事务写入 | CreateGroupOrder/ConfirmGroupPayment                             |
@@ -653,8 +629,6 @@ group_plans ──1:N── group_orders（订单）
 
 | 数据         | 来源 1级表                                  | 存储位置                                         | 允许延迟 | 重建方式                                                                                |
 | ---------- | --------------------------------------- | -------------------------------------------- | ---- | ----------------------------------------------------------------------------------- |
-| 用户粉丝数      | user\_follows                           | Redis + member\_stats                        | 秒级   | COUNT(user\_follows WHERE following\_id=? AND status=active)                        |
-| 用户关注数      | user\_follows                           | Redis + member\_stats                        | 秒级   | COUNT(user\_follows WHERE follower\_id=? AND status=active)                         |
 | 用户发帖数      | topics                                  | Redis + member\_stats                        | 秒级   | COUNT(topics WHERE author\_id=? AND status=published)                               |
 | 群组成员数      | group\_members                          | Redis + group\_stats + groups.members\_count | 秒级   | COUNT(group\_members WHERE group\_id=? AND status=active)                           |
 | 群组帖子数      | topics                                  | Redis + group\_stats + groups.topics\_count  | 秒级   | COUNT(topics WHERE group\_id=? AND status=published)                                |
@@ -662,7 +636,6 @@ group_plans ──1:N── group_orders（订单）
 | 帖子点赞数      | topic\_reactions                        | Redis + topic\_stats                         | 秒级   | COUNT(topic\_reactions WHERE topic\_id=? AND reaction\_type=like AND status=active) |
 | 帖子评论数      | topic\_comments                         | Redis + topic\_stats                         | 秒级   | COUNT(topic\_comments WHERE topic\_id=? AND status=normal)                          |
 | 圈主看板       | 多表聚合                                    | Redis Snapshot                               | 分钟级  | 多表 JOIN 聚合查询                                                                        |
-| 粉丝列表（分页）   | user\_follows                           | Redis List/Set                               | 秒级   | SELECT ... FROM user\_follows ORDER BY created\_at                                  |
 | 群组帖子列表（分页） | topics                                  | Redis Sorted Set                             | 秒级   | SELECT ... FROM topics WHERE group\_id=? ORDER BY published\_at                     |
 | 热门帖子       | topic\_reactions + topic\_read\_records | Redis Sorted Set                             | 分钟级  | 加权评分计算                                                                              |
 | 推荐群组       | groups + group\_stats                   | Redis/Search                                 | 小时级  | 活跃度评分算法                                                                             |
@@ -693,7 +666,7 @@ group_plans ──1:N── group_orders（订单）
 
 | 协议组   | maxType  | 职责                      | Proto 文件                  | Tars Server  | Tars Servant |
 | ----- | -------- | ----------------------- | ------------------------- | ------------ | ------------ |
-| 成员协议组 | **1000** | 用户注册、登录、资料、关注、粉丝、成员状态   | proto/social/member.proto | MemberServer | MemberObj    |
+| 成员协议组 | **1000** | 用户注册、登录、资料、成员状态   | proto/social/member.proto | MemberServer | MemberObj    |
 | 群组协议组 | **2000** | 群组 CRUD、入群、付费方案、订单、圈主管理 | proto/social/group.proto  | GroupServer  | GroupObj     |
 | 主题协议组 | **3000** | 帖子 CRUD、阅读记录、评论、互动、内容审核 | proto/social/topic.proto  | TopicServer  | TopicObj     |
 
@@ -706,11 +679,6 @@ group_plans ──1:N── group_orders（订单）
 | 1003    | MemberLogout        | C→S | 1级写入  | 用户登出              |
 | 1004    | GetMemberProfile    | C→S | 1级读取  | 获取用户资料            |
 | 1005    | UpdateMemberProfile | C→S | 1级写入  | 修改用户资料            |
-| 1010    | FollowMember        | C→S | 1级写入  | 关注用户/圈主           |
-| 1011    | UnfollowMember      | C→S | 1级写入  | 取消关注              |
-| 1012    | ListFollowers       | C→S | 2级读取  | 粉丝列表（可走缓存）        |
-| 1013    | ListFollowings      | C→S | 2级读取  | 关注列表（可走缓存）        |
-| 1020    | GetMemberStats      | C→S | 2级读取  | 用户统计（粉丝数/关注数/发帖数） |
 | 1030    | UpdateMemberStatus  | C→S | 1级高权限 | 平台管理员禁用/恢复用户      |
 
 ### 8.3 群组协议组（maxType = 2000）
@@ -807,46 +775,7 @@ group_plans ──1:N── group_orders（订单）
 
 ***
 
-#### FR-Member-003：关注用户
 
-**前置条件**：已登录，follower\_id ≠ following\_id
-
-**输入**：target\_user\_id（被关注者）
-
-**处理流程**：
-
-1. CanFollowTarget 权限检查（目标用户未被屏蔽）
-2. 查询是否已关注
-3. 未关注：INSERT user\_follows（status=active）
-4. 已关注且 cancelled：UPDATE status=active
-5. 发布 MemberFollowed 事件
-6. 失效 follow:rel 缓存
-7. 异步更新被关注者粉丝数（2级）
-
-**输出**：FollowMemberResponse { success, followed\_at }
-
-**异常**：ALREADY\_FOLLOWED, CANNOT\_FOLLOW\_SELF, TARGET\_USER\_BANNED
-
-**领域事件**：MemberFollowed
-
-***
-
-#### FR-Member-010：获取用户统计
-
-**输入**：user\_id（可选，默认当前登录用户）
-
-**处理流程**：
-
-1. 优先从 Redis member:stats:{userId} 读取
-2. 缓存未命中时查 member\_stats 表
-3. member\_stats 也未命中时触发异步重建
-4. 返回 followers\_count, followings\_count, topics\_count
-
-**输出**：GetMemberStatsResponse { followers\_count, followings\_count, topics\_count }
-
-**缓存策略**：Cache Aside, TTL 30-120min, 关注/取关事件驱动更新
-
-***
 
 ### 9.2 群组协议组功能需求
 
@@ -1231,7 +1160,6 @@ RETURN nil  // 允许
 | 付费方案 | `group:plans:{groupId}`                 | 10-30min | CreatePlan / UpdatePlan                     | 主动 DELETE |
 | 帖子详情 | `topic:detail:{topicId}`                | 5-15min  | UpdateTopic / DeleteTopic / AuditTopic      | 主动 DELETE |
 | 成员关系 | `group:member:{groupId}:{userId}`       | 5-10min  | JoinGroup / LeaveGroup / UpdateMemberStatus | 主动 DELETE |
-| 关注关系 | `follow:rel:{followerId}:{followingId}` | 5-10min  | FollowMember / UnfollowMember               | 主动 DELETE |
 
 **1级数据缓存铁律**：
 
@@ -1244,10 +1172,9 @@ RETURN nil  // 允许
 
 | 数据类型   | 缓存 Key                             | TTL       | 更新方式            | 重建方式        |
 | ------ | ---------------------------------- | --------- | --------------- | ----------- |
-| 用户统计   | `member:stats:{userId}`            | 30-120min | 关注/发帖事件增量       | 全量 COUNT 重建 |
+| 用户统计   | `member:stats:{userId}`            | 30-120min | 发帖事件增量       | 全量 COUNT 重建 |
 | 群组统计   | `group:stats:{groupId}`            | 10-60min  | 入群/退群/发帖事件增量    | 全量 COUNT 重建 |
 | 帖子统计   | `topic:stats:{topicId}`            | 5-30min   | 阅读/评论/点赞事件增量    | 全量 COUNT 重建 |
-| 粉丝列表   | `member:followers:{userId}:{page}` | 1-10min   | 关注/取关后删除前几页     | DB 分页查询重建   |
 | 群组帖子列表 | `group:topics:{groupId}:{page}`    | 1-5min    | 发帖/删帖后删除第一页     | DB 分页查询重建   |
 | 圈主看板   | `owner:dashboard:{ownerId}`        | 1-10min   | 事件刷新 + 定时重建     | 多表 JOIN 重建  |
 | 热门帖子   | `topic:hot:{groupId}`              | 1-5min    | Sorted Set 增量计算 | 加权评分重算      |
@@ -1259,9 +1186,6 @@ RETURN nil  // 允许
 # ===== 成员域 =====
 member:profile:{userId}              # 用户资料
 member:stats:{userId}                # 用户统计
-member:followers:{userId}:{page}     # 粉丝列表（分页）
-member:followings:{userId}:{page}     # 关注列表（分页）
-follow:rel:{followerId}:{followingId} # 关注关系是否存在
 
 # ===== 群组域 =====
 group:detail:{groupId}               # 群组详情
@@ -1323,8 +1247,6 @@ Step 7: 返回成功响应
 | 事件名称                | 触发来源                    | 消费者（2级数据更新）                    |
 | ------------------- | ----------------------- | ------------------------------ |
 | MemberRegistered    | MemberRegister          | 初始化 member\_stats              |
-| MemberFollowed      | FollowMember            | 更新粉丝数(following)、关注数(follower) |
-| MemberUnfollowed    | UnfollowMember          | 更新粉丝数、关注数                      |
 | GroupCreated        | CreateGroup             | 初始化 group\_stats               |
 | GroupJoined         | JoinGroup               | 更新成员数                          |
 | GroupLeft           | LeaveGroup              | 更新成员数                          |
@@ -1393,7 +1315,7 @@ paths:
 x-cairobot-protocol-groups:
   - maxType: 1000
     name: MemberProtocolGroup
-    description: 用户注册、登录、资料、关注粉丝、成员状态协议组
+    description: 用户注册、登录、资料、成员状态协议组
   - maxType: 2000
     name: GroupProtocolGroup
     description: 群组创建、详情、入群、付费方案、订单、圈主管理协议组
@@ -1419,9 +1341,7 @@ x-cairobot-protocol-groups:
 | 用户登录          | < 100ms | < 300ms | 500    |
 | 获取帖子详情（含权限判断） | < 150ms | < 400ms | 1000   |
 | 发布帖子          | < 300ms | < 800ms | 200    |
-| 关注/取关         | < 150ms | < 400ms | 500    |
 | 群组列表（分页）      | < 200ms | < 500ms | 800    |
-| 粉丝列表（分页）      | < 200ms | < 500ms | 500    |
 | 圈主看板          | < 300ms | < 800ms | 100    |
 
 ### 14.2 安全要求
@@ -1457,8 +1377,6 @@ x-cairobot-protocol-groups:
 | ------ | ----------- | ----------------------------------- | ----------------------------------------------- |
 | TC-001 | 用户正常注册      | 有效 username/email/password/nickname | 返回 user\_id + token，users 表新增记录                 |
 | TC-002 | 用户正常登录      | 正确 credentials                      | 返回用户信息 + token                                  |
-| TC-003 | 正常关注圈主      | follower ≠ following                | user\_follows 新增 active 记录                      |
-| TC-004 | 正常取关        | 已存在 active 关注记录                     | user\_follows status → cancelled                |
 | TC-005 | 创建免费群组      | 合法参数 + type=free                    | groups 新增记录 + 自动成为 owner                        |
 | TC-006 | 正常加入免费群组    | group(join\_mode=direct)            | group\_members 新增 active 记录                     |
 | TC-007 | 创建付费订单      | group + plan                        | group\_orders 新增 pending 记录                     |
@@ -1480,8 +1398,6 @@ x-cairobot-protocol-groups:
 | TE-002 | 注册邮箱已存在    | 重复 email                       | EMAIL\_EXISTS 错误                       |
 | TE-003 | 登录密码错误     | 错误密码                           | INVALID\_CREDENTIALS 错误                |
 | TE-004 | 登录被禁用用户    | banned 状态用户                    | USER\_BANNED 错误                        |
-| TE-005 | 自己关注自己     | follower == following          | CANNOT\_FOLLOW\_SELF 错误                |
-| TE-006 | 重复关注       | 已 active                       | ALREADY\_FOLLOWED 错误                   |
 | TE-007 | 加入已达上限群组   | groups.max\_members=100, 第101人 | GROUP\_FULL 错误                         |
 | TE-008 | 重复加入已加入群组  | 已是 active 成员                   | ALREADY\_JOINED 错误                     |
 | TE-009 | 无权限读取付费帖子  | 非成员访问 PAID\_MEMBER 帖子          | can\_read=false + NEED\_JOIN\_AND\_PAY |
@@ -1509,7 +1425,6 @@ x-cairobot-protocol-groups:
 | 编号         | 场景                | 验证点                        |
 | ---------- | ----------------- | -------------------------- |
 | TCACHE-001 | 更新用户资料后缓存失效       | GET profile 返回新数据（TTL 内）   |
-| TCACHE-002 | 关注后粉丝数最终一致        | 1-3 秒内 followers\_count +1 |
 | TCACHE-003 | 禁言后立即生效           | 被禁言用户下一请求即无法发帖             |
 | TCACHE-004 | Redis 不可用时降级直连 DB | 功能正常，延迟略有上升                |
 
@@ -1524,7 +1439,7 @@ x-cairobot-protocol-groups:
 | 消息通知系统     | 站内信 + WebSocket 推送 |
 | 内容审核 AI 集成 | 自动审核帖子/评论          |
 | 搜索引擎接入     | Elasticsearch 全文检索 |
-| 推荐流        | 基于关注关系 + 行为的内容推荐   |
+| 推荐流        | 基于行为数据的内容推荐   |
 | 真实支付对接     | 微信支付/支付宝/IAP       |
 | 退款流程       | 订单退款 → 权益回收        |
 | 数据导出       | 圈主导出成员/收益报表        |

@@ -10,9 +10,9 @@
 
 ## 1. 背景
 
-CaiRobot MVP 社交域涉及用户、群组、帖子、关注、评论、互动、支付等多种数据类型。如果将所有数据等同对待——都使用相同的缓存策略、一致性要求和更新方式——会导致以下问题：
+CaiRobot MVP 社交域涉及用户、群组、帖子、评论、互动、支付等多种数据类型。如果将所有数据等同对待——都使用相同的缓存策略、一致性要求和更新方式——会导致以下问题：
 
-1. **缓存失效复杂度爆炸**：粉丝数、成员数、帖子数等频繁变化的统计数据与用户资料、群组名称等稳定数据使用相同 TTL，要么稳定数据缓存命中率低，要么统计数据不准确
+1. **缓存失效复杂度爆炸**：成员数、帖子数等频繁变化的统计数据与用户资料、群组名称等稳定数据使用相同 TTL，要么稳定数据缓存命中率低，要么统计数据不准确
 2. **事务范围过大**：如果每次发帖都要同步更新"群组帖子数+作者发帖数+标签帖子数"，事务持有时间过长，锁竞争激烈
 3. **权限判断风险**：如果权限判断依赖了可能延迟或不准确的统计缓存，会出现安全漏洞（如已过期付费用户仍能访问付费内容）
 4. **审计边界不清**：哪些变更需要记录审计日志、哪些不需要，缺乏统一标准
@@ -62,7 +62,6 @@ CaiRobot MVP 社交域涉及用户、群组、帖子、关注、评论、互动�
 | users | 全部字段 | MemberRegister, UpdateMemberProfile, UpdateMemberStatus |
 | groups | 除 members_count/topics_count | CreateGroup, UpdateGroup, AuditGroup |
 | topics | 全部字段 | CreateTopic, UpdateTopic, DeleteTopic, AuditTopic |
-| user_follows | 关系记录 | FollowMember, UnfollowMember |
 | group_members | 成员关系和角色 | JoinGroup, LeaveGroup, UpdateGroupMemberStatus, ConfirmGroupPayment |
 | group_plans | 方案定义 | CreateGroupPlan, UpdateGroupPlan |
 | group_orders | 订单状态 | CreateGroupOrder, ConfirmGroupPayment |
@@ -87,8 +86,6 @@ CaiRobot MVP 社交域涉及用户、群组、帖子、关注、评论、互动�
 
 | 数据 | 来源 1级表 | 存储建议 | 允许延迟 |
 |-----|-----------|---------|---------|
-| 用户粉丝数 | user_follows | Redis Counter + member_stats.followers_count | 秒级 |
-| 用户关注数 | user_follows | Redis Counter + member_stats.followings_count | 秒级 |
 | 用户发帖数 | topics | Redis Counter + member_stats.topics_count | 秒级 |
 | 群组成员数 | group_members | Redis Counter + group_stats.members_count + groups.members_count | 秒级 |
 | 群组帖子数 | topics | Redis Counter + group_stats.topics_count + groups.topics_count | 秒级 |
@@ -96,7 +93,6 @@ CaiRobot MVP 社交域涉及用户、群组、帖子、关注、评论、互动�
 | 帖子点赞数 | topic_reactions | Redis Counter + topic_stats.likes_count | 秒级 |
 | 帖子评论数 | topic_comments | Redis Counter + topic_stats.comments_count | 秒级 |
 | 圈主看板 | 多表聚合 | Redis Snapshot | 分钟级 |
-| 粉丝列表（分页） | user_follows | Redis List/Set + DB 分页 | 秒级 |
 | 群组帖子列表（分页） | topics | Redis Sorted Set + DB 分页 | 秒级 |
 | 热门帖子排行 | 多维行为 | Redis Sorted Set（ZSET 加权评分） | 分钟级 |
 | 推荐群组 | 活跃度数据 | Redis/Search Index | 小时级 |
@@ -104,9 +100,6 @@ CaiRobot MVP 社交域涉及用户、群组、帖子、关注、评论、互动�
 **可重建性验证**：每个 2级数据必须能写出对应的 SQL 重建语句。例如：
 
 ```sql
--- 重建某用户的粉丝数
-SELECT COUNT(*) FROM user_follows WHERE following_id = ? AND status = 1;
-
 -- 重建某群组的活跃成员数
 SELECT COUNT(*) FROM group_members WHERE group_id = ? AND status = 1;
 
@@ -118,7 +111,7 @@ SELECT COUNT(*) FROM topic_reactions WHERE topic_id = ? AND reaction_type = 'lik
 
 #### 1级数据缓存：Cache Aside + 主动失效
 
-**适用对象**：用户资料、群组详情、帖子详情、成员关系、关注关系、付费方案
+**适用对象**：用户资料、群组详情、帖子详情、成员关系、付费方案
 
 **读写流程**：
 
@@ -137,7 +130,7 @@ SELECT COUNT(*) FROM topic_reactions WHERE topic_id = ? AND reaction_type = 'lik
 
 | 数据敏感度 | TTL 范围 | 说明 |
 |-----------|---------|------|
-| 高（安全相关） | 5-10 min | 成员关系、禁言状态、关注关系 |
+| 高（安全相关） | 5-10 min | 成员关系、禁言状态 |
 | 中（业务相关） | 10-20 min | 用户资料、群组详情、帖子详情 |
 | 低（配置相关） | 20-30 min | 付费方案列表 |
 
@@ -175,7 +168,7 @@ SELECT COUNT(*) FROM topic_reactions WHERE topic_id = ? AND reaction_type = 'lik
 | 数据类型 | TTL 范围 | 说明 |
 |---------|---------|------|
 | 实时计数器 | 5-30 min | 点赞数、评论数、阅读数 |
-| 分页列表 | 1-10 min | 粉丝列表、帖子列表 |
+| 分页列表 | 1-10 min | 帖子列表 |
 | 排行榜 | 1-5 min | 热门帖子 |
 | 推荐数据 | 5-30 min | 推荐群组 |
 | 看板/聚合 | 1-10 min | 圈主看板 |
@@ -205,8 +198,6 @@ SELECT COUNT(*) FROM topic_reactions WHERE topic_id = ? AND reaction_type = 'lik
 | 事件名 | 触发条件 | 消费者动作 |
 |-------|---------|-----------|
 | MemberRegistered | 用户注册成功 | 初始化 member_stats |
-| MemberFollowed | 关注成功 | follower.followings+1, following.followers+1; 删 follow 缓存 |
-| MemberUnfollowed | 取关成功 | follower.followings-1, following.followers-1; 删 follow 缓存 |
 | GroupCreated | 创建群组成功 | 初始化 group_stats |
 | GroupJoined | 加入群组成功 | group.members_count+1; 删 group:member 缓存 |
 | GroupLeft | 退出群组成功 | group.members_count-1; 删 group:member 缓存 |
@@ -328,8 +319,8 @@ message GetMemberProfileResponse {
   request_min: 1010
   data_level: "1-write"       # 1级写入操作
   cache_invalidate:
-    - "follow:rel:{followerId}:{followingId}"
-    - "member:stats:{followingId}"
+    - "group:member:{groupId}:{userId}"
+    - "group:stats:{groupId}"
 ```
 
 ### 与 TarsGo 服务的关系
@@ -339,7 +330,7 @@ message GetMemberProfileResponse {
 ```
 go/modules/social/
   ├── member/          # 成员协议组 handler/service/usecase/repository
-  │   └── event.go    # MemberFollowed/MemberUnfollowed 等事件定义
+  │   └── event.go    # MemberRegistered/GroupCreated 等事件定义
   ├── group/           # 群组协议组
   │   └── event.go    # GroupCreated/GroupJoined 等事件定义
   ├── topic/           # 主题协议组

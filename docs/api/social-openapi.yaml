@@ -64,7 +64,7 @@ x-cairobot-protocol-groups:
   - maxType: 1000
     name: MemberProtocolGroup
     description: >
-      成员协议组。负责用户注册、登录、资料管理、关注粉丝、成员状态。
+      成员协议组。负责用户注册、登录、资料管理、成员状态。
       对应 Proto 文件: proto/social/member.proto
       对应 Tars Server: MemberServer / MemberObj
       编号规则: 奇数 minType=C->S Request, 偶数 minType=S->C Response
@@ -161,92 +161,6 @@ x-cairobot-protocols:
     authRequired: true
     auditRequired: false
     description: 修改用户资料（写后失效 member:profile 缓存）
-
-  - name: FollowMember
-    maxType: 1000
-    minType: 1011
-    direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.FollowMemberRequest
-    responseProto: cairobot.social.v1.FollowMemberResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "follow:rel:{followerId}:{followingId}"
-      - "member:stats:{followingId}"
-      - "member:followers:{followingId}:*"
-    events:
-      - MemberFollowed
-    authRequired: true
-    auditRequired: false
-    permission:
-      - CanFollowTarget
-    description: 关注用户/圈主（1级写入，失效关注关系和统计缓存）
-
-  - name: UnfollowMember
-    maxType: 1000
-    minType: 1013
-    direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.UnfollowMemberRequest
-    responseProto: cairobot.social.v1.UnfollowMemberResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "follow:rel:{followerId}:{followingId}"
-      - "member:stats:{followingId}"
-      - "member:followers:{followingId}:*"
-    events:
-      - MemberUnfollowed
-    authRequired: true
-    auditRequired: false
-    description: 取消关注
-
-  - name: ListFollowers
-    maxType: 1000
-    minType: 1015
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.ListFollowersRequest
-    responseProto: cairobot.social.v1.ListFollowersResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "member:followers:{userId}:{page}"
-    cacheTtlMinutes: 5
-    events: []
-    authRequired: true
-    auditRequired: false
-    description: 粉丝列表（2级读取，可走缓存，事件驱动更新）
-
-  - name: ListFollowings
-    maxType: 1000
-    minType: 1017
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.ListFollowingsRequest
-    responseProto: cairobot.social.v1.ListFollowingsResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "member:followings:{userId}:{page}"
-    cacheTtlMinutes: 5
-    events: []
-    authRequired: true
-    auditRequired: false
-    description: 关注列表（2级读取，可走缓存）
-
-  - name: GetMemberStats
-    maxType: 1000
-    minType: 1019
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.GetMemberStatsRequest
-    responseProto: cairobot.social.v1.GetMemberStatsResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "member:stats:{userId}"
-    cacheTtlMinutes: 60
-    events: []
-    authRequired: false
-    auditRequired: false
-    description: 用户统计（粉丝数/关注数/发帖数，2级数据）
 
   - name: UpdateMemberStatus
     maxType: 1000
