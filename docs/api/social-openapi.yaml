@@ -3,17 +3,17 @@ info:
   title: CaiRobot Social Domain API
   version: 1.0.0
   description: >
-    CaiRobot MVP 社交域协议文档。
-
+    CaiRobot MVP 社交域协议文档（Proto-First 版本）。
 
     ## 架构约束
-
 
     所有业务请求统一通过 `POST /api/hello` 进入，
     使用 `MessagePacket.maxType` 区分成员(1000)/群组(2000)/主题(3000)协议组，
     使用 `MessagePacket.minType` 区分具体业务动作（**奇数=Request，偶数=Response**），
     payload 为对应 Protobuf Request 序列化后的 bytes。
 
+    **Proto-First**: 所有 minType 编号以 proto/social/*.proto 文件中的实际定义为准，
+    不再使用理想化的连续编号。本文档与 Protobuf 定义保持严格一致。
 
     **重要**: 本文档不描述任何绕过网关的业务 REST 接口。
     所有社交域能力均通过 MessagePacket 统一入口访问。
@@ -64,23 +64,26 @@ x-cairobot-protocol-groups:
   - maxType: 1000
     name: MemberProtocolGroup
     description: >
-      成员协议组。负责用户注册、登录、资料管理、成员状态。
+      成员协议组。负责用户注册、登录、登出、令牌刷新、资料管理、拉黑、用户统计。
       对应 Proto 文件: proto/social/member.proto
       对应 Tars Server: MemberServer / MemberObj
+      **Proto-First**: minType 编号以 member.proto 中 message 定义为准
       编号规则: 奇数 minType=C->S Request, 偶数 minType=S->C Response
   - maxType: 2000
     name: GroupProtocolGroup
     description: >
-      群组协议组。负责群组 CRUD、入群、付费方案、订单、圈主管理成员。
+      群组协议组。负责群组 CRUD、入群退群、成员管理（禁言/封禁/移除/角色）、续期、权限、折扣、支付计算。
       对应 Proto 文件: proto/social/group.proto
       对应 Tars Server: GroupServer / GroupObj
+      **Proto-First**: minType 编号以 group.proto 中 message 定义为准
       编号规则: 奇数 minType=C->S Request, 偶数 minType=S->C Response
   - maxType: 3000
     name: TopicProtocolGroup
     description: >
-      主题协议组。负责帖子发布与管理、阅读记录、评论、互动、内容审核。
+      主题协议组。负责帖子发布与管理、列表查询、置顶、回复、搜索、点赞收藏、举报、操作检查。
       对应 Proto 文件: proto/social/topic.proto
       对应 Tars Server: TopicServer / TopicObj
+      **Proto-First**: minType 编号以 topic.proto 中 message 定义为准
       编号规则: 奇数 minType=C->S Request, 偶数 minType=S->C Response
 
 x-cairobot-protocols:
@@ -92,11 +95,11 @@ x-cairobot-protocols:
 
   - name: MemberRegister
     maxType: 1000
-    minType: 1001
+    minType: 1021
     direction: C->S
     dataLevel: "1-write"
-    requestProto: cairobot.social.v1.MemberRegisterRequest
-    responseProto: cairobot.social.v1.MemberRegisterResponse
+    requestProto: cairobot.social.v1.UserRegisterRequest
+    responseProto: cairobot.social.v1.UserRegisterResponse
     cachePolicy: no-cache
     events:
       - MemberRegistered
@@ -106,11 +109,11 @@ x-cairobot-protocols:
 
   - name: MemberLogin
     maxType: 1000
-    minType: 1003
+    minType: 1023
     direction: C->S
     dataLevel: "1-read"
-    requestProto: cairobot.social.v1.MemberLoginRequest
-    responseProto: cairobot.social.v1.MemberLoginResponse
+    requestProto: cairobot.social.v1.UserLoginRequest
+    responseProto: cairobot.social.v1.UserLoginResponse
     cachePolicy: no-cache
     events: []
     authRequired: false
@@ -119,11 +122,11 @@ x-cairobot-protocols:
 
   - name: MemberLogout
     maxType: 1000
-    minType: 1005
+    minType: 1025
     direction: C->S
     dataLevel: "1-write"
-    requestProto: cairobot.social.v1.MemberLogoutRequest
-    responseProto: cairobot.social.v1.MemberLogoutResponse
+    requestProto: cairobot.social.v1.UserLogoutRequest
+    responseProto: cairobot.social.v1.UserLogoutResponse
     cachePolicy: no-cache
     events: []
     authRequired: true
@@ -132,11 +135,11 @@ x-cairobot-protocols:
 
   - name: GetMemberProfile
     maxType: 1000
-    minType: 1007
+    minType: 1029
     direction: C->S
     dataLevel: "1-read"
-    requestProto: cairobot.social.v1.GetMemberProfileRequest
-    responseProto: cairobot.social.v1.GetMemberProfileResponse
+    requestProto: cairobot.social.v1.GetUserInfoRequest
+    responseProto: cairobot.social.v1.GetUserInfoResponse
     cachePolicy: cache-aside
     cacheKeys:
       - "member:profile:{userId}"
@@ -148,11 +151,11 @@ x-cairobot-protocols:
 
   - name: UpdateMemberProfile
     maxType: 1000
-    minType: 1009
+    minType: 1031
     direction: C->S
     dataLevel: "1-write"
-    requestProto: cairobot.social.v1.UpdateMemberProfileRequest
-    responseProto: cairobot.social.v1.UpdateMemberProfileResponse
+    requestProto: cairobot.social.v1.UpdateUserInfoRequest
+    responseProto: cairobot.social.v1.UpdateUserInfoResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
       - "member:profile:{userId}"
@@ -162,18 +165,93 @@ x-cairobot-protocols:
     auditRequired: false
     description: 修改用户资料（写后失效 member:profile 缓存）
 
-  - name: UpdateMemberStatus
+  - name: RefreshToken
     maxType: 1000
-    minType: 1021
+    minType: 1027
     direction: C->S
-    dataLevel: "1-write-elevated"
-    requestProto: cairobot.social.v1.UpdateMemberStatusRequest
-    responseProto: cairobot.social.v1.UpdateMemberStatusResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "member:profile:{userId}"
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.RefreshTokenRequest
+    responseProto: cairobot.social.v1.RefreshTokenResponse
+    cachePolicy: no-cache
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 刷新访问令牌
+
+  - name: BlockUser
+    maxType: 1000
+    minType: 1039
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.BlockUserRequest
+    responseProto: cairobot.social.v1.BlockUserResponse
+    cachePolicy: no-cache
     events:
-      - UserStatusChanged
+      - UserBlocked
+    authRequired: true
+    auditRequired: false
+    description: 拉黑用户
+
+  - name: UnblockUser
+    maxType: 1000
+    minType: 1041
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.UnblockUserRequest
+    responseProto: cairobot.social.v1.UnblockUserResponse
+    cachePolicy: no-cache
+    events:
+      - UserUnblocked
+    authRequired: true
+    auditRequired: false
+    description: 取消拉黑用户
+
+  - name: GetBlockList
+    maxType: 1000
+    minType: 1043
+    direction: C->S
+    dataLevel: "2-read"
+    requestProto: cairobot.social.v1.GetBlockListRequest
+    responseProto: cairobot.social.v1.GetBlockListResponse
+    cachePolicy: event-driven-with-ttl
+    cacheTtlMinutes: 10
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 获取黑名单列表
+
+  - name: GetUserStats
+    maxType: 1000
+    minType: 1045
+    direction: C->S
+    dataLevel: "2-read"
+    requestProto: cairobot.social.v1.GetUserStatsRequest
+    responseProto: cairobot.social.v1.GetUserStatsResponse
+    cachePolicy: event-driven-with-ttl
+    cacheKeys:
+      - "user:stats:{userId}"
+    cacheTtlMinutes: 15
+    events: []
+    authRequired: false
+    auditRequired: false
+    description: 获取用户统计信息
+
+  - name: BatchGetUserInfo
+    maxType: 1000
+    minType: 1049
+    direction: C->S
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.BatchGetUserInfoRequest
+    responseProto: cairobot.social.v1.BatchGetUserInfoResponse
+    cachePolicy: cache-aside
+    cacheTtlMinutes: 20
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 批量获取用户基本信息
+
+    # UpdateMemberStatus 已移除：minType 1021 已被 UserRegister 占用（Proto-First 方案）
+    # 管理员禁用/恢复用户功能如需保留，需分配新的 minType（建议 1033/1034）
     authRequired: true
     auditRequired: true
     permission:
@@ -187,7 +265,7 @@ x-cairobot-protocols:
 
   - name: CreateGroup
     maxType: 2000
-    minType: 2001
+    minType: 2005
     direction: C->S
     dataLevel: "1-write"
     requestProto: cairobot.social.v1.CreateGroupRequest
@@ -203,7 +281,7 @@ x-cairobot-protocols:
 
   - name: UpdateGroup
     maxType: 2000
-    minType: 2003
+    minType: 2009
     direction: C->S
     dataLevel: "1-write"
     requestProto: cairobot.social.v1.UpdateGroupRequest
@@ -219,42 +297,29 @@ x-cairobot-protocols:
       - CanManageGroup
     description: 修改群组资料
 
-  - name: GetGroupDetail
+  - name: DeleteGroup
     maxType: 2000
-    minType: 2005
+    minType: 2011
     direction: C->S
-    dataLevel: "mixed-1plus2"
-    requestProto: cairobot.social.v1.GetGroupDetailRequest
-    responseProto: cairobot.social.v1.GetGroupDetailResponse
-    cachePolicy: cache-aside
-    cacheKeys:
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.DeleteGroupRequest
+    responseProto: cairobot.social.v1.DeleteGroupResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
       - "group:detail:{groupId}"
+      - "group:topics:{groupId}:*"
       - "group:stats:{groupId}"
-    cacheTtlMinutes: 10
-    events: []
-    authRequired: false
-    auditRequired: false
-    description: 群组详情（1级基础信息 + 2级统计数据混合）
-
-  - name: ListGroups
-    maxType: 2000
-    minType: 2007
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.ListGroupsRequest
-    responseProto: cairobot.social.v1.ListGroupsResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "group:recommend:{category}"
-    cacheTtlMinutes: 15
-    events: []
-    authRequired: false
-    auditRequired: false
-    description: 群组列表/推荐列表（2级读取）
+    events:
+      - GroupDeleted
+    authRequired: true
+    auditRequired: true
+    permission:
+      - CanManageGroup
+    description: 删除群组（高权限操作）
 
   - name: JoinGroup
     maxType: 2000
-    minType: 2009
+    minType: 2013
     direction: C->S
     dataLevel: "1-write"
     requestProto: cairobot.social.v1.JoinGroupRequest
@@ -274,7 +339,7 @@ x-cairobot-protocols:
 
   - name: LeaveGroup
     maxType: 2000
-    minType: 2011
+    minType: 2015
     direction: C->S
     dataLevel: "1-write"
     requestProto: cairobot.social.v1.LeaveGroupRequest
@@ -290,178 +355,206 @@ x-cairobot-protocols:
     auditRequired: false
     description: 退出群组
 
-  - name: ListGroupMembers
+  - name: MuteMember
     maxType: 2000
-    minType: 2013
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.ListGroupMembersRequest
-    responseProto: cairobot.social.v1.ListGroupMembersResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "group:members:{groupId}:{page}"
-    cacheTtlMinutes: 5
-    events: []
-    authRequired: true
-    auditRequired: false
-    permission:
-      - CanViewGroupMembers
-    description: 群成员列表（2级读取，可走缓存）
-
-  - name: UpdateGroupMemberStatus
-    maxType: 2000
-    minType: 2015
+    minType: 2019
     direction: C->S
     dataLevel: "1-write-elevated"
-    requestProto: cairobot.social.v1.UpdateGroupMemberStatusRequest
-    responseProto: cairobot.social.v1.UpdateGroupMemberStatusResponse
+    requestProto: cairobot.social.v1.MuteMemberRequest
+    responseProto: cairobot.social.v1.MuteMemberResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:member:{groupId}:{targetUserId}"
+      - "group:members:{groupId}:*"
+    events:
+      - GroupMemberMuted
+    authRequired: true
+    auditRequired: true
+    permission:
+      - CanManageMember
+    description: 禁言成员（高权限操作）
+
+  - name: UnmuteMember
+    maxType: 2000
+    minType: 2021
+    direction: C->S
+    dataLevel: "1-write-elevated"
+    requestProto: cairobot.social.v1.UnmuteMemberRequest
+    responseProto: cairobot.social.v1.UnmuteMemberResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:member:{groupId}:{targetUserId}"
+    events:
+      - GroupMemberUnmuted
+    authRequired: true
+    auditRequired: true
+    permission:
+      - CanManageMember
+    description: 解除禁言（高权限操作）
+
+  - name: BanMember
+    maxType: 2000
+    minType: 2023
+    direction: C->S
+    dataLevel: "1-write-elevated"
+    requestProto: cairobot.social.v1.BanMemberRequest
+    responseProto: cairobot.social.v1.BanMemberResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
       - "group:member:{groupId}:{targetUserId}"
       - "group:members:{groupId}:*"
       - "group:stats:{groupId}"
-      - "owner:dashboard:{ownerId}"
     events:
       - GroupMemberBanned
-      - GroupMemberMuted
-      - GroupMemberRemoved
-      - GroupMemberRecovered
     authRequired: true
     auditRequired: true
     permission:
       - CanManageMember
-    description: >
-      禁言/移除/恢复成员（高权限操作）。
-      执行完整四件套: 权限校验 → 审计日志 → 1级数据更新 → 事件+缓存失效+通知
+    description: 封禁成员（高权限操作）
 
-  - name: CreateGroupPlan
-    maxType: 2000
-    minType: 2017
-    direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.CreateGroupPlanRequest
-    responseProto: cairobot.social.v1.CreateGroupPlanResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "group:plans:{groupId}"
-    events:
-      - GroupPlanCreated
-    authRequired: true
-    auditRequired: false
-    permission:
-      - CanManageGroup
-    description: 创建付费方案
-
-  - name: UpdateGroupPlan
-    maxType: 2000
-    minType: 2019
-    direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.UpdateGroupPlanRequest
-    responseProto: cairobot.social.v1.UpdateGroupPlanResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "group:plans:{groupId}"
-    events:
-      - GroupPlanUpdated
-    authRequired: true
-    auditRequired: false
-    permission:
-      - CanManageGroup
-    description: 修改付费方案
-
-  - name: ListGroupPlans
-    maxType: 2000
-    minType: 2021
-    direction: C->S
-    dataLevel: "1-read"
-    requestProto: cairobot.social.v1.ListGroupPlansRequest
-    responseProto: cairobot.social.v1.ListGroupPlansResponse
-    cachePolicy: cache-aside
-    cacheKeys:
-      - "group:plans:{groupId}"
-    cacheTtlMinutes: 15
-    events: []
-    authRequired: false
-    auditRequired: false
-    description: 查询群组付费方案列表
-
-  - name: CreateGroupOrder
-    maxType: 2000
-    minType: 2023
-    direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.CreateGroupOrderRequest
-    responseProto: cairobot.social.v1.CreateGroupOrderResponse
-    cachePolicy: no-cache
-    events: []
-    authRequired: true
-    auditRequired: false
-    permission:
-      - CanJoinGroup
-    description: 创建付费订单（status=pending）
-
-  - name: ConfirmGroupPayment
+  - name: UnbanMember
     maxType: 2000
     minType: 2025
     direction: C->S
     dataLevel: "1-write-elevated"
-    requestProto: cairobot.social.v1.ConfirmGroupPaymentRequest
-    responseProto: cairobot.social.v1.ConfirmGroupPaymentResponse
+    requestProto: cairobot.social.v1.UnbanMemberRequest
+    responseProto: cairobot.social.v1.UnbanMemberResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:member:{groupId}:{targetUserId}"
+      - "group:members:{groupId}:*"
+      - "group:stats:{groupId}"
+    events:
+      - GroupMemberUnbanned
+    authRequired: true
+    auditRequired: true
+    permission:
+      - CanManageMember
+    description: 解封成员（高权限操作）
+
+  - name: RemoveMember
+    maxType: 2000
+    minType: 2027
+    direction: C->S
+    dataLevel: "1-write-elevated"
+    requestProto: cairobot.social.v1.RemoveMemberRequest
+    responseProto: cairobot.social.v1.RemoveMemberResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:member:{groupId}:{targetUserId}"
+      - "group:members:{groupId}:*"
+      - "group:stats:{groupId}"
+    events:
+      - GroupMemberRemoved
+    authRequired: true
+    auditRequired: true
+    permission:
+      - CanManageMember
+    description: 移除成员（高权限操作）
+
+  - name: UpdateMemberRole
+    maxType: 2000
+    minType: 2029
+    direction: C->S
+    dataLevel: "1-write-elevated"
+    requestProto: cairobot.social.v1.UpdateMemberRoleRequest
+    responseProto: cairobot.social.v1.UpdateMemberRoleResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:member:{groupId}:{targetUserId}"
+      - "group:members:{groupId}:*"
+    events:
+      - GroupMemberRoleChanged
+    authRequired: true
+    auditRequired: true
+    permission:
+      - IsGroupOwner
+    description: 更新成员角色（圈主专属权限）
+
+  - name: RenewMember
+    maxType: 2000
+    minType: 2037
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.RenewMemberRequest
+    responseProto: cairobot.social.v1.RenewMemberResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
       - "group:member:{groupId}:{userId}"
       - "group:stats:{groupId}"
     events:
-      - GroupOrderPaid
-      - GroupMemberActivated
-    authRequired: true
-    auditRequired: true
-    permission:
-      - CanConfirmPayment
-    description: >
-      支付确认/手动开通权益（高权限操作）。
-      事务内原子更新订单状态和成员权益（expired_at）。
-
-  - name: GetOwnerDashboard
-    maxType: 2000
-    minType: 2027
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.GetOwnerDashboardRequest
-    responseProto: cairobot.social.v1.GetOwnerDashboardResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "owner:dashboard:{ownerId}"
-    cacheTtlMinutes: 5
-    events: []
+      - GroupMemberRenewed
     authRequired: true
     auditRequired: false
     permission:
-      - IsGroupOwner
-    description: 圈主看板数据（2级聚合数据）
+      - CanManageGroup
+    description: 续期成员权益
 
-  - name: AuditGroup
+  - name: GetGroupPermissionsLite
     maxType: 2000
-    minType: 2029
+    minType: 2059
     direction: C->S
-    dataLevel: "1-write-elevated"
-    requestProto: cairobot.social.v1.AuditGroupRequest
-    responseProto: cairobot.social.v1.AuditGroupResponse
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.GetGroupPermissionsLiteRequest
+    responseProto: cairobot.social.v1.GetGroupPermissionsLiteResponse
+    cachePolicy: cache-aside
+    cacheKeys:
+      - "group:permissions:{groupId}:{userId}"
+    cacheTtlMinutes: 10
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 获取用户在群组中的轻量级权限列表
+
+  - name: UpdateGroupDiscounts
+    maxType: 2000
+    minType: 2067
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.UpdateGroupDiscountsRequest
+    responseProto: cairobot.social.v1.UpdateGroupDiscountsResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
-      - "group:detail:{groupId}"
+      - "group:plans:{groupId}"
     events:
-      - GroupAudited
+      - GroupDiscountsUpdated
     authRequired: true
-    auditRequired: true
+    auditRequired: false
     permission:
-      - CanAuditContent
-    description: 平台审核群组（高权限操作）
+      - CanManageGroup
+    description: 更新群组折扣方案
+
+  - name: CalcPayableAmount
+    maxType: 2000
+    minType: 2073
+    direction: C->S
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.CalcPayableAmountRequest
+    responseProto: cairobot.social.v1.CalcPayableAmountResponse
+    cachePolicy: no-cache
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 计算应付金额
+
+  - name: GroupUserEnter
+    maxType: 2000
+    minType: 2087
+    direction: C->S
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.GroupUserEnterRequest
+    responseProto: cairobot.social.v1.GroupUserEnterResponse
+    cachePolicy: no-cache
+    events:
+      - GroupUserEntered
+    authRequired: true
+    auditRequired: false
+    description: 用户进入群组（记录进入事件）
 
   # ============================================================
   # 主题协议组 (maxType = 3000)
   # 奇数 minType = C->S Request, 偶数 minType = S->C Response
+  # Proto-First: 编号以 proto/social/topic.proto 为准
   # ============================================================
 
   - name: CreateTopic
@@ -480,28 +573,25 @@ x-cairobot-protocols:
       - CanPublishTopic
     description: 发布帖子
 
-  - name: UpdateTopic
+  - name: GetTopicList
     maxType: 3000
-    minType: 3003
+    minType: 3005
     direction: C->S
-    dataLevel: "1-write"
-    requestProto: cairobot.social.v1.UpdateTopicRequest
-    responseProto: cairobot.social.v1.UpdateTopicResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "topic:detail:{topicId}"
-      - "group:topics:{groupId}:*"
-    events:
-      - TopicUpdated
-    authRequired: true
+    dataLevel: "2-read"
+    requestProto: cairobot.social.v1.GetTopicListRequest
+    responseProto: cairobot.social.v1.GetTopicListResponse
+    cachePolicy: event-driven-with-ttl
+    cacheKeys:
+      - "group:topics:{groupId}:{page}"
+    cacheTtlMinutes: 3
+    events: []
+    authRequired: false
     auditRequired: false
-    permission:
-      - IsTopicAuthorOrAdmin
-    description: 修改帖子
+    description: 获取帖子列表（2级读取）
 
   - name: DeleteTopic
     maxType: 3000
-    minType: 3005
+    minType: 3009
     direction: C->S
     dataLevel: "1-write"
     requestProto: cairobot.social.v1.DeleteTopicRequest
@@ -520,173 +610,203 @@ x-cairobot-protocols:
       - IsTopicAuthorOrAdmin
     description: 删除/下架帖子
 
-  - name: GetTopicDetail
+  - name: PinTopic
     maxType: 3000
-    minType: 3007
-    direction: C->S
-    dataLevel: "mixed-1plus2-permission"
-    requestProto: cairobot.social.v1.GetTopicDetailRequest
-    responseProto: cairobot.social.v1.GetTopicDetailResponse
-    cachePolicy: cache-aside-with-permission-check
-    cacheKeys:
-      - "topic:detail:{topicId}"
-    cacheTtlMinutes: 10
-    events: []
-    authRequired: false
-    auditRequired: false
-    permission:
-      - CanReadTopic
-    description: >
-      帖子详情（含权限判断）。
-      必须调用 CanReadTopic 基于 1级 group_members 数据判断阅读权限。
-      无权限时返回摘要 + access_status + need_plan_id。
-
-  - name: ListGroupTopics
-    maxType: 3000
-    minType: 3009
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.ListGroupTopicsRequest
-    responseProto: cairobot.social.v1.ListGroupTopicsResponse
-    cachePolicy: event-driven-with-ttl
-    cacheKeys:
-      - "group:topics:{groupId}:{page}"
-    cacheTtlMinutes: 3
-    events: []
-    authRequired: false
-    auditRequired: false
-    description: 群组帖子列表（2级读取）
-
-  - name: MarkTopicRead
-    maxType: 3000
-    minType: 3011
-    direction: C->S
-    dataLevel: "2-write"
-    requestProto: cairobot.social.v1.MarkTopicReadRequest
-    responseProto: cairobot.social.v1.MarkTopicReadResponse
-    cachePolicy: event-driven-update
-    updateKeys:
-      - "topic:read:{userId}:{topicId}"
-      - "topic:stats:{topicId}"
-    events: []
-    authRequired: true
-    auditRequired: false
-    description: 标记阅读（2级行为数据，允许异步写入）
-
-  - name: GetReadHistory
-    maxType: 3000
-    minType: 3013
-    direction: C->S
-    dataLevel: "2-read"
-    requestProto: cairobot.social.v1.GetReadHistoryRequest
-    responseProto: cairobot.social.v1.GetReadHistoryResponse
-    cachePolicy: event-driven-with-ttl
-    cacheTtlMinutes: 10
-    events: []
-    authRequired: true
-    auditRequired: false
-    description: 阅读历史（2级读取）
-
-  - name: CreateComment
-    maxType: 3000
-    minType: 3015
+    minType: 3029
     direction: C->S
     dataLevel: "1-write"
-    requestProto: cairobot.social.v1.CreateCommentRequest
-    responseProto: cairobot.social.v1.CreateCommentResponse
+    requestProto: cairobot.social.v1.PinTopicRequest
+    responseProto: cairobot.social.v1.PinTopicResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "group:topics:{groupId}:*"
+    events:
+      - TopicPinned
+      - TopicUnpinned
+    authRequired: true
+    auditRequired: false
+    permission:
+      - CanManageGroup
+    description: 置顶/取消置顶帖子
+
+  - name: AddTopicReply
+    maxType: 3000
+    minType: 3043
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.AddTopicReplyRequest
+    responseProto: cairobot.social.v1.AddTopicReplyResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
       - "topic:stats:{topicId}"
     events:
-      - TopicCommentCreated
+      - TopicReplyAdded
     authRequired: true
     auditRequired: false
     permission:
       - CanCommentTopic
-    description: 发表评论（1级 UGC 数据）
+    description: 添加帖子回复/评论
 
-  - name: DeleteComment
+  - name: SearchTopics
     maxType: 3000
-    minType: 3017
+    minType: 3049
+    direction: C->S
+    dataLevel: "2-read"
+    requestProto: cairobot.social.v1.SearchTopicsRequest
+    responseProto: cairobot.social.v1.SearchTopicsResponse
+    cachePolicy: event-driven-with-ttl
+    cacheTtlMinutes: 5
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 搜索帖子
+
+  - name: DeleteTopicReply
+    maxType: 3000
+    minType: 3055
     direction: C->S
     dataLevel: "1-write"
-    requestProto: cairobot.social.v1.DeleteCommentRequest
-    responseProto: cairobot.social.v1.DeleteCommentResponse
+    requestProto: cairobot.social.v1.DeleteTopicReplyRequest
+    responseProto: cairobot.social.v1.DeleteTopicReplyResponse
     cachePolicy: cache-aside-invalidate
     invalidateKeys:
       - "topic:stats:{topicId}"
     events:
-      - CommentRemoved
+      - TopicReplyDeleted
     authRequired: true
     auditRequired: true
     permission:
       - IsCommentAuthorOrAdmin
-    description: 删除评论
+    description: 删除帖子回复
 
-  - name: ReactTopic
+  - name: LikeTopic
     maxType: 3000
-    minType: 3019
+    minType: 3061
     direction: C->S
     dataLevel: "1-or-2-write"
-    requestProto: cairobot.social.v1.ReactTopicRequest
-    responseProto: cairobot.social.v1.ReactTopicResponse
+    requestProto: cairobot.social.v1.LikeTopicRequest
+    responseProto: cairobot.social.v1.LikeTopicResponse
     cachePolicy: event-driven-update
     updateKeys:
       - "topic:stats:{topicId}"
     events:
-      - TopicReacted
+      - TopicLiked
+      - TopicUnliked
     authRequired: true
     auditRequired: false
-    description: 点赞/收藏/分享（关系本身是 1级，计数值是 2级）
+    description: 点赞/取消点赞帖子
 
-  - name: CancelReactTopic
+  - name: FavoriteTopic
     maxType: 3000
-    minType: 3021
+    minType: 3063
     direction: C->S
     dataLevel: "1-or-2-write"
-    requestProto: cairobot.social.v1.CancelReactTopicRequest
-    responseProto: cairobot.social.v1.CancelReactTopicResponse
+    requestProto: cairobot.social.v1.FavoriteTopicRequest
+    responseProto: cairobot.social.v1.FavoriteTopicResponse
     cachePolicy: event-driven-update
     updateKeys:
       - "topic:stats:{topicId}"
-    events: []
+    events:
+      - TopicFavorited
+      - TopicUnfavorited
     authRequired: true
     auditRequired: false
-    description: 取消点赞/收藏
+    description: 收藏/取消收藏帖子
 
-  - name: AuditTopic
+  - name: GetReplyList
     maxType: 3000
-    minType: 3023
-    direction: C->S
-    dataLevel: "1-write-elevated"
-    requestProto: cairobot.social.v1.AuditTopicRequest
-    responseProto: cairobot.social.v1.AuditTopicResponse
-    cachePolicy: cache-aside-invalidate
-    invalidateKeys:
-      - "topic:detail:{topicId}"
-    events:
-      - TopicAudited
-    authRequired: true
-    auditRequired: true
-    permission:
-      - CanAuditContent
-    description: 审核/下架帖子（高权限操作）
-
-  - name: GetTopicStats
-    maxType: 3000
-    minType: 3025
+    minType: 3065
     direction: C->S
     dataLevel: "2-read"
-    requestProto: cairobot.social.v1.GetTopicStatsRequest
-    responseProto: cairobot.social.v1.GetTopicStatsResponse
+    requestProto: cairobot.social.v1.GetReplyListRequest
+    responseProto: cairobot.social.v1.GetReplyListResponse
     cachePolicy: event-driven-with-ttl
     cacheKeys:
-      - "topic:stats:{topicId}"
-    cacheTtlMinutes: 15
+      - "topic:replies:{topicId}:{page}"
+    cacheTtlMinutes: 5
     events: []
     authRequired: false
     auditRequired: false
-    description: 帖子统计（阅读/评论/点赞/收藏/分享数，2级数据）
+    description: 获取帖子回复列表
+
+  - name: LikeReply
+    maxType: 3000
+    minType: 3077
+    direction: C->S
+    dataLevel: "1-or-2-write"
+    requestProto: cairobot.social.v1.LikeReplyRequest
+    responseProto: cairobot.social.v1.LikeReplyResponse
+    cachePolicy: event-driven-update
+    updateKeys:
+      - "topic:stats:{topicId}"
+    events:
+      - ReplyLiked
+      - ReplyUnliked
+    authRequired: true
+    auditRequired: false
+    description: 点赞/取消点赞回复
+
+  - name: PinComment
+    maxType: 3000
+    minType: 3081
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.PinCommentRequest
+    responseProto: cairobot.social.v1.PinCommentResponse
+    cachePolicy: cache-aside-invalidate
+    invalidateKeys:
+      - "topic:replies:{topicId}:*"
+    events:
+      - CommentPinned
+      - CommentUnpinned
+    authRequired: true
+    auditRequired: false
+    permission:
+      - CanManageGroup
+    description: 置顶/取消置顶评论
+
+  - name: GetReportTypes
+    maxType: 3000
+    minType: 3093
+    direction: C->S
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.GetReportTypesRequest
+    responseProto: cairobot.social.v1.GetReportTypesResponse
+    cachePolicy: cache-aside
+    cacheKeys:
+      - "report:types"
+    cacheTtlMinutes: 60
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 获取举报类型列表
+
+  - name: CreateReport
+    maxType: 3000
+    minType: 3095
+    direction: C->S
+    dataLevel: "1-write"
+    requestProto: cairobot.social.v1.CreateReportRequest
+    responseProto: cairobot.social.v1.CreateReportResponse
+    cachePolicy: no-cache
+    events:
+      - ReportCreated
+    authRequired: true
+    auditRequired: false
+    description: 创建举报
+
+  - name: CheckTopicActions
+    maxType: 3000
+    minType: 3099
+    direction: C->S
+    dataLevel: "1-read"
+    requestProto: cairobot.social.v1.CheckTopicActionsRequest
+    responseProto: cairobot.social.v1.CheckTopicActionsResponse
+    cachePolicy: no-cache
+    events: []
+    authRequired: true
+    auditRequired: false
+    description: 检查用户对帖子的可用操作（点赞、评论、删除等权限）
 
 components:
   securitySchemes:

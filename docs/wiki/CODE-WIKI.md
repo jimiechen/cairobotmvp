@@ -781,7 +781,7 @@ go/modules/social/
   │   ├── handler.go    # Protobuf decode/encode
   │   ├── service.go    # 成员业务逻辑
   │   ├── usecase.go    # 注册/登录/资料/关注流程编排
-  │   └── repository.go # users/user_follows 数据访问
+  │   └── repository.go # users/member_blocks 数据访问
   ├── group/           # 群组协议组 (maxType=2000)
   │   ├── handler.go
   │   ├── service.go
@@ -840,13 +840,12 @@ MySQL (1级数据) + Redis (2级数据)
 | groups | 群组/圈子主表 | 1级（不保存动态关系） |
 | topics | 帖子主表 | 1级（阅读权限由关联表判断） |
 
-新增 8 张表：
+新增 7 张表：
 
 | 新增表 | 用途 | 数据等级 |
 |-------|------|---------|
-| user_follows | 关注/粉丝关系 | 1级 |
 | group_members | 群组成员关系 | 1级 |
-| group_plans | 付费方案 | 1级 |
+| group_pay_configs | 付费配置 | 1级 |
 | group_orders | 付费订单 | 1级 |
 | topic_read_records | 阅读记录 | 2级行为数据 |
 | topic_comments | 评论 | 1级 UGC |
@@ -860,12 +859,9 @@ MySQL (1级数据) + Redis (2级数据)
 ```
 # 成员域（1级 Cache Aside）
 member:profile:{userId}          TTL 10-30min
-follow:rel:{fid}:{tid}            TTL 5-10min
 
 # 成员域（2级 事件驱动）
 member:stats:{userId}            TTL 30-120min
-member:followers:{uid}:{page}     TTL 1-10min
-member:followings:{uid}:{page}    TTL 1-10min
 
 # 群组域（1级 Cache Aside）
 group:detail:{gid}               TTL 5-15min
@@ -906,8 +902,6 @@ topic:hot:{gid}                   TTL 1-5min
 | 事件 | 触发 | 驱动的2级数据变更 |
 |-----|------|------------------|
 | MemberRegistered | 注册 | 初始化 member_stats |
-| MemberFollowed | 关注 | 粉丝数+1 / 关注数+1 |
-| MemberUnfollowed | 取关 | 粉丝数-1 / 关注数-1 |
 | GroupCreated | 创建群组 | 初始化 group_stats |
 | GroupJoined | 加入群组 | 成员数+1 |
 | GroupLeft | 退出群组 | 成员数-1 |

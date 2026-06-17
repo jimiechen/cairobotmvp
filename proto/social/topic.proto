@@ -1,0 +1,861 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+import "base/result.proto";
+import "base/common.proto";
+
+package com.mineplanet.pojo.topic;
+option java_outer_classname = "TopicStatServiceProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/social";
+option optimize_for = LITE_RUNTIME;
+
+// 主题状态枚举
+enum TopicStatus {
+  TOPIC_STATUS_UNKNOWN = 0;    // 未知状态
+  TOPIC_STATUS_ACTIVE = 1;     // 活跃状态
+  TOPIC_STATUS_INACTIVE = 2;   // 非活跃状态
+  TOPIC_STATUS_DELETED = 3;    // 已删除状态
+  TOPIC_STATUS_LOCKED = 4;     // 锁定状态
+  TOPIC_STATUS_PINNED = 5;     // 置顶状态
+}
+
+// 主题类型枚举
+enum TopicType {
+  TOPIC_TYPE_UNKNOWN = 0;      // 未知类型
+  TOPIC_TYPE_NORMAL = 1;       // 普通主题
+  TOPIC_TYPE_ANNOUNCEMENT = 2; // 公告主题
+  TOPIC_TYPE_QUESTION = 3;     // 问题主题
+  TOPIC_TYPE_ARTICLE = 6;      // 文章主题
+}
+
+// 主题导航类型枚举（用于内容导航菜单）
+enum TopicNavType {
+  TOPIC_NAV_TYPE_UNKNOWN = 0;          // 未知
+  TOPIC_NAV_TYPE_NEW = 1;              // 最新/全部
+  TOPIC_NAV_TYPE_FOR_ME_TO_ANSWER = 2; // 等我回答
+  TOPIC_NAV_TYPE_FEATURED = 3;         // 精华
+  TOPIC_NAV_TYPE_QA = 4;               // 问答
+  TOPIC_NAV_TYPE_CREATOR = 5;          // 圈主
+  TOPIC_NAV_TYPE_MEDIA = 6;            // 媒体
+  TOPIC_NAV_TYPE_ARTICLE = 7;          // 文章
+  TOPIC_NAV_TYPE_DOCS = 8;             // 文件
+}
+
+// 回复状态枚举
+enum ReplyStatus {
+  REPLY_STATUS_UNKNOWN = 0;    // 未知状态
+  REPLY_STATUS_ACTIVE = 1;     // 活跃状态
+  REPLY_STATUS_DELETED = 2;    // 已删除状态
+  REPLY_STATUS_HIDDEN = 3;     // 隐藏状态
+}
+
+// 主题信息
+message TopicInfo {
+  string topic_id = 1;         // 主题ID
+  string title = 2;            // 主题标题
+  string content = 3;          // 主题内容
+  string author_id = 4;        // 作者ID
+  string author_name = 5;      // 作者名称
+  string group_id = 6;         // 所属群组ID
+  TopicType topic_type = 7;    // 主题类型
+  int64 created_at = 15;       // 创建时间
+  int64 updated_at = 16;       // 更新时间
+  TopicInfoExtra extra = 18;   // UI扩展字段集合，用于Figma映射与前端展示（静态子集）
+  string summary = 19;         // 内容摘要（约150字，创建时固定）
+  string author_avatar = 20;   // 作者头像（/.figma/image 路径）
+  Visibility visibility = 21;  // 可见性
+  ContentFormat content_format = 22; // 内容格式
+  reserved 23, 24, 25, 26;     // v3.0 已迁移到TopicStat: is_liked/is_favorited/is_pinned/is_featured
+  
+  // 新增字段 - 导航项（发布时预计算）
+  repeated TopicNavType nav_types = 27;  // 主题所属的导航项列表
+  string qa_target_user_id = 28;         // 问答指向的用户ID
+  bool has_media = 29;                   // 是否包含媒体
+  bool has_docs = 30;                    // 是否包含文件
+  string draft_id = 31;                  // 草稿ID，创建主题时传入
+
+  // 新增字段 - 问答相关（2026-05-16 补充）
+  string question_text = 32;             // 提问文本（仅type=3时有值，最多300字符）
+  bool qa_private = 33;                  // 是否私密问答（仅type=3时有值）
+  int64 answered_at = 34;                // 回答时间戳（首次回答时间）
+  string cover_image = 35;               // 封面图片URL（文章/回答类型）
+  string member_id = 36;                 // 作者在圈子的成员ID（group_members.id），CreateTopic时注入
+}
+
+
+enum MediaType {
+  MEDIA_TYPE_UNKNOWN = 0;      // 未知类型
+  MEDIA_TYPE_IMAGE = 1;        // 图片（轮播）
+  MEDIA_TYPE_VIDEO = 2;        // 视频（播放器）
+  MEDIA_TYPE_FILE = 3;         // 文件附件（PDF/DOCX/XLSX/PPTX/TXT/ZIP等）
+  MEDIA_TYPE_LINK = 4;         // 外部链接预览（Reuters/FT等）
+}
+
+enum MediaStatus {
+  MEDIA_STATUS_UNKNOWN = 0;    // 未知
+  MEDIA_STATUS_READY = 1;      // 可展示
+  MEDIA_STATUS_PROCESSING = 2; // 处理中（进度条）
+  MEDIA_STATUS_FAILED = 3;     // 处理失败
+}
+
+// 内容类型枚举
+enum ContentType {
+  CONTENT_TYPE_UNKNOWN = 0;
+  CONTENT_TYPE_ARTICLE = 1;
+  CONTENT_TYPE_MEDIA = 2;
+  CONTENT_TYPE_FILE = 3;
+  CONTENT_TYPE_LINK = 4;
+}
+
+// 内容格式枚举
+enum ContentFormat {
+  CONTENT_FORMAT_UNKNOWN = 0;
+  CONTENT_FORMAT_PLAIN_TEXT = 1;
+  CONTENT_FORMAT_MARKDOWN = 2;
+  CONTENT_FORMAT_RICH_TEXT = 3;
+}
+
+// 可见性枚举
+enum Visibility {
+  VISIBILITY_UNKNOWN = 0;
+  VISIBILITY_PUBLIC = 1;  // 全员可见
+  VISIBILITY_PARTIAL = 2; // 仅部分可见
+  VISIBILITY_SELF = 3;    // 仅自己可见
+}
+
+// 媒体MIME类型枚举（常见类型）
+enum MimeType {
+  MIME_TYPE_UNKNOWN = 0;
+  MIME_TYPE_IMAGE_PNG = 1;
+  MIME_TYPE_IMAGE_SVG = 2;
+  MIME_TYPE_IMAGE_JPEG = 3;
+  MIME_TYPE_VIDEO_MP4 = 10;
+  MIME_TYPE_APPLICATION_PDF = 20;
+  MIME_TYPE_APPLICATION_DOC = 21;
+  MIME_TYPE_APPLICATION_DOCX = 22;
+  MIME_TYPE_APPLICATION_XLS = 23;
+  MIME_TYPE_APPLICATION_XLSX = 24;
+  MIME_TYPE_APPLICATION_PPT = 25;
+  MIME_TYPE_APPLICATION_PPTX = 26;
+  MIME_TYPE_TEXT_PLAIN = 30;
+}
+
+message ExternalLink {
+  string site_name = 1;        // 站点名称（如Reuters/FT）
+  string title = 2;            // 链接标题
+  string cover = 3;            // 封面图（/.figma/image 路径）
+}
+
+message MediaItem {
+  string media_id = 1;         // 媒体唯一ID
+  MediaType type = 2;          // 媒体类型
+  string url = 3;              // 媒体资源路径（/.figma/image 或本地文件路径）
+  string thumbnail_url = 4;    // 缩略图（/.figma/image 路径）
+  int32 duration_sec = 5;      // 时长（秒），客户端渲染文本
+  MimeType mime_type = 6;      // 媒体MIME类型（枚举）
+  string filename = 7;         // 文件名（type=FILE）
+  int32 sort_order = 8;        // 展示顺序（轮播索引/进度条）
+  MediaStatus status = 9;      // 媒体处理状态
+  int32 width = 10;
+  int32 height = 11;
+  int64 file_size = 12;        // 文件大小
+}
+
+message TopicInfoExtra {
+  reserved 1, 2, 3, 4, 5, 6, 7, 8, 9, 13;
+  ContentType content_type = 10; // 内容类型（枚举）
+  repeated MediaItem media = 11;// 媒体列表
+  ExternalLink external_link = 12; // 外链富预览
+}
+
+message TopicStat {
+  string topic_id = 1;              // 主题ID
+  int32 like_count = 2;             // 点赞数量
+  int32 comment_count = 3;          // 评论数量
+  int64 view_count = 4;             // 浏览次数
+  int64 last_reply_time = 5;        // 最后回复时间
+  int32 favorite_count = 9;         // 收藏数量
+  
+  // v3.0 新增：从 TopicInfo 迁移的字段（用户交互状态 + 主题标记）
+  bool is_liked = 10;               // 当前用户是否点赞（动态填充）
+  bool is_favorited = 11;           // 当前用户是否收藏（动态填充）
+  bool is_pinned = 12;              // 是否置顶
+  bool is_featured = 13;            // 是否精华
+  
+  // v3.0 新增：topics 表状态字段
+  int64 topic_updated_at = 14;       // 主题最后更新时间（对应 topics.updated_at）
+  TopicLifecycleStatus status = 15; // 主题生命周期状态（对应 topics.status: 1=草稿 2=已发布 3=隐藏 4=删除）
+  Visibility visibility = 16;        // 可见性（对应 topics.visibility: 1=公开 2=部分可见 3=仅自己）
+}
+
+// 主题生命周期状态
+enum TopicLifecycleStatus {
+  TOPIC_LIFECYCLE_STATUS_UNKNOWN = 0;
+  TOPIC_LIFECYCLE_STATUS_DRAFT = 1;
+  TOPIC_LIFECYCLE_STATUS_PUBLISHED = 2;
+  TOPIC_LIFECYCLE_STATUS_HIDDEN = 3;
+  TOPIC_LIFECYCLE_STATUS_DELETED = 4;
+}
+
+// 主题互动类型枚举
+enum InteractionType {
+  INTERACTION_TYPE_UNKNOWN = 0;    // 未知类型
+  INTERACTION_TYPE_LIKE = 1;       // 点赞
+  INTERACTION_TYPE_FAVORITE = 2;   // 收藏
+  INTERACTION_TYPE_BOOKMARK = 3;   // 书签
+  INTERACTION_TYPE_SHARE = 4;      // 分享
+  INTERACTION_TYPE_VOTE_UP = 5;    // 投票赞成
+  INTERACTION_TYPE_VOTE_DOWN = 6;  // 投票反对
+}
+
+// 回复信息
+// 引用评论简略信息
+message ReferReplyInfo {
+  string reply_id = 1;         // 引用的评论ID
+  string author_id = 2;        // 作者ID
+  string author_name = 3;      // 作者名称
+  string content = 4;          // 评论内容
+  bool is_deleted = 5;         // 是否已删除
+  int64 created_at = 6;        // 创建时间
+}
+
+message ReplyInfo {
+  string reply_id = 1;         // 回复ID
+  string topic_id = 2;         // 主题ID
+  string content = 3;          // 回复内容
+  string author_id = 4;        // 作者ID
+  string author_name = 5;      // 作者名称
+  string parent_reply_id = 6;  // 父回复ID（用于嵌套回复）
+  ReplyStatus status = 7;      // 回复状态
+  int32 like_count = 8;        // 点赞数量
+  int64 created_at = 9;        // 创建时间
+  int64 updated_at = 10;       // 更新时间
+  int32 replies_count = 11;    // 回复数量
+  bool is_pinned = 12;         // 是否置顶
+  bool is_liked = 14;          // 当前用户是否已点赞
+  int32 level = 15;            // 评论层级（1=一级，2=二级）
+  ReferReplyInfo refer_reply_info = 16;  // 引用的评论信息
+  string reply_to_user_id = 17;          // 回复目标用户ID
+  string reply_to_user_name = 18;        // 回复目标用户昵称
+  repeated MediaItem media_items = 19;   // 评论媒体列表（含长宽信息）
+}
+
+message AddTopicReplyRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3043;
+  }
+  string topic_id = 1;
+  string content = 2;
+  string parent_reply_id = 3;
+  string refer_id = 4;                  // 引用评论ID
+  repeated MediaItem media_items = 5;   // 评论媒体列表（含长宽信息）
+}
+
+message AddTopicReplyResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3044;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  ReplyInfo reply_info = 2;
+  string reply_id = 3; // 新增：透传 reply_id
+}
+
+message GetReplyListRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3065;
+  }
+  string topic_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string sort_by = 4;
+  com.mineplanet.pojo.common.SortOrder sort_order = 5; // 排序方向枚举
+  string parent_reply_id = 6;
+  int32 max_depth = 7;              // 最大层级深度（默认 2，即返回一级 + 二级）
+  int32 child_comments_size = 8;    // 每条父评论返回的子评论数量（默认 3）
+  bool include_children = 9;        // 是否同时返回子评论（默认 true）
+}
+
+message GetReplyListResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3066;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated ReplyInfo replies = 2;
+  int64 total = 3;              // 一级评论总数（用于分页）
+  int32 page = 4;
+  int32 page_size = 5;
+  int32 total_pages = 6;
+  string topic_id = 7;          // 透传 topic_id
+  int64 total_all = 8;          // 所有评论总数（一级+二级+...）
+}
+
+
+message LikeReplyRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3077;
+  }
+  string reply_id = 1; // 必填，回复ID
+  bool like = 2; // 非必填，是否点赞
+  bool is_like = 3; // 非必填，兼容字段
+  string topic_id = 4; // 必填，主题ID
+}
+message LikeReplyResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3078;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string reply_id = 2; // 新增：透传 reply_id
+  string topic_id = 3; // 新增：透传 topic_id
+}
+
+// 接口用途：分页获取主题列表
+message GetTopicListRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3005;
+  }
+  string group_id = 1;         // 非必填，群组ID
+  int32 page = 2;              // 非必填，页码
+  int32 page_size = 3;         // 非必填，每页大小
+  string sort_by = 4;          // 非必填，排序字段
+  com.mineplanet.pojo.common.SortOrder sort_order = 5;    // 非必填，排序方向
+
+  // 新增字段 - 按导航项筛选
+  TopicNavType nav_type = 6;   // 非必填，按导航项筛选
+  string target_user_id = 7;   // 非必填，目标用户ID（For Me to Answer 用）
+}
+
+// 接口用途：返回主题列表分页结果
+message GetTopicListResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3006;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated TopicInfo topics = 2; // 主题列表
+  int64 total = 3;             // 总数
+  int32 page = 4;              // 当前页码
+  int32 page_size = 5;         // 每页大小
+  int32 total_pages = 6;       // 总页数
+  string group_id = 7;       // 圈子id
+  int64 latest_topic_ts = 8; // 新增：最新主题的创建时间（UTC时间戳）
+  repeated string pinned_topic_ids = 9; // 置顶主题ids数组（每个分页都返回，最多2条）
+}
+
+// 接口用途：删除主题
+message DeleteTopicRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3009;
+  }
+  string topic_id = 1; // 必填，主题ID
+}
+
+// 接口用途：返回删除结果
+message DeleteTopicResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3010;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string topic_id = 2; // 新增：透传 topic_id
+}
+
+// 接口用途说明：统一使用带 Type 的详情协议（对齐路由）
+
+// 接口用途：点赞/取消点赞主题
+message LikeTopicRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3061;
+  }
+  string topic_id = 1;         // 必填，主题ID
+  bool is_like = 2;            // 非必填，是否点赞
+}
+// 接口用途：返回点赞结果
+message LikeTopicResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3062;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  bool is_liked = 2;
+  int32 like_count = 3;
+  string topic_id = 4; // 新增：透传 topic_id
+}
+
+// 接口用途：收藏/取消收藏主题
+message FavoriteTopicRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3063;
+  }
+  string topic_id = 1;         // 必填，主题ID
+  bool is_favorite = 2;        // 非必填，是否收藏
+}
+// 接口用途：返回收藏结果
+message FavoriteTopicResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3064;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  bool is_favorited = 2;
+  int32 favorite_count = 3;
+  string topic_id = 4;
+}
+
+// 接口用途：搜索主题
+message SearchTopicsRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3049;
+  }
+  string keyword = 1;          // 非必填，关键词
+  string group_id = 2;         // 非必填，群组ID
+  int32 page = 3;              // 非必填，页码
+  int32 page_size = 4;         // 非必填，每页大小
+  string sort_by = 5;          // 非必填，排序字段
+  com.mineplanet.pojo.common.SortOrder sort_order = 6;    // 非必填，排序方向
+}
+// 接口用途：返回搜索结果
+message SearchTopicsResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3050;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated TopicInfo topics = 2;
+  int64 total = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+  int32 total_pages = 6;
+  string keyword = 7;
+  int64 search_time_ms = 8;
+}
+
+// 接口用途：置顶评论
+message PinCommentRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3081;
+  }
+  string reply_id = 1;
+  string topic_id = 2;
+  bool pin = 3;
+}
+// 接口用途：返回置顶结果
+message PinCommentResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3082;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string reply_id = 2;
+}
+
+// 接口用途：批量获取主题状态
+message GetTopicStatRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3035;
+  }
+  repeated string topic_ids = 1; // 非必填，主题ID集合
+  int64 since_ts = 2;            // 非必填，增量起始时间戳
+}
+
+// 接口用途：返回主题状态列表
+message GetTopicStatResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3036;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated TopicStat stats = 2; // 主题状态列表
+  repeated string topic_ids = 3; // 新增：透传 topic_ids
+}
+
+// 接口用途：批量获取主题信息
+message BatchGetTopicInfoRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3057;
+  }
+  repeated string topic_ids = 1; // 必填，主题ID集合（建议 ≤ 100）
+  bool include_stats = 2;        // 非必填，是否返回统计信息
+}
+
+// 接口用途：返回主题信息与统计列表
+message BatchGetTopicInfoResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3058;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated TopicInfo topics = 2;            // 主题信息列表
+  repeated TopicStat stats = 3;             // 统计信息列表（当 include_stats=true 时返回）
+  repeated string topic_ids = 4;            // 新增：透传 topic_ids
+}
+
+// 接口用途：刷新主题状态（支持增量）
+message RefreshTopicStatRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3037;
+  }
+  repeated string topic_ids = 1; // 非必填，主题ID集合
+  int64 since_ts = 2;            // 非必填，增量起始时间戳
+  string group_id = 3;           // 非必填，圈子ID。为空则查询用户所有加入的圈子
+  int32 limit = 4;               // 非必填，返回条数（默认3）
+}
+
+// 接口用途：返回刷新操作结果（仅元数据，统计数据改用 3035/3036 获取）
+message RefreshTopicStatResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3038;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  reserved 2; // 已移除：stats 字段（改用 GetTopicStat 3035/3036 获取统计数据）
+  repeated string topic_ids = 3; // 透传 topic_ids
+  repeated TopicAuthorInfo authors = 5; // 作者信息列表
+  string group_id = 6; // 透传 group_id
+}
+
+// 主题作者信息
+message TopicAuthorInfo {
+  string topic_id = 1;      // 主题ID
+  string author_id = 2;     // 作者ID
+  string author_name = 3;   // 作者昵称
+  string author_avatar = 4; // 作者头像URL
+}
+
+message LinkInfo {
+  string url = 1;
+  string title = 2;
+}
+ 
+// 接口用途：创建主题（内容/媒体/文件/链接/问答/回答）
+message CreateTopicRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3001;
+  }
+  // ========== 基础字段 ==========
+  string title = 1;            // 主题标题
+  string content = 2;          // 主题内容（提问时：问题内容；回答时：回答内容）
+  string group_id = 3;         // 所属群组ID
+  TopicType topic_type = 4;    // 主题类型（提问/回答时都为3-QUESTION）
+  ContentFormat content_format = 5; // 内容格式
+
+  // ========== 媒体字段（回答时可用，提问时不可用）==========
+  repeated string media_refs = 6;   // 多媒体对象列表（仅回答时可用）
+  repeated string file_refs = 7;    // 文件引用ID列表（仅回答时可用）
+  // 链接URL列表（修改为LinkInfo结构以支持标题）
+  repeated LinkInfo link_urls = 8;  // 链接URL列表（仅回答时可用）
+
+  // ========== 提问字段（提问时必填，回答时不填）==========
+  string question_text = 9;         // 提问文本（最多300字符，不支持媒体）
+  string qa_target_user_id = 10;    // 提问者UID（提问者自己的ID）
+  bool qa_private = 11;             // 私密问答
+
+  // ========== 回答字段（回答时必填，提问时不填）==========
+  string topic_id = 12;             // 主题ID（回答时必填，指向要回答的问题）
+
+  // ========== 其他字段 ==========
+  string cover_image = 13;          // 文章封面图片（仅回答时可用）
+  repeated MediaItem media_items = 14; // 新版多媒体对象列表（仅回答时可用）
+  string summary = 15;              // 内容摘要（约150字）
+  string draft_id = 16;             // 草稿ID，服务端透传
+}
+
+// 接口用途：返回创建的主题信息
+message CreateTopicResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3002;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  TopicInfo topic_info = 2;    // 创建的主题信息
+  string topic_id = 3;         // 新增：透传 topic_id
+  string draft_id = 4;         // 草稿ID，透传客户端传入值
+}
+
+// 接口用途：删除主题回复
+message DeleteTopicReplyRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3055;
+  }
+  string reply_id = 1;
+  string topic_id = 2; // 增加 topic_id
+}
+// 接口用途：返回删除结果
+message DeleteTopicReplyResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3056;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string reply_id = 2; // 新增：透传 reply_id
+}
+
+// 接口用途：置顶/取消置顶主题
+message PinTopicRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3029;
+  }
+  string topic_id = 1;
+  bool pin = 2;
+}
+// 接口用途：返回置顶操作结果
+message PinTopicResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3030;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string topic_id = 2; // 新增：透传 topic_id
+}
+
+// 主题用户状态详情
+message TopicUserStatus {
+  string topic_id = 1;
+  bool is_liked = 2;
+  bool is_favorited = 3;
+  int64 updated_at = 4;
+}
+
+// 接口用途：批量检查用户对帖子的状态（点赞、收藏）
+message CheckTopicsUserStatusRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3083;
+  }
+  repeated string topic_ids = 1; // 必填，主题ID列表
+  int64 since_ts = 2;            // 非必填，增量更新时间戳（服务端可能忽略）
+  int32 mask = 3;                // 非必填，掩码：1=点赞，2=收藏，3=全部（默认）
+}
+
+// 接口用途：返回批量检查结果
+message CheckTopicsUserStatusResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3084;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  map<string, TopicUserStatus> statuses = 2; // 状态Map，Key为TopicID
+  int64 last_updated_ts = 3;                 // 服务端当前时间戳
+  repeated string topic_ids = 4;             // 新增：透传 topic_ids
+}
+
+
+// 接口用途：分页获取主题ids
+message GetTopicIdsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3085;
+  }
+  string group_id = 1;         // 非必填，群组ID
+  int32 page = 2;              // 非必填，页码
+  int32 page_size = 3;         // 非必填，每页大小
+  string sort_by = 4;          // 非必填，排序字段
+  string sort_order = 5;       // 非必填，排序方向
+  TopicNavType nav_type = 6;   // 非必填，按导航项筛选（与3005一致）
+  string target_user_id = 7;   // 非必填，目标用户ID（与3005一致）
+}
+
+// 接口用途：返回主题ids
+message GetTopicIdsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3086;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated string topic_ids = 2; // 主题ids数组
+  int64 total = 3;             // 总数
+  int32 page = 4;              // 当前页码
+  int32 page_size = 5;         // 每页大小
+  int32 total_pages = 6;       // 总页数
+  string group_id = 7;       // 圈子id
+  int64 latest_topic_ts = 8; // 新增：最新主题的创建时间（UTC时间戳）
+  repeated string pinned_topic_ids = 9; // 置顶主题ids数组（每个分页都返回，最多2条）
+}
+
+// 接口用途：标记/取消标记主题为精选（精华）
+// 权限要求：PermSetEssencePost (Owner/Admin)
+message FeatureTopicRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3091;  // 新增协议号
+  }
+  string topic_id = 1;      // 必填，主题ID
+  bool featured = 2;         // 必填，true=标记精选，false=取消精选
+}
+
+// 接口用途：返回精选操作结果
+message FeatureTopicResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3092;  // 新增协议号
+  }
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果
+  string topic_id = 2;                       // 透传 topic_id
+}
+
+// ==================== Report (举报) 功能协议 (3093-3096) ====================
+
+// 举报类型选项
+message ReportTypeOption {
+  string type_key = 1;       // 类型标识，如 "hate", "abuse", "violent_speech"
+  string display_name = 2;   // 显示名称
+  string description = 3;    // 详细描述
+  int32 sort_order = 4;      // 排序
+}
+
+// 接口用途：获取举报类型配置
+// MinType: 3093
+message GetReportTypesRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3093;
+  }
+  string target_type = 1;  // 非必填，举报对象类型: topic/reply/user
+}
+
+// 接口用途：返回举报类型列表
+// MinType: 3094
+message GetReportTypesResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3094;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated ReportTypeOption types = 2;  // 举报类型列表
+}
+
+// 接口用途：提交举报
+// MinType: 3095
+message CreateReportRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3095;
+  }
+  string target_type = 1;      // 必填，举报对象类型: topic/reply/user
+  string target_id = 2;        // 必填，举报对象ID
+  string group_id = 3;         // 必填，所属圈子ID（从帖子信息自动填充）
+  string report_type = 4;      // 必填，举报类型（对应 report_configs.type_key）
+  string reason_text = 5;      // 非必填，补充说明
+  repeated string screenshot_urls = 6;  // 非必填，截图URL列表
+}
+
+// 接口用途：返回举报提交结果
+// MinType: 3096
+message CreateReportResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3096;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string report_id = 2;        // 举报记录ID
+  string status = 3;            // 初始状态: pending
+}
+
+// ==================== 帖子操作权限查询协议 (3099-3100) ====================
+// 用途：根据 topic_id 查询当前用户对该帖子的所有可用操作（按钮是否可见/可用）
+// 设计参考：Group 2060 GetGroupPermissionsLiteResponse.ui_visibility（repeated string 模式）
+// 调用时机：用户打开帖子详情页、长按帖子卡片弹出操作菜单时
+
+// 接口用途：查询帖子操作权限请求
+message CheckTopicActionsRequest {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3099;  // CheckTopicActions 请求
+  }
+  string topic_id = 1;    // 必填，主题ID
+}
+
+// 接口用途：返回帖子操作权限列表
+message CheckTopicActionsResponse {
+  enum Type {
+    none = 0;
+    max = 3000;
+    min = 3100;  // CheckTopicActions 响应
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string topic_id = 2;                    // 透传 topic_id
+
+  // 核心字段：可用的操作列表（与 Group 2060 ui_visibility 同模式：repeated string）
+  // 客户端使用: available_actions.includes('delete_post') 判断按钮是否可见
+  repeated string available_actions = 3;
+
+  // 辅助信息：帖子当前状态快照（减少客户端额外查询 GetTopicDetail）
+  TopicActionState state = 4;
+}
+
+// 帖子操作状态快照（辅助客户端渲染决策，如"置顶"vs"取消置顶"文案切换）
+message TopicActionState {
+  bool is_author = 1;          // 当前用户是否为帖子作者
+  bool is_pinned = 2;          // 帖子是否已置顶
+  bool is_featured = 3;        // 帖子是否已精选
+  bool is_locked = 4;          // 帖子是否已锁定
+  TopicLifecycleStatus status = 5;   // 帖子生命周期状态
+  bool allow_comments = 6;     // 帖子是否允许评论
+}

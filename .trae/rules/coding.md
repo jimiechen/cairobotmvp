@@ -285,3 +285,118 @@ ParentAuthService 只做家长授权
 - 日志必须包含时间、模块、级别
 - 日志内容要可追溯
 - 敏感信息不能记日志
+
+## 6. 禁止硬编码枚举值与魔法字符串（Phase 1 MVP-P0 补充）
+
+> **生效范围**：svc 层、permission 层、converter 层、repository 层、测试代码
+> **生效时机**：Step 8 起，含 Steps 5-7 已有代码的整改
+
+### 6.1 Protobuf 协议枚举必须直接使用 pb 枚举常量
+
+svc 层凡是涉及协议中已定义的枚举值，**禁止写硬编码整数**。必须使用 protobuf 生成代码中的枚举常量，保证业务语义和协议定义保持一致。
+
+**错误示例：**
+```go
+member.Role = 1        // 裸数字，语义不明
+group.Status = 1       // 谁知道 1 是什么？
+topic.Visibility = 2   // 维护噩梦
+```
+
+**正确示例：**
+```go
+member.Role = int8(pb.GroupMemberRole_GROUP_MEMBER_ROLE_OWNER)
+group.Status = int8(pb.GroupStatus_GROUP_STATUS_ACTIVE)
+topic.Visibility = int8(pb.TopicVisibility_TOPIC_VISIBILITY_PUBLIC)
+```
+
+- model 层字段使用 `int8`/`int32` 基础类型时，允许在赋值边界做显式 `int8()` 类型转换
+- 枚举来源**必须是 pb 枚举常量**，禁止直接写数字
+- 如果 proto 中未定义该枚举值，应在 model 包中定义具名常量并注释来源
+
+### 6.2 业务字符串必须定义为包级常量
+
+svc、permission、converter、repository 中出现的业务字符串（角色名、上下文 key、错误消息片段、状态字符串等），**禁止散落魔法字符串**。应统一定义为包级或域级常量。
+
+**错误示例：**
+```go
+if role == "owner" || role == "admin" { return true }
+ctx.Value("user_id")
+```
+
+**正确示例：**
+```go
+const (
+    RoleOwner  = "owner"
+    RoleAdmin  = "admin"
+    RoleMember = "member"
+    CtxKeyUserID = "ctx_user_id"
+)
+
+if role == RoleOwner || role == RoleAdmin { return true }
+ctx.Value(CtxKeyUserID)
+```
+
+- 字符串来自 protobuf 枚举语义时，优先用 proto 枚举而非再定义字符串常量
+- 仅在模型确实需要字符串表达时，才允许用本地常量承接
+
+### 6.3 svc 层禁止裸字面量状态值
+
+以下类型的裸值均视为不合规：
+
+```go
+Status: 1          // ❌ 是什么状态？
+Role: 2            // ❌ 什么角色？
+Visibility: 3      // ❌ 可见性等级？
+Type: 1            // ❌ 帖子类型？
+Mode: "public"     // ❌ 魔法字符串
+Role: "admin"      // ❌ 角色名字面量
+```
+
+应替换为 pb 枚举常量或具名常量：
+
+```go
+Status:     int8(pb.GroupStatus_GROUP_STATUS_ACTIVE)
+Role:       int8(pb.GroupMemberRole_GROUP_MEMBER_ROLE_ADMIN)
+Visibility: int8(pb.TopicVisibility_TOPIC_VISIBILITY_PAID_MEMBER)
+Type:       int8(pb.TopicType_TOPIC_TYPE_NORMAL)
+```
+
+### 6.4 converter 层集中处理枚举转换
+
+model 和 proto 的枚举类型不一致时（如 model 用 `int8`，proto 用 `pb.XxxEnum`），**必须在 converter.go 中集中转换**，禁止各 svc 文件重复维护映射关系。
+
+**推荐模式：**
+```go
+// converter.go — 集中定义所有 model↔proto 枚举转换
+func toProtoGroupMemberRole(role int8) pb.GroupMemberRole {
+    switch role {
+    case 1: return pb.GroupMemberRole_GROUP_MEMBER_ROLE_OWNER
+    case 2: return pb.GroupMemberRole_GROUP_MEMBER_ROLE_ADMIN
+    case 3: return pb.GroupMemberRole_GROUP_MEMBER_ROLE_MEMBER
+    default: return pb.GroupMemberRole_GROUP_MEMBER_ROLE_UNSPECIFIED
+    }
+}
+```
+
+svc 层只负责业务编排，不应重复写 `map[int8]string{1:"owner", 2:"admin"}` 这类映射。
+
+### 6.5 测试代码同样适用
+
+测试中也禁止直接写业务枚举数字。断言中使用 pb 枚举常量，避免协议调整后测试仍"错误地通过"。
+
+**错误示例：**
+```go
+assert.Equal(t, int8(1), member.Role)
+```
+
+**正确示例：**
+```go
+assert.Equal(t, int8(pb.GroupMemberRole_GROUP_MEMBER_ROLE_OWNER), member.Role)
+```
+
+### 6.6 违规检测与整改清单
+
+CI 检查项（补充到 `make rules`）：
+1. 扫描 svc/permission/converter/repository 目录中的裸数字赋值（`= 1`、`= 2` 等）
+2. 扫测散落的角色/状态魔法字符串（`"owner"`、`"admin"`、`"active"` 等）
+3. 检查是否存在跨文件重复的枚举映射 map

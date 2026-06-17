@@ -180,7 +180,7 @@ CODE-WIKI 中已规划以下 MVP2 预留模块：
 Client                    Gateway              Social Service           MySQL          Redis
   |                          |                      |                     |             |
   |-- JoinGroup ------------>|                      |                     |             |
-  | (maxType=2000,min=2011)   |                      |                     |             |
+  | (maxType=2000,min=2013)   |                      |                     |             |
   |                          |                      |-- BEGIN TX -------->|             |
   |                          |                      |-- INSERT group_members            |
   |                          |                      |<-- TX OK -----------|             |
@@ -200,13 +200,13 @@ Client                    Gateway              Social Service           MySQL   
 Client                    Gateway              Social Service           MySQL          Redis
   |                          |                      |                     |             |
   |-- CreateGroupOrder ----->|                      |                     |             |
-  | (maxType=2000,min=2030)   |                      |                     |             |
+  | (maxType=2000,min=2037)   |                      |                     |             |
   |                          |                      |-- INSERT group_orders            |
   |                          |                      | (status=pending)     |             |
   |<-- OrderCreated ---------|<----------------------|                     |             |
   |                          |                      |                     |             |
   |-- ConfirmGroupPayment -->|                      |                     |             |
-  | (maxType=2000,min=2031)   |                      |                     |             |
+  | (maxType=2000,min=2038)   |                      |                     |             |
   |                          |                      |-- BEGIN TX -------->|             |
   |                          |                      |-- UPDATE orders      |             |
   |                          |                      |   status=paid        |             |
@@ -227,7 +227,7 @@ Client                    Gateway              Social Service           MySQL   
 Client                    Gateway              Social Service         Permission      MySQL
   |                          |                      |                   Service          |
   |-- GetTopicDetail ------->|                      |                   |                |
-  | (maxType=3000,min=3003)   |                      |                   |                |
+  | (maxType=3000,min=3005)   |                      |                   |                |
   |                          |                      |-- load topic ------|--> 1级查询     |
   |                          |                      |-- CanReadTopic? --|                |
   |                          |                      |   |-- check group_members  |        |
@@ -243,7 +243,7 @@ Client                    Gateway              Social Service         Permission
   |<-- TopicDetail ----------|<-- (with can_read flag)                   |                |
   |                          |                      |                                |
   |-- [async] MarkTopicRead ->|                      |                   |                |
-  | (maxType=3000,min=3010)   |                      |-- async write ---->|--> 2级写入     |
+  | (maxType=3000,min=3006)   |                      |-- async write ---->|--> 2级写入     |
   |                          |                      |   topic_read_records |                |
 ```
 
@@ -255,7 +255,7 @@ Client                    Gateway              Social Service         Permission
 Operator                  Gateway            Social Service        Perm Svc        MySQL        Redis
   |                           |                    |                 |              |           |
   |--UpdateGroupMemberStatus->|                    |                 |              |           |
-  | (maxType=2000,min=2013)    |                    |                 |              |           |
+  | (maxType=2000,min=2027)    |                    |                 |              |           |
   |                           |                    |--CanManageMember|              |           |
   |                           |                    |  check role ----|              |           |
   |                           |                    |  check ownership |              |           |
@@ -660,73 +660,135 @@ group_plans ──1:N── group_orders（订单）
 
 ## 8. 协议组规划
 
-### 8.1 协议组总览
+### 8.0 协议组总览
 
-社交域划分为三个协议组，每个协议组对应一个 maxType：
+社交域划分为三个协议组，每个协议组对应一个 maxType。以下编号均为 **proto 文件中的实际编号**（Proto-First 方案）。
 
-| 协议组   | maxType  | 职责                      | Proto 文件                  | Tars Server  | Tars Servant |
-| ----- | -------- | ----------------------- | ------------------------- | ------------ | ------------ |
-| 成员协议组 | **1000** | 用户注册、登录、资料、成员状态   | proto/social/member.proto | MemberServer | MemberObj    |
-| 群组协议组 | **2000** | 群组 CRUD、入群、付费方案、订单、圈主管理 | proto/social/group.proto  | GroupServer  | GroupObj     |
-| 主题协议组 | **3000** | 帖子 CRUD、阅读记录、评论、互动、内容审核 | proto/social/topic.proto  | TopicServer  | TopicObj     |
+| 协议组   | maxType  | 协议对数 | 职责                                    | Proto 文件                  | Tars Server  | Tars Servant |
+| ----- | -------- | ------ | ------------------------------------- | ------------------------- | ------------ | ------------ |
+| 成员协议组 | **1000** | 26 对   | 用户注册、登录、资料、成员状态、拉黑、IM 签到、配置等 | proto/social/member.proto | MemberServer | MemberObj    |
+| 群组协议组 | **2000** | 32 对   | 圈子 CRUD、成员管理、付费方案、权限、折扣、统计等     | proto/social/group.proto  | GroupServer  | GroupObj     |
+| 主题协议组 | **3000** | 21 对   | 帖子 CRUD、互动、评论、搜索、举报等               | proto/social/topic.proto  | TopicServer  | TopicObj     |
 
-### 8.2 成员协议组（maxType = 1000）
+### 8.1 成员协议组（maxType = 1000）
 
-| minType | 协议名称                | 方向  | 数据等级  | 说明                |
-| ------- | ------------------- | --- | ----- | ----------------- |
-| 1001    | MemberRegister      | C→S | 1级写入  | 用户注册              |
-| 1002    | MemberLogin         | C→S | 1级读取  | 用户登录              |
-| 1003    | MemberLogout        | C→S | 1级写入  | 用户登出              |
-| 1004    | GetMemberProfile    | C→S | 1级读取  | 获取用户资料            |
-| 1005    | UpdateMemberProfile | C→S | 1级写入  | 修改用户资料            |
-| 1030    | UpdateMemberStatus  | C→S | 1级高权限 | 平台管理员禁用/恢复用户      |
+> 编号规则：奇数 minType = C→S Request，偶数 minType = S→C Response（两两成对）
+> 负责用户注册、登录、资料、成员状态、拉黑、IM 签名、配置等
 
-### 8.3 群组协议组（maxType = 2000）
+| minType | 协议名称 | 方向 | 数据等级 | 说明 |
+|---|---|---|---|---|
+| 1021 | UserRegister | C→S | 1级写入 | 用户注册 |
+| 1022 | UserRegisterResponse | S→C | — | 用户注册响应 |
+| 1023 | UserLogin | C→S | 2级读取 | 用户登录 |
+| 1024 | UserLoginResponse | S→C | — | 登录响应(含令牌) |
+| 1025 | UserLogout | C→S | 1级写入 | 用户登出 |
+| 1026 | UserLogoutResponse | S→C | — | 登出响应 |
+| 1027 | RefreshToken | C→S | 2级读取 | 刷新令牌 |
+| 1028 | RefreshTokenResponse | S→C | — | 刷新令牌响应 |
+| 1029 | GetUserInfo | C→S | 2级读取 | 获取用户信息 |
+| 1030 | GetUserInfoResponse | S→C | — | 用户信息响应 |
+| 1031 | UpdateUserInfo | C→S | 1级写入 | 更新用户信息 |
+| 1032 | UpdateUserInfoResponse | S→C | — | 更新响应 |
+| 1039 | BlockUser | C→S | 1级高权限 | 拉黑用户 |
+| 1040 | BlockUserResponse | S→C | — | 拉黑响应 |
+| 1041 | UnblockUser | C→S | 1级高权限 | 解除拉黑 |
+| 1042 | UnblockUserResponse | S→C | — | 解除拉黑响应 |
+| 1043 | GetBlockList | C→S | 2级读取 | 黑名单列表 |
+| 1044 | GetBlockListResponse | S→C | — | 黑名单列表响应 |
+| 1045 | GetUserStats | C→S | 2级读取 | 用户统计 |
+| 1046 | GetUserStatsResponse | S→C | — | 统计响应 |
+| 1047 | GetBlockCount | C→S | 2级读取 | 拉黑数量 |
+| 1048 | GetBlockCountResponse | S→C | — | 拉黑数量响应 |
+| 1049 | BatchGetUserInfo | C→S | 2级读取 | 批量获取用户信息 |
+| 1050 | BatchGetUserInfoResponse | S→C | — | 批量用户信息响应 |
+| 1051 | UpgradeMembership | C→S | 1级写入 | 会员升级 |
+| 1052 | UpgradeMembershipResponse | S→C | — | 会员升级响应 |
+| 1074 | GetIMUserSig | C→S | 2级读取 | IM 登录签名 |
+| 1075 | GetIMUserSigResponse | S→C | — | IM 签名响应 |
 
-| minType | 协议名称                    | 方向  | 数据等级    | 说明             |
-| ------- | ----------------------- | --- | ------- | -------------- |
-| 2001    | CreateGroup             | C→S | 1级写入    | 创建群组           |
-| 2002    | UpdateGroup             | C→S | 1级写入    | 修改群组资料         |
-| 2003    | GetGroupDetail          | C→S | 1级+2级读取 | 群组详情（含统计信息）    |
-| 2004    | ListGroups              | C→S | 2级读取    | 群组列表/推荐列表      |
-| 2010    | JoinGroup               | C→S | 1级写入    | 加入群组（免费/申请/邀请） |
-| 2011    | LeaveGroup              | C→S | 1级写入    | 退出群组           |
-| 2012    | ListGroupMembers        | C→S | 2级读取    | 群成员列表          |
-| 2013    | UpdateGroupMemberStatus | C→S | 1级高权限   | 禁言/移除/恢复成员     |
-| 2020    | CreateGroupPlan         | C→S | 1级写入    | 创建付费方案         |
-| 2021    | UpdateGroupPlan         | C→S | 1级写入    | 修改付费方案         |
-| 2022    | ListGroupPlans          | C→S | 1级读取    | 查询群组付费方案       |
-| 2030    | CreateGroupOrder        | C→S | 1级写入    | 创建付费订单         |
-| 2031    | ConfirmGroupPayment     | C→S | 1级高权限   | 支付确认/手动开通权益    |
-| 2040    | GetOwnerDashboard       | C→S | 2级读取    | 圈主看板数据         |
-| 2050    | AuditGroup              | C→S | 1级高权限   | 平台审核群组         |
+### 8.2 群组协议组（maxType = 2000）
 
-### 8.4 主题协议组（maxType = 3000）
+> 编号规则：同上。负责圈子 CRUD、成员管理、付费方案、权限、折扣、统计等
 
-| minType | 协议名称             | 方向  | 数据等级    | 说明              |
-| ------- | ---------------- | --- | ------- | --------------- |
-| 3001    | CreateTopic      | C→S | 1级写入    | 发布帖子            |
-| 3002    | UpdateTopic      | C→S | 1级写入    | 修改帖子            |
-| 3003    | DeleteTopic      | C→S | 1级写入    | 删除/下架帖子         |
-| 3004    | GetTopicDetail   | C→S | 1级+2级读取 | 帖子详情（含权限判断）     |
-| 3005    | ListGroupTopics  | C→S | 2级读取    | 群组帖子列表          |
-| 3010    | MarkTopicRead    | C→S | 2级写入    | 标记阅读（可异步）       |
-| 3011    | GetReadHistory   | C→S | 2级读取    | 阅读历史            |
-| 3020    | CreateComment    | C→S | 1级写入    | 发表评论            |
-| 3021    | DeleteComment    | C→S | 1级写入    | 删除评论            |
-| 3030    | ReactTopic       | C→S | 1级或2级   | 点赞/收藏/分享        |
-| 3031    | CancelReactTopic | C→S | 1级或2级   | 取消点赞/收藏         |
-| 3040    | AuditTopic       | C→S | 1级高权限   | 审核/下架帖子         |
-| 3050    | GetTopicStats    | C→S | 2级读取    | 帖子统计（阅读/评论/点赞数） |
+| minType | 协议名称 | 方向 | 数据等级 | 说明 |
+|---|---|---|---|---|
+| 2005 | CreateGroup | C→S | 1级写入 | 创建圈子 |
+| 2006 | CreateGroupResponse | S→C | — | 创建响应 |
+| 2009 | UpdateGroup | C→S | 1级写入 | 更新圈子信息 |
+| 2010 | UpdateGroupResponse | S→C | — | 更新响应 |
+| 2011 | DeleteGroup | C→S | 1级高权限 | 解散圈子 |
+| 2012 | DeleteGroupResponse | S→C | — | 解散响应 |
+| 2013 | JoinGroup | C→S | 1级写入 | 加入圈子 |
+| 2014 | JoinGroupResponse | S→C | — | 加入响应 |
+| 2015 | LeaveGroup | C→S | 1级写入 | 退出圈子 |
+| 2016 | LeaveGroupResponse | S→C | — | 退出响应 |
+| 2019 | MuteMember | C→S | 1级高权限 | 禁言成员 |
+| 2020 | MuteMemberResponse | S→C | — | 禁言响应 |
+| 2021 | UnmuteMember | C→S | 1级高权限 | 解除禁言 |
+| 2022 | UnmuteMemberResponse | S→C | — | 解除禁言响应 |
+| 2023 | BanMember | C→S | 1级高权限 | 封禁成员 |
+| 2024 | BanMemberResponse | S→C | — | 封禁响应 |
+| 2025 | UnbanMember | C→S | 1级高权限 | 解除封禁 |
+| 2026 | UnbanMemberResponse | S→C | — | 解除封禁响应 |
+| 2027 | RemoveMember | C→S | 1级高权限 | 踢出成员 |
+| 2028 | RemoveMemberResponse | S→C | — | 踢出响应 |
+| 2029 | UpdateMemberRole | C→S | 1级高权限 | 修改角色 |
+| 2030 | UpdateMemberRoleResponse | S→C | — | 角色修改响应 |
+| 2037 | RenewMember | C→S | 1级写入 | 成员续费 |
+| 2038 | RenewMemberResponse | S→C | — | 续费响应 |
+| 2041 | RefreshGroupStat | C→S | 2级读取 | 刷新圈子统计 |
+| \*(待补)* | RefreshGroupStatResponse | S→C | — | 统计刷新响应 |
+| 2059 | GetGroupPermissionsLite | C→S | 2级读取 | 轻量权限查询 |
+| 2060 | GetGroupPermissionsLiteResponse | S→C | — | 权限查询响应 |
+| 2067 | UpdateGroupDiscounts | C→S | 1级高权限 | 更新折扣配置 |
+| 2068 | UpdateGroupDiscountsResponse | S→C | — | 折扣配置响应 |
+| 2073 | CalcPayableAmount | C→S | 2级读取 | 计算应付金额 |
+| 2074 | CalcPayableAmountResponse | S→C | — | 应付金额响应 |
+| 2087 | GroupUserEnter | C→S | 2级读取 | 进入圈子 |
+| 2088 | GroupUserEnterResponse | S→C | — | 进入圈子响应 |
 
-### 8.5 编号冲突说明
+### 8.3 主题协议组（maxType = 3000）
 
-当前 [协议编号注册表](../api/协议编号注册表.md) 的"编号分配建议"中，1000-1999 为"通用基础协议"、2000-2999 为"系统/健康检查/网关"、3000-3999 为"认证与权限"。但上述三个范围目前**无任何已占用编号**（仅有 2100 段被 health/hello 占用，属于 2000-2999 范围内的子集）。
+> 编号规则：同上。负责帖子 CRUD、互动、评论、搜索、举报等
 
-**决策**：社交域三个协议组正式占用 1000/2000/3000 三个 maxType，后续新增通用基础协议从 1100 开始、系统协议从 2100 已占用的下一个可用号开始、认证协议从 3100 开始。本次 PRD 将同步更新协议编号注册表。
+| minType | 协议名称 | 方向 | 数据等级 | 说明 |
+|---|---|---|---|---|
+| 3001 | CreateTopic | C→S | 1级写入 | 创建帖子 |
+| 3002 | CreateTopicResponse | S→C | — | 创建响应 |
+| 3005 | GetTopicList | C→S | 2级读取 | 帖子列表 |
+| 3006 | GetTopicListResponse | S→C | — | 列表响应 |
+| 3009 | DeleteTopic | C→S | 1级写入 | 删除帖子 |
+| 3010 | DeleteTopicResponse | S→C | — | 删除响应 |
+| 3029 | PinTopic | C→S | 1级高权限 | 置顶/取消置顶 |
+| 3030 | PinTopicResponse | S→C | — | 置顶响应 |
+| 3043 | AddTopicReply | C→S | 1级写入 | 添加回复 |
+| 3044 | AddTopicReplyResponse | S→C | — | 回复响应 |
+| 3049 | SearchTopics | C→S | 2级读取 | 搜索帖子 |
+| 3050 | SearchTopicsResponse | S→C | — | 搜索响应 |
+| 3055 | DeleteTopicReply | C→S | 1级写入 | 删除回复 |
+| 3056 | DeleteTopicReplyResponse | S→C | — | 删除回复响应 |
+| 3061 | LikeTopic | C→S | 1级写入 | 点赞/取消点赞帖子 |
+| 3062 | LikeTopicResponse | S→C | — | 点赞响应 |
+| 3063 | FavoriteTopic | C→S | 1级写入 | 收藏/取消收藏 |
+| 3064 | FavoriteTopicResponse | S→C | — | 收藏响应 |
+| 3065 | GetReplyList | C→S | 2级读取 | 回复列表 |
+| 3066 | GetReplyListResponse | S→C | — | 回复列表响应 |
+| 3077 | LikeReply | C→S | 1级写入 | 点赞回复 |
+| 3078 | LikeReplyResponse | S→C | — | 点赞回复响应 |
+| 3081 | PinComment | C→S | 1级高权限 | 置顶评论 |
+| 3082 | PinCommentResponse | S→C | — | 置顶评论响应 |
+| 3093 | GetReportTypes | C→S | 2级读取 | 举报类型 |
+| 3094 | GetReportTypesResponse | S→C | — | 举报类型响应 |
+| 3095 | CreateReport | C→S | 1级写入 | 提交举报 |
+| 3096 | CreateReportResponse | S→C | — | 举报提交响应 |
+| 3099 | CheckTopicActions | C→S | 2级读取 | 操作权限查询 |
+| 3100 | CheckTopicActionsResponse | S→C | — | 操作权限响应 |
+
+### 8.4 编号说明
+
+以上编号均来自 proto 文件实际定义，遵循 Proto-First 方案。编号分配已在 [协议编号注册表](../api/协议编号注册表.md) 中登记，确保 max + min 全局唯一。
 
 ***
-
 ## 9. 功能需求
 
 ### 9.1 成员协议组功能需求

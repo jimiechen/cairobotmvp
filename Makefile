@@ -1,4 +1,4 @@
-.PHONY: help bootstrap proto proto-check lint test unit integration coverage build package \
+.PHONY: help bootstrap proto proto-go proto-ts proto-check lint test unit integration coverage build package \
         docs rules testcase-check comment-check ci clean \
         gateway-build gateway-start gateway-stop gateway-restart gateway-test gateway-smoke gateway-verify \
         go-all common-lib-test modules-test tars-test gateway-e2e \
@@ -124,7 +124,7 @@ help: ## 显示帮助信息
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
 	@echo ""
 	@echo "━━━ 构建 / 测试 / 检查 ━━━"
-	@grep -E '^(proto|proto-check|lint|test|unit|integration|coverage|build|package|docs|rules|testcase-check|comment-check):.*?## ' $(MAKEFILE_LIST) | sort | \
+	@grep -E '^(proto|proto-go|proto-ts|proto-check|lint|test|unit|integration|coverage|build|package|docs|rules|testcase-check|comment-check):.*?## ' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
 	@echo ""
 	@echo "━━━ Gateway（Proto 网关） ━━━"
@@ -169,6 +169,46 @@ proto: ## 生成所有语言的 Protobuf 代码（Go/TS/Python/TarsGo），工�
 	@bash scripts/proto/generate-python.sh || echo "[skip] grpcio-tools 未安装"
 	@bash scripts/proto/generate-tarsgo.sh || echo "[skip] tars2go 未安装"
 	@echo "==> Protobuf 代码生成完成"
+
+proto-go: ## 仅生成 Go Protobuf 代码（social domain + base）
+	@echo "==> 检查 protoc 工具..."
+	@if ! command -v protoc >/dev/null 2>&1; then \
+		echo "❌ 错误：protoc 未安装"; \
+		echo "   macOS: brew install protobuf"; \
+		exit 1; \
+	fi
+	@echo "==> 清理旧生成文件..."
+	@rm -f proto/generated/go/base/common.pb.go
+	@echo "==> 生成 Go Protobuf 代码..."
+	@protoc \
+		--go_out=proto/generated/go \
+		--go_opt=paths=source_relative \
+		-Iproto \
+		proto/base/common.proto \
+		proto/social/member.proto \
+		proto/social/group.proto \
+		proto/social/topic.proto
+	@echo "EXIT=$$?"
+	@echo "==> Go Protobuf 代码生成完成，输出到 proto/generated/go/"
+
+proto-ts: ## 仅生成 TypeScript Protobuf 代码
+	@echo "==> 检查 protoc-gen-ts ..."
+	@if ! command -v protoc-gen-ts >/dev/null 2>&1 && ! command -v protoc-gen-es >/dev/null 2>&1; then \
+		echo "❌ 错误：protoc-gen-ts / protoc-gen-es 未安装"; \
+		echo "   安装方式：npm install -g protoc-gen-ts @bufbuild/protobuf"; \
+		exit 1; \
+	fi
+	@mkdir -p proto/generated/ts
+	@echo "==> 生成 TS Protobuf 代码..."
+	@protoc \
+		--ts_out=proto/generated/ts \
+		--ts_opt=eslint_disable=false \
+		-Iproto \
+		proto/base/common.proto \
+		proto/social/member.proto \
+		proto/social/group.proto \
+		proto/social/topic.proto
+	@echo "==> TypeScript Protobuf 代码生成完成，输出到 proto/generated/ts/"
 
 proto-check: ## 校验 Protobuf 生成代码是否存在且注册表一致（CI 用，不需要 protoc）
 	@echo "==> 校验 Protobuf 生成代码..."

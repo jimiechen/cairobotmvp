@@ -1,0 +1,186 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo.common;
+import "base/result.proto";
+
+option java_package = "com.mineplanet.pojo.common";
+option java_outer_classname = "CommonResult";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/base";
+option optimize_for = LITE_RUNTIME;
+
+enum UserStatus {
+  USER_STATUS_UNKNOWN = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_INACTIVE = 2;
+  USER_STATUS_BANNED = 3;
+  USER_STATUS_PENDING = 4;
+  USER_STATUS_FROZEN = 5;
+}
+
+enum MembershipLevel {
+  MEMBERSHIP_NORMAL = 0;
+  MEMBERSHIP_PREMIUM = 1;
+  MEMBERSHIP_PREMIUM_PLUS = 2;
+}
+
+enum PermissionType {
+  PERMISSION_UNKNOWN = 0;
+  PERMISSION_READ = 1;
+  PERMISSION_WRITE = 2;
+  PERMISSION_DELETE = 3;
+  PERMISSION_MANAGE = 4;
+  PERMISSION_ADMIN = 5;
+}
+
+message UserInfo {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+  string phone = 4;
+  string avatar = 5;
+  string nickname = 6;
+  UserStatus status = 7;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  int64 last_login_at = 11;
+  MembershipLevel membership_level = 12;
+  string uid = 13;
+  bool passkey_enabled = 14;
+  bool totp_enabled = 15;
+  bool im_registered = 16; // 是否已激活 IM 功能
+}
+
+message LoginData {
+  UserInfo user_info = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 expires_at = 4;
+}
+
+// 接口用途：服务健康检查响应（通用成功包装）
+message HealthCheckResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4020;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;                 // 标准结果码与消息
+  map<string, string> details = 2;   // 可选详情（JSON字符串等）
+}
+
+
+// 接口用途：错误封装（通用错误包装）
+message ErrorEnvelope {
+  com.mineplanet.pojo.pb.Result result = 1;                 // 标准错误码与消息
+}
+
+// 通用错误码枚举
+enum ErrorCode {
+  ERROR_CODE_UNKNOWN = 0;                    // 未知错误
+  ERROR_CODE_SUCCESS = 10200;                // 成功
+  ERROR_CODE_INVALID_REQUEST = 10400;        // 无效请求
+  ERROR_CODE_UNAUTHORIZED = 10401;           // 未授权
+  ERROR_CODE_FORBIDDEN = 10403;              // 禁止访问
+  ERROR_CODE_NOT_FOUND = 10404;              // 资源不存在
+  ERROR_CODE_CONFLICT = 10409;               // 冲突
+  ERROR_CODE_TOO_MANY_REQUESTS = 10429;      // 请求过多
+  ERROR_CODE_INTERNAL_ERROR = 10500;         // 服务器内部错误
+}
+
+// 用户模块错误码枚举
+enum UserErrorCode {
+  USER_ERROR_UNKNOWN = 0;                    // 未知错误
+  USER_ERROR_NOT_FOUND = 10601;              // 用户不存在
+  USER_ERROR_INVALID_CREDENTIALS = 10602;    // 凭据无效
+  USER_ERROR_USER_BLOCKED = 10603;           // 用户被禁用
+  USER_ERROR_NAME_TOO_SHORT = 10610;         // 名称太短（至少4个字符）
+  USER_ERROR_NAME_TOO_LONG = 10611;          // 名称太长
+  USER_ERROR_NAME_ALREADY_TAKEN = 10612;     // 名称已被占用
+  USER_ERROR_NAME_UNAVAILABLE = 10613;       // 名称不可用
+  USER_ERROR_NAME_STARTS_WITH_SPACE = 10614; // 名称不能以空格开头
+  USER_ERROR_NAME_UNAVAILABLE_ALT = 10615;   // 名称不可用（备选）
+  USER_ERROR_PHONE_ALREADY_EXISTS = 10617;   // 手机号已存在
+  USER_ERROR_GENERAL_FAILURE = 10699;        // 操作失败，请稍后重试
+}
+
+// 圈子模块错误码枚举
+enum GroupErrorCode {
+  GROUP_ERROR_UNKNOWN = 0;                           // 未知错误
+  GROUP_ERROR_NOT_FOUND = 10701;                     // 圈子不存在
+  GROUP_ERROR_NAME_EMPTY = 10702;                    // 圈子名称不能为空
+  GROUP_ERROR_NAME_TOO_LONG = 10703;                 // 圈子名称不能超过50个字符
+  GROUP_ERROR_PAY_CONFIG_EMPTY = 10704;              // 支付配置不能为空
+  GROUP_ERROR_INVALID_PAY_CYCLE = 10705;             // 支付周期单位必须是MONTH/QUARTER/HALF_YEAR/YEAR
+  GROUP_ERROR_INVALID_CURRENCY = 10706;              // 无效的货币类型
+  GROUP_ERROR_INVALID_AMOUNT = 10707;                // 无效的金额
+  GROUP_ERROR_COVER_EMPTY = 10708;                   // 圈子封面不能为空
+  GROUP_ERROR_PAID_CREATION_LIMIT = 10709;           // 付费圈子创建数量已达上限
+  GROUP_ERROR_FREE_CREATION_LIMIT = 10710;           // 免费圈子创建数量已达上限
+  GROUP_ERROR_NAME_ALREADY_EXISTS = 10711;           // 圈子名称已存在
+  GROUP_ERROR_LOGIN_REQUIRED = 10712;                // 需要登录才能查看此圈子
+  GROUP_ERROR_ID_EMPTY = 10713;                      // 圈子ID不能为空
+  GROUP_ERROR_UPDATE_PERMISSION_DENIED = 10714;      // 无权限更新圈子
+  GROUP_ERROR_MEMBER_NOT_FOUND = 10715;              // 成员不存在
+  GROUP_ERROR_CANNOT_REMOVE_OWNER = 10716;           // 不能移除圈子主
+  GROUP_ERROR_OPERATOR_NOT_MEMBER = 10717;           // 操作者不是圈子成员
+  GROUP_ERROR_ADMIN_CANNOT_REMOVE_ADMIN = 10718;     // 管理员不能移除其他管理员
+  GROUP_ERROR_ONLY_OWNER_CAN_DELETE = 10719;         // 只有圈子主可以删除圈子
+  GROUP_ERROR_ALREADY_DELETED = 10720;               // 圈子已被删除
+  GROUP_ERROR_MISSING_PARAMETERS = 10721;            // 缺少必要参数
+  GROUP_ERROR_PERMISSION_DENIED = 10722;             // 权限不足
+  GROUP_ERROR_INVALID_PERMISSION_FORMAT = 10723;     // 权限格式无效
+  GROUP_ERROR_TYPE_MISMATCH = 10724;                 // 类型不匹配
+  GROUP_ERROR_UNSUPPORTED_SETTING_KEY = 10725;       // 不支持的设置项
+  GROUP_ERROR_UNSUPPORTED_TYPE = 10726;              // 不支持的类型
+  GROUP_ERROR_INVALID_ROLE = 10727;                  // 无效的角色
+  GROUP_ERROR_ALREADY_MEMBER = 10728;                // 您已经是该圈子的成员
+  GROUP_ERROR_MEMBER_LIMIT_REACHED = 10729;          // 圈子成员数量已达上限
+  GROUP_ERROR_INVITATION_REQUIRED = 10730;           // 需要邀请才能加入此圈子
+  GROUP_ERROR_OWNER_CANNOT_LEAVE = 10731;            // 圈子主不能直接退出，请先转让所有权
+  GROUP_ERROR_NOT_MEMBER = 10732;                    // 您不是该圈子的成员
+  GROUP_ERROR_CANNOT_BAN_OWNER = 10733;              // 不能禁言圈子主
+  GROUP_ERROR_ADMIN_CANNOT_BAN_ADMIN = 10734;        // 管理员不能禁言其他管理员
+  GROUP_ERROR_BAN_MEMBER_FAILED = 10735;             // 禁言成员失败
+  GROUP_ERROR_UNBAN_MEMBER_FAILED = 10736;           // 取消禁言成员失败
+  GROUP_ERROR_MUTE_MEMBER_FAILED = 10737;            // 静音成员失败
+  GROUP_ERROR_UNMUTE_MEMBER_FAILED = 10738;          // 取消静音成员失败
+  GROUP_ERROR_UPDATE_ROLE_FAILED = 10739;            // 更新成员角色失败
+  GROUP_ERROR_UPDATE_SETTINGS_FAILED = 10740;        // 更新圈子设置失败
+  GROUP_ERROR_GET_SETTINGS_FAILED = 10741;           // 获取圈子设置失败
+  GROUP_ERROR_UPDATE_PAY_CYCLE_FAILED = 10742;       // 更新支付周期失败
+  GROUP_ERROR_UPDATE_PERMISSIONS_FAILED = 10743;     // 更新成员权限失败
+  GROUP_ERROR_RENEW_MEMBER_FAILED = 10744;           // 续费成员失败
+  GROUP_ERROR_INVITE_GUEST_FAILED = 10745;           // 邀请嘉宾失败
+  GROUP_ERROR_CALCULATE_AMOUNT_FAILED = 10746;       // 计算应付金额失败
+  GROUP_ERROR_CHECK_NAME_FAILED = 10747;             // 检查圈子名称失败
+  GROUP_ERROR_GET_MEMBER_LIST_FAILED = 10748;        // 获取成员列表失败
+  GROUP_ERROR_GET_GROUP_LIST_FAILED = 10749;         // 获取圈子列表失败
+  GROUP_ERROR_DATABASE_OPERATION_FAILED = 10750;     // 数据库操作失败
+  GROUP_ERROR_GROUP_ID_EMPTY = 10751;                // 圈子ID不能为空
+  GROUP_ERROR_INVALID_GROUP_ID_FORMAT = 10752;       // 圈子ID格式无效
+  GROUP_ERROR_GROUP_ID_TOO_SHORT = 10753;            // 圈子ID太短
+  GROUP_ERROR_GROUP_ID_TOO_LONG = 10754;             // 圈子ID太长
+  GROUP_ERROR_GROUP_ID_ALREADY_EXISTS = 10755;       // 圈子ID已存在
+}
+
+// 话题模块错误码枚举
+enum TopicErrorCode {
+  TOPIC_ERROR_UNKNOWN = 0;                      // 未知错误
+  TOPIC_ERROR_NOT_FOUND = 10801;                // 话题不存在
+  TOPIC_ERROR_MEDIA_COUNT_LIMIT = 10811;        // 媒体数量超出限制
+  TOPIC_ERROR_FILE_COUNT_LIMIT = 10812;         // 文件数量超出限制
+}
+
+// 通知消息码枚举
+enum InboxMessageCode {
+  INBOX_MESSAGE_UNKNOWN = 0;                    // 未知消息
+  INBOX_MESSAGE_JOINED_SUCCESS = 20001;         // 成功加入圈子
+  INBOX_MESSAGE_JOINED_GROUP_SUCCESS = 20002;   // 成功加入圈子（带名称）
+}
+
+// 排序方向枚举
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;  // 未指定
+  SORT_ORDER_ASC = 1;          // 升序
+  SORT_ORDER_DESC = 2;         // 降序
+}
