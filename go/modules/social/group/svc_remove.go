@@ -7,18 +7,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcRemoveMember 踢出成员服务（minType=2027 RemoveMember）
 // 负责将成员从群组中移除（管理员主动踢出）
 // 不负责权限校验（由上层确保操作者有管理权限）
 type SvcRemoveMember struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcRemoveMember 创建服务实例
-func NewSvcRemoveMember(repo Repository) *SvcRemoveMember {
-	return &SvcRemoveMember{repo: repo}
+func NewSvcRemoveMember(repo Repository, publisher event.Publisher) *SvcRemoveMember {
+	return &SvcRemoveMember{repo: repo, publisher: publisher}
 }
 
 // Handle 处理踢出成员请求，遵循 DevGuide §7 五步模式
@@ -61,7 +63,7 @@ func (s *SvcRemoveMember) Handle(ctx context.Context, req *pb.RemoveMemberReques
 	}
 
 	now := time.Now().UnixMilli()
-	member.Status = 3 // 已移除
+	member.Status = GroupMemberStatusBanned // 已移除（使用常量，禁止硬编码裸数字）
 	member.BanReason = req.Reason
 	member.UpdatedAt = now
 
@@ -69,7 +71,30 @@ func (s *SvcRemoveMember) Handle(ctx context.Context, req *pb.RemoveMemberReques
 		return nil, fmt.Errorf("更新成员状态失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 无
+	// Step 4: 领域事件 — 发布 GroupMemberRemoved 事件
+	operatorID := getOperatorIDFromContext(ctx)
+	if s.publisher != nil {
+		removeEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupMemberRemoved,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   req.GroupId,
+			ActorID:       operatorID,
+			Payload: event.GroupMemberChangedPayload{
+				GroupID:      req.GroupId,
+				OperatorID:   operatorID,
+				TargetUserID: req.UserId,
+				Action:       event.ActionRemove,
+				OldStatus:    int32(member.Status), // 记录变更前状态
+				NewStatus:    int32(GroupMemberStatusBanned),
+				Reason:       req.Reason,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupMemberRemoved 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, removeEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupMemberRemoved 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.RemoveMemberResponse{

@@ -7,16 +7,18 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcReplyTopic 回复主题服务（minType=3043 AddTopicReply）
 type SvcReplyTopic struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcReplyTopic 创建服务实例
-func NewSvcReplyTopic(repo Repository) *SvcReplyTopic {
-	return &SvcReplyTopic{repo: repo}
+func NewSvcReplyTopic(repo Repository, publisher event.Publisher) *SvcReplyTopic {
+	return &SvcReplyTopic{repo: repo, publisher: publisher}
 }
 
 // Handle 处理回复主题请求
@@ -42,6 +44,34 @@ func (s *SvcReplyTopic) Handle(ctx context.Context, req *pb.AddTopicReplyRequest
 
 	if err := s.repo.CreateReply(ctx, reply); err != nil {
 		return nil, fmt.Errorf("创建回复失败: %w", err)
+	}
+
+	// 领域事件 — 发布 TopicCommentCreated 事件
+	if s.publisher != nil {
+		// 从 topic 查询 GroupID（AddTopicReplyRequest 不携带 group_id）
+		groupID := ""
+		if t, err := s.repo.GetTopicByID(ctx, reply.TopicID); err == nil && t != nil {
+			groupID = t.GroupID
+		}
+		evt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventTopicCommentCreated,
+			AggregateType: event.AggregateComment,
+			AggregateID:   reply.ID,
+			ActorID:       userID,
+			Payload: event.TopicCommentCreatedPayload{
+				CommentID: reply.ID,
+				TopicID:   reply.TopicID,
+				GroupID:   groupID,
+				UserID:    userID,
+				ParentID:  reply.ParentReplyID,
+				Status:    reply.Status,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 TopicCommentCreated 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, evt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 TopicCommentCreated 事件失败: %v\n", pubErr)
+		}
 	}
 
 	return &pb.AddTopicReplyResponse{

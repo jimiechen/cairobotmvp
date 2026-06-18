@@ -11,7 +11,7 @@ import (
 func TestSvcReplyTopic_正常回复(t *testing.T) {
 	mockRepo := newMockRepository()
 	mockRepo.topics["topic-001"] = &Topic{ID: "topic-001", Status: TopicStatusInactive}
-	svc := NewSvcReplyTopic(mockRepo)
+	svc := NewSvcReplyTopic(mockRepo, nil)
 	ctx := WithUserID(context.Background(), "user-001")
 
 	req := &pb.AddTopicReplyRequest{
@@ -34,7 +34,7 @@ func TestSvcReplyTopic_正常回复(t *testing.T) {
 // TestSvcReplyTopic_缺少content 当content为空时_应返回参数校验错误
 func TestSvcReplyTopic_缺少content(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcReplyTopic(mockRepo)
+	svc := NewSvcReplyTopic(mockRepo, nil)
 
 	req := &pb.AddTopicReplyRequest{
 		TopicId: "topic-001",

@@ -11,7 +11,7 @@ import (
 func TestSvcLikeTopic_正常点赞(t *testing.T) {
 	mockRepo := newMockRepository()
 	mockRepo.topics["topic-001"] = &Topic{ID: "topic-001", Status: TopicStatusInactive}
-	svc := NewSvcLikeTopic(mockRepo)
+	svc := NewSvcLikeTopic(mockRepo, nil)
 	ctx := WithUserID(context.Background(), "user-001")
 
 	req := &pb.LikeTopicRequest{TopicId: "topic-001"}
@@ -34,7 +34,7 @@ func TestSvcLikeTopic_重复点赞(t *testing.T) {
 	mockRepo.topics["topic-001"] = &Topic{ID: "topic-001", Status: TopicStatusInactive}
 	// 预先插入点赞记录
 	mockRepo.likes["user-001:topic-001"] = &TopicLike{TopicID: "topic-001", UserID: "user-001"}
-	svc := NewSvcLikeTopic(mockRepo)
+	svc := NewSvcLikeTopic(mockRepo, nil)
 	ctx := WithUserID(context.Background(), "user-001")
 
 	req := &pb.LikeTopicRequest{TopicId: "topic-001"}

@@ -3,6 +3,7 @@
 package social
 
 import (
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 	"github.com/jimiechen/mineplanet/go/modules/social/group"
 	"github.com/jimiechen/mineplanet/go/modules/social/member"
 	"github.com/jimiechen/mineplanet/go/modules/social/topic"
@@ -15,11 +16,11 @@ type Module struct {
 	TopicServant   *topic.Servant
 }
 
-// NewModule 创建社交域模块实例，注入各域 Repository 依赖
-func NewModule(memberRepo member.Repository, groupRepo group.Repository, topicRepo topic.Repository) *Module {
+// NewModule 创建社交域模块实例，注入各域 Repository 和事件发布器依赖
+func NewModule(memberRepo member.Repository, groupRepo group.Repository, topicRepo topic.Repository, publisher event.Publisher) *Module {
 	return &Module{
-		MemberServant: member.NewServant(memberRepo),
-		GroupServant:  group.NewServant(groupRepo),
-		TopicServant:   topic.NewServant(topicRepo),
+		MemberServant: member.NewServant(memberRepo, publisher),
+		GroupServant:  group.NewServant(groupRepo, publisher),
+		TopicServant:   topic.NewServant(topicRepo, publisher),
 	}
 }

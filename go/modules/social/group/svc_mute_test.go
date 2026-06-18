@@ -12,8 +12,7 @@ import (
 // TestSvcMuteMember_正常禁言 当目标成员存在且非群主时_应更新禁言状态
 func TestSvcMuteMember_正常禁言(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcMuteMember(mockRepo)
-
+	svc := NewSvcMuteMember(mockRepo, nil)
 	member := &GroupMember{
 		ID:      "member-001",
 		GroupID: "group-001",
@@ -51,8 +50,7 @@ func TestSvcMuteMember_正常禁言(t *testing.T) {
 // TestSvcMuteMember_目标非成员 当用户不是成员时_应返回非成员错误
 func TestSvcMuteMember_目标非成员(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcMuteMember(mockRepo)
-
+	svc := NewSvcMuteMember(mockRepo, nil)
 	req := &pb.MuteMemberRequest{
 		GroupId:      "group-001",
 		UserId:       "user-nonexistent",
@@ -71,8 +69,7 @@ func TestSvcMuteMember_目标非成员(t *testing.T) {
 // TestSvcMuteMember_禁言群主 当目标是群主时_应返回禁止操作错误
 func TestSvcMuteMember_禁言群主(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcMuteMember(mockRepo)
-
+	svc := NewSvcMuteMember(mockRepo, nil)
 	member := &GroupMember{
 		ID:      "member-owner",
 		GroupID: "group-001",

@@ -7,17 +7,19 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcCreateTopic 创建主题服务（minType=3001 CreateTopic）
 // 负责新帖子创建流程：参数校验 → 构建模型 → 持久化 → 返回结果
 type SvcCreateTopic struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcCreateTopic 创建服务实例
-func NewSvcCreateTopic(repo Repository) *SvcCreateTopic {
-	return &SvcCreateTopic{repo: repo}
+func NewSvcCreateTopic(repo Repository, publisher event.Publisher) *SvcCreateTopic {
+	return &SvcCreateTopic{repo: repo, publisher: publisher}
 }
 
 // Handle 处理创建主题请求，遵循 DevGuide §7 五步模式
@@ -55,7 +57,27 @@ func (s *SvcCreateTopic) Handle(ctx context.Context, req *pb.CreateTopicRequest)
 		return nil, fmt.Errorf("创建帖子失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — MVP-P0 可延迟
+	// Step 4: 领域事件 — 发布 TopicCreated 事件
+	if s.publisher != nil {
+		evt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventTopicCreated,
+			AggregateType: event.AggregateTopic,
+			AggregateID:   topic.ID,
+			ActorID:       userID,
+			Payload: event.TopicCreatedPayload{
+				TopicID:    topic.ID,
+				GroupID:    topic.GroupID,
+				AuthorID:   topic.AuthorID,
+				Status:     topic.Status,
+				Visibility: topic.Visibility,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 TopicCreated 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, evt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 TopicCreated 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.CreateTopicResponse{

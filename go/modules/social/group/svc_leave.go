@@ -6,18 +6,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcLeave 退出圈子服务（minType=2015 LeaveGroup）
 // 负责将用户从群组中移除（主动退出）
 // 不负责群主退出拦截（由业务规则层处理）
 type SvcLeave struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcLeave 创建服务实例
-func NewSvcLeave(repo Repository) *SvcLeave {
-	return &SvcLeave{repo: repo}
+func NewSvcLeave(repo Repository, publisher event.Publisher) *SvcLeave {
+	return &SvcLeave{repo: repo, publisher: publisher}
 }
 
 // Handle 处理退出圈子请求，遵循 DevGuide §7 五步模式
@@ -59,12 +61,30 @@ func (s *SvcLeave) Handle(ctx context.Context, req *pb.LeaveGroupRequest) (*pb.L
 	}
 
 	// Step 3: 1级数据读写 — 更新成员状态为已退出
-	member.Status = 2 // 已退出
+	member.Status = GroupMemberStatusLeft // 已退出（使用常量，禁止硬编码裸数字）
 	if err := s.repo.UpdateMember(ctx, member); err != nil {
 		return nil, fmt.Errorf("更新成员状态失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 更新群组统计（MVP-P0 可延迟）
+	// Step 4: 领域事件 — 发布 GroupLeft 事件
+	if s.publisher != nil {
+		leftEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupLeft,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   req.GroupId,
+			ActorID:       userID,
+			Payload: event.GroupLeftPayload{
+				GroupID:  req.GroupId,
+				UserID:   userID,
+				MemberID: member.ID,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupLeft 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, leftEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupLeft 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.LeaveGroupResponse{

@@ -44,6 +44,12 @@ func getOwnerIDFromContext(ctx context.Context) string {
 	return ""
 }
 
+// getOperatorIDFromContext 从上下文获取操作者用户 ID
+// 用于高权限操作（封禁/移除/禁言）的事件 payload，语义上区分于普通用户
+func getOperatorIDFromContext(ctx context.Context) string {
+	return getUserIDFromContext(ctx)
+}
+
 // generateGroupID 生成群组内部 ID（MVP-P0 使用时间戳+随机数格式）
 func generateGroupID() string {
 	return fmt.Sprintf("group-%d", time.Now().UnixNano())

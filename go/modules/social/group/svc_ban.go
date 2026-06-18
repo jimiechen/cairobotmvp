@@ -7,18 +7,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcBanMember 封禁成员服务（minType=2023 BanMember）
 // 负责对群组成员执行封禁操作（移除并标记为封禁状态）
 // 不负责权限校验（由上层确保操作者有管理权限）
 type SvcBanMember struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcBanMember 创建服务实例
-func NewSvcBanMember(repo Repository) *SvcBanMember {
-	return &SvcBanMember{repo: repo}
+func NewSvcBanMember(repo Repository, publisher event.Publisher) *SvcBanMember {
+	return &SvcBanMember{repo: repo, publisher: publisher}
 }
 
 // Handle 处理封禁成员请求，遵循 DevGuide §7 五步模式
@@ -71,7 +73,30 @@ func (s *SvcBanMember) Handle(ctx context.Context, req *pb.BanMemberRequest) (*p
 		return nil, fmt.Errorf("更新封禁状态失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 无
+	// Step 4: 领域事件 — 发布 GroupMemberBanned 事件
+	operatorID := getOperatorIDFromContext(ctx)
+	if s.publisher != nil {
+		banEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupMemberBanned,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   req.GroupId,
+			ActorID:       operatorID,
+			Payload: event.GroupMemberChangedPayload{
+				GroupID:      req.GroupId,
+				OperatorID:   operatorID,
+				TargetUserID: req.UserId,
+				Action:       event.ActionBan,
+				OldStatus:    int32(GroupMemberStatusActive),
+				NewStatus:    int32(GroupMemberStatusBanned),
+				Reason:       "", // BanMemberRequest 无 Reason 字段，预留
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupMemberBanned 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, banEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupMemberBanned 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.BanMemberResponse{

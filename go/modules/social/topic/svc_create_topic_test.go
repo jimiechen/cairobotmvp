@@ -10,7 +10,7 @@ import (
 // TestSvcCreateTopic_正常创建 当标题和内容合法时_应返回成功响应包含topic_id
 func TestSvcCreateTopic_正常创建(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcCreateTopic(mockRepo)
+	svc := NewSvcCreateTopic(mockRepo, nil)
 	ctx := WithUserID(context.Background(), "user-001")
 
 	req := &pb.CreateTopicRequest{
@@ -37,7 +37,7 @@ func TestSvcCreateTopic_正常创建(t *testing.T) {
 // TestSvcCreateTopic_缺少标题 当title为空时_应返回参数校验错误
 func TestSvcCreateTopic_缺少标题(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcCreateTopic(mockRepo)
+	svc := NewSvcCreateTopic(mockRepo, nil)
 
 	req := &pb.CreateTopicRequest{
 		Title:   "",

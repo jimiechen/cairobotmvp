@@ -9,18 +9,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcRegister 用户注册服务（minType=1021 UserRegister）
-// 负责新用户注册流程：参数校验 → 唯一性检查 → 创建用户 → 返回令牌
+// 负责新用户注册流程：参数校验 → 唯一性检查 → 创建用户 → 发布领域事件 → 返回令牌
 // 不负责登录认证（由 SvcLogin 负责）
 type SvcRegister struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcRegister 创建注册服务实例
-func NewSvcRegister(repo Repository) *SvcRegister {
-	return &SvcRegister{repo: repo}
+func NewSvcRegister(repo Repository, publisher event.Publisher) *SvcRegister {
+	return &SvcRegister{repo: repo, publisher: publisher}
 }
 
 // Handle 处理用户注册请求，遵循 DevGuide §7 五步模式
@@ -65,7 +67,28 @@ func (s *SvcRegister) Handle(ctx context.Context, req *pb.UserRegisterRequest) (
 		return nil, fmt.Errorf("创建用户失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 注册成功后初始化统计记录（MVP-P0 可延迟到首次查询时懒初始化）
+	// Step 4: 领域事件 — 注册成功后发布 MemberRegistered 事件
+	// 事件发布失败不回滚业务结果（用户已创建成功），仅记录错误
+	if s.publisher != nil {
+		memberEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventMemberRegistered,
+			AggregateType: event.AggregateMember,
+			AggregateID:   user.ID,
+			ActorID:       user.ID,
+			Payload: event.MemberRegisteredPayload{
+				UserID:          user.ID,
+				Username:        user.Username,
+				Nickname:        user.Nickname,
+				MembershipLevel: user.MembershipLevel,
+			},
+		})
+		if err != nil {
+			// 事件构造失败不阻塞注册成功，记录日志即可
+			fmt.Printf("[EVENT] 构造 MemberRegistered 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, memberEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 MemberRegistered 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.UserRegisterResponse{

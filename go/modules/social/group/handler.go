@@ -7,11 +7,14 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
 // switch case 以外禁止业务逻辑
 type Handler struct {
+	// 领域事件发布器（可为 nil，nil 时不发布事件）
+	publisher event.Publisher
 	// 群组创建/加入/进入
 	createSvc *SvcCreate
 	joinSvc   *SvcJoin
@@ -27,17 +30,18 @@ type Handler struct {
 }
 
 // NewHandler 创建 Handler 实例，注入 Repository 并初始化所有 svc
-func NewHandler(repo Repository) *Handler {
+func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 	return &Handler{
-		createSvc:      NewSvcCreate(repo),
-		joinSvc:        NewSvcJoin(repo),
+		publisher:      publisher,
+		createSvc:      NewSvcCreate(repo, publisher),
+		joinSvc:        NewSvcJoin(repo, publisher),
 		enterSvc:       NewSvcEnter(repo),
-		leaveSvc:       NewSvcLeave(repo),
+		leaveSvc:       NewSvcLeave(repo, publisher),
 		renewSvc:       NewSvcRenewMember(repo),
 		calcPayableSvc: NewSvcCalcPayableAmount(repo),
-		muteSvc:        NewSvcMuteMember(repo),
-		banSvc:         NewSvcBanMember(repo),
-		removeSvc:      NewSvcRemoveMember(repo),
+		muteSvc:        NewSvcMuteMember(repo, publisher),
+		banSvc:         NewSvcBanMember(repo, publisher),
+		removeSvc:      NewSvcRemoveMember(repo, publisher),
 		updateRoleSvc:  NewSvcUpdateMemberRole(repo),
 	}
 }

@@ -7,16 +7,18 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcLikeTopic 点赞主题服务（minType=3065 LikeTopic）
 type SvcLikeTopic struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcLikeTopic 创建服务实例
-func NewSvcLikeTopic(repo Repository) *SvcLikeTopic {
-	return &SvcLikeTopic{repo: repo}
+func NewSvcLikeTopic(repo Repository, publisher event.Publisher) *SvcLikeTopic {
+	return &SvcLikeTopic{repo: repo, publisher: publisher}
 }
 
 // Handle 处理点赞请求，支持幂等（已点赞则直接返回成功）
@@ -49,6 +51,27 @@ func (s *SvcLikeTopic) Handle(ctx context.Context, req *pb.LikeTopicRequest) (*p
 	}
 	if err := s.repo.CreateLike(ctx, like); err != nil {
 		return nil, fmt.Errorf("点赞失败: %w", err)
+	}
+
+	// 领域事件 — 发布 TopicReacted 事件（点赞）
+	if s.publisher != nil {
+		evt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventTopicReacted,
+			AggregateType: event.AggregateTopic,
+			AggregateID:   req.TopicId,
+			ActorID:       userID,
+			Payload: event.TopicReactedPayload{
+				TopicID:      req.TopicId,
+				UserID:       userID,
+				ReactionType: event.ReactionTypeLike,
+				Status:       1, // active
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 TopicReacted(like) 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, evt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 TopicReacted(like) 事件失败: %v\n", pubErr)
+		}
 	}
 
 	count, _ := s.repo.CountLikesByTopicID(ctx, req.TopicId)

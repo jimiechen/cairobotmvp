@@ -7,16 +7,18 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcFavoriteTopic 收藏主题服务（minType=3061 FavoriteTopic）
 type SvcFavoriteTopic struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcFavoriteTopic 创建服务实例
-func NewSvcFavoriteTopic(repo Repository) *SvcFavoriteTopic {
-	return &SvcFavoriteTopic{repo: repo}
+func NewSvcFavoriteTopic(repo Repository, publisher event.Publisher) *SvcFavoriteTopic {
+	return &SvcFavoriteTopic{repo: repo, publisher: publisher}
 }
 
 // Handle 处理收藏请求，支持幂等（已收藏则直接返回成功）
@@ -49,6 +51,27 @@ func (s *SvcFavoriteTopic) Handle(ctx context.Context, req *pb.FavoriteTopicRequ
 	}
 	if err := s.repo.CreateFavorite(ctx, fav); err != nil {
 		return nil, fmt.Errorf("收藏失败: %w", err)
+	}
+
+	// 领域事件 — 发布 TopicReacted 事件（收藏）
+	if s.publisher != nil {
+		evt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventTopicReacted,
+			AggregateType: event.AggregateTopic,
+			AggregateID:   req.TopicId,
+			ActorID:       userID,
+			Payload: event.TopicReactedPayload{
+				TopicID:      req.TopicId,
+				UserID:       userID,
+				ReactionType: event.ReactionTypeFavorite,
+				Status:       1, // active
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 TopicReacted(favorite) 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, evt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 TopicReacted(favorite) 事件失败: %v\n", pubErr)
+		}
 	}
 
 	count, _ := s.repo.CountFavoritesByTopicID(ctx, req.TopicId)

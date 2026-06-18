@@ -110,7 +110,7 @@ func (m *mockRepository) UpdateStats(ctx context.Context, stats *MemberStats) er
 func TestSvcRegister_正常注册(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
-	svc := NewSvcRegister(mockRepo)
+	svc := NewSvcRegister(mockRepo, nil)
 
 	req := &pb.UserRegisterRequest{
 		Username: "testuser",
@@ -151,7 +151,7 @@ func TestSvcRegister_用户名重复(t *testing.T) {
 	}
 	mockRepo.users[existingUser.ID] = existingUser
 
-	svc := NewSvcRegister(mockRepo)
+	svc := NewSvcRegister(mockRepo, nil)
 
 	req := &pb.UserRegisterRequest{
 		Username: "testuser",
@@ -174,7 +174,7 @@ func TestSvcRegister_用户名重复(t *testing.T) {
 func TestSvcRegister_缺少必填字段(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
-	svc := NewSvcRegister(mockRepo)
+	svc := NewSvcRegister(mockRepo, nil)
 
 	req := &pb.UserRegisterRequest{
 		Username: "",

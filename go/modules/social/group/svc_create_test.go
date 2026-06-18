@@ -11,7 +11,7 @@ import (
 // TestSvcCreate_正常创建 当名称和slug合法时_应返回成功响应包含圈子信息
 func TestSvcCreate_正常创建(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcCreate(mockRepo)
+	svc := NewSvcCreate(mockRepo, nil)
 	ctx := WithOwnerID(context.Background(), "owner-001")
 
 	req := &pb.CreateGroupRequest{
@@ -39,7 +39,7 @@ func TestSvcCreate_正常创建(t *testing.T) {
 // TestSvcCreate_Slug重复 当slug已存在时_应返回标识符已被占用错误
 func TestSvcCreate_Slug重复(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcCreate(mockRepo)
+	svc := NewSvcCreate(mockRepo, nil)
 	ctx := WithOwnerID(context.Background(), "owner-001")
 
 	// 预先创建一个圈子占用 slug
@@ -69,7 +69,7 @@ func TestSvcCreate_Slug重复(t *testing.T) {
 // TestSvcCreate_缺少必填字段 当名称为空时_应返回参数校验错误
 func TestSvcCreate_缺少必填字段(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcCreate(mockRepo)
+	svc := NewSvcCreate(mockRepo, nil)
 	ctx := context.Background()
 
 	req := &pb.CreateGroupRequest{

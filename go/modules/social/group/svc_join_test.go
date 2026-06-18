@@ -11,7 +11,7 @@ import (
 // TestSvcJoin_正常加入 当圈子存在且用户未加入时_应返回成功响应
 func TestSvcJoin_正常加入(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcJoin(mockRepo)
+	svc := NewSvcJoin(mockRepo, nil)
 
 	// 预先创建一个圈子
 	group := &Group{ID: "group-001", Slug: "test-group"}
@@ -42,7 +42,7 @@ func TestSvcJoin_正常加入(t *testing.T) {
 // TestSvcJoin_圈子不存在 当groupId不存在时_应返回圈子不存在错误
 func TestSvcJoin_圈子不存在(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcJoin(mockRepo)
+	svc := NewSvcJoin(mockRepo, nil)
 
 	ctx := WithUserID(context.Background(), "user-001")
 	req := &pb.JoinGroupRequest{
@@ -61,7 +61,7 @@ func TestSvcJoin_圈子不存在(t *testing.T) {
 // TestSvcJoin_已成员重复加入 当用户已是成员时_应返回已成员错误
 func TestSvcJoin_已成员重复加入(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcJoin(mockRepo)
+	svc := NewSvcJoin(mockRepo, nil)
 
 	// 预先创建圈子和成员关系
 	group := &Group{ID: "group-002", Slug: "test-group-2"}

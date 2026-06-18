@@ -11,7 +11,7 @@ import (
 func TestSvcFavoriteTopic_正常收藏(t *testing.T) {
 	mockRepo := newMockRepository()
 	mockRepo.topics["topic-001"] = &Topic{ID: "topic-001", Status: TopicStatusInactive}
-	svc := NewSvcFavoriteTopic(mockRepo)
+	svc := NewSvcFavoriteTopic(mockRepo, nil)
 	ctx := WithUserID(context.Background(), "user-001")
 
 	req := &pb.FavoriteTopicRequest{TopicId: "topic-001"}
@@ -31,7 +31,7 @@ func TestSvcFavoriteTopic_正常收藏(t *testing.T) {
 // TestSvcFavoriteTopic_缺少topic_id 当topic_id为空时_应返回参数校验错误
 func TestSvcFavoriteTopic_缺少topic_id(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcFavoriteTopic(mockRepo)
+	svc := NewSvcFavoriteTopic(mockRepo, nil)
 
 	req := &pb.FavoriteTopicRequest{TopicId: ""}
 

@@ -11,7 +11,7 @@ import (
 // TestSvcBanMember_正常封禁 当目标成员存在且非群主时_应更新封禁状态
 func TestSvcBanMember_正常封禁(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcBanMember(mockRepo)
+	svc := NewSvcBanMember(mockRepo, nil)
 
 	member := &GroupMember{
 		ID:      "member-001",
@@ -48,7 +48,7 @@ func TestSvcBanMember_正常封禁(t *testing.T) {
 // TestSvcBanMember_目标非成员 当用户不是成员时_应返回非成员错误
 func TestSvcBanMember_目标非成员(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcBanMember(mockRepo)
+	svc := NewSvcBanMember(mockRepo, nil)
 
 	req := &pb.BanMemberRequest{
 		GroupId: "group-001",
@@ -67,7 +67,7 @@ func TestSvcBanMember_目标非成员(t *testing.T) {
 // TestSvcBanMember_封禁群主 当目标是群主时_应返回禁止操作错误
 func TestSvcBanMember_封禁群主(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcBanMember(mockRepo)
+	svc := NewSvcBanMember(mockRepo, nil)
 
 	member := &GroupMember{
 		ID:      "member-owner",

@@ -7,18 +7,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcMuteMember 禁言成员服务（minType=2019 MuteMember）
 // 负责对群组成员执行禁言操作
 // 不负责权限校验（由上层确保操作者有管理权限），不负责通知被禁言者
 type SvcMuteMember struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcMuteMember 创建服务实例
-func NewSvcMuteMember(repo Repository) *SvcMuteMember {
-	return &SvcMuteMember{repo: repo}
+func NewSvcMuteMember(repo Repository, publisher event.Publisher) *SvcMuteMember {
+	return &SvcMuteMember{repo: repo, publisher: publisher}
 }
 
 // Handle 处理禁言成员请求，遵循 DevGuide §7 五步模式
@@ -49,7 +51,7 @@ func (s *SvcMuteMember) Handle(ctx context.Context, req *pb.MuteMemberRequest) (
 	}
 
 	// 不能禁言群主
-	if member.Role == 1 {
+	if member.Role == GroupMemberRoleOwner {
 		return &pb.MuteMemberResponse{
 			Result: &base.Result{
 				Code:    int32(base.GroupErrorCode_GROUP_ERROR_CANNOT_BAN_OWNER),
@@ -72,7 +74,28 @@ func (s *SvcMuteMember) Handle(ctx context.Context, req *pb.MuteMemberRequest) (
 		return nil, fmt.Errorf("更新禁言状态失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 无
+	// Step 4: 领域事件 — 发布 GroupMemberMuted 事件
+	operatorID := getOperatorIDFromContext(ctx)
+	if s.publisher != nil {
+		muteEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupMemberMuted,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   req.GroupId,
+			ActorID:       operatorID,
+			Payload: event.GroupMemberChangedPayload{
+				GroupID:      req.GroupId,
+				OperatorID:   operatorID,
+				TargetUserID: req.UserId,
+				Action:       event.ActionMute,
+				MutedUntil:   mutedUntil,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupMemberMuted 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, muteEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupMemberMuted 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.MuteMemberResponse{

@@ -11,7 +11,7 @@ import (
 // TestSvcRemoveMember_正常踢出 当目标成员存在且非群主时_应更新移除状态
 func TestSvcRemoveMember_正常踢出(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcRemoveMember(mockRepo)
+	svc := NewSvcRemoveMember(mockRepo, nil)
 
 	member := &GroupMember{
 		ID:      "member-001",
@@ -49,7 +49,7 @@ func TestSvcRemoveMember_正常踢出(t *testing.T) {
 // TestSvcRemoveMember_目标非成员 当用户不是成员时_应返回非成员错误
 func TestSvcRemoveMember_目标非成员(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcRemoveMember(mockRepo)
+	svc := NewSvcRemoveMember(mockRepo, nil)
 
 	req := &pb.RemoveMemberRequest{
 		GroupId: "group-001",
@@ -68,7 +68,7 @@ func TestSvcRemoveMember_目标非成员(t *testing.T) {
 // TestSvcRemoveMember_踢出群主 当目标是群主时_应返回禁止操作错误
 func TestSvcRemoveMember_踢出群主(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcRemoveMember(mockRepo)
+	svc := NewSvcRemoveMember(mockRepo, nil)
 
 	member := &GroupMember{
 		ID:      "member-owner",

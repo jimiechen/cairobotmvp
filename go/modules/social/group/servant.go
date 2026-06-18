@@ -2,6 +2,8 @@ package group
 
 import (
 	"context"
+
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // Servant TarsGo Servant 注册与转发
@@ -12,9 +14,9 @@ type Servant struct {
 }
 
 // NewServant 创建 Servant 实例
-func NewServant(repo Repository) *Servant {
+func NewServant(repo Repository, publisher event.Publisher) *Servant {
 	return &Servant{
-		handler: NewHandler(repo),
+		handler: NewHandler(repo, publisher),
 	}
 }
 

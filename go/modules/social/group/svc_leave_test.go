@@ -11,8 +11,7 @@ import (
 // TestSvcLeave_正常退出 当用户是普通成员时_应返回成功
 func TestSvcLeave_正常退出(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcLeave(mockRepo)
-
+	svc := NewSvcLeave(mockRepo, nil)
 	// 预设群组和成员
 	group := &Group{ID: "group-001", Slug: "test-leave"}
 	mockRepo.groups[group.ID] = group
@@ -48,8 +47,7 @@ func TestSvcLeave_正常退出(t *testing.T) {
 // TestSvcLeave_非成员退出 当用户不是成员时_应返回非成员错误
 func TestSvcLeave_非成员退出(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcLeave(mockRepo)
-
+	svc := NewSvcLeave(mockRepo, nil)
 	group := &Group{ID: "group-002", Slug: "test-leave-2"}
 	mockRepo.groups[group.ID] = group
 	mockRepo.groups[group.Slug] = group
@@ -69,8 +67,7 @@ func TestSvcLeave_非成员退出(t *testing.T) {
 // TestSvcLeave_群主退出 当用户是群主时_应返回禁止退出错误
 func TestSvcLeave_群主退出(t *testing.T) {
 	mockRepo := newMockRepository()
-	svc := NewSvcLeave(mockRepo)
-
+	svc := NewSvcLeave(mockRepo, nil)
 	group := &Group{ID: "group-003", Slug: "test-leave-3"}
 	mockRepo.groups[group.ID] = group
 	mockRepo.groups[group.Slug] = group

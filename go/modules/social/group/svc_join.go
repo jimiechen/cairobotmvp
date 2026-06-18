@@ -7,18 +7,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcJoin 加入圈子服务（minType=2013 JoinGroup）
 // 负责将用户加入群组为成员
 // 不负责邀请码验证（MVP-P0 简化）
 type SvcJoin struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcJoin 创建服务实例
-func NewSvcJoin(repo Repository) *SvcJoin {
-	return &SvcJoin{repo: repo}
+func NewSvcJoin(repo Repository, publisher event.Publisher) *SvcJoin {
+	return &SvcJoin{repo: repo, publisher: publisher}
 }
 
 // Handle 处理加入圈子请求，遵循 DevGuide §7 五步模式
@@ -81,7 +83,27 @@ func (s *SvcJoin) Handle(ctx context.Context, req *pb.JoinGroupRequest) (*pb.Joi
 		return nil, fmt.Errorf("创建成员记录失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 更新群组统计（MVP-P0 可延迟）
+	// Step 4: 领域事件 — 发布 GroupJoined 事件
+	if s.publisher != nil {
+		joinEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupJoined,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   req.GroupId,
+			ActorID:       userID,
+			Payload: event.GroupJoinedPayload{
+				GroupID:   req.GroupId,
+				UserID:    userID,
+				MemberID:  member.ID,
+				Status:    GroupMemberStatusActive,
+				JoinSource: "direct",
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupJoined 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, joinEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupJoined 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.JoinGroupResponse{

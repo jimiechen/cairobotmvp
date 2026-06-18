@@ -7,11 +7,14 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
 // switch case 以外禁止业务逻辑
 type Handler struct {
+	// 领域事件发布器（可为 nil，nil 时不发布事件）
+	publisher event.Publisher
 	// 用户注册/登录
 	registerSvc *SvcRegister
 	loginSvc    *SvcLogin
@@ -28,9 +31,10 @@ type Handler struct {
 }
 
 // NewHandler 创建 Handler 实例，注入所有 svc 依赖
-func NewHandler(repo Repository) *Handler {
+func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 	return &Handler{
-		registerSvc:      NewSvcRegister(repo),
+		publisher:         publisher,
+		registerSvc:      NewSvcRegister(repo, publisher),
 		loginSvc:         NewSvcLogin(repo),
 		logoutSvc:        NewSvcLogout(),
 		refreshSvc:       NewSvcRefresh(),

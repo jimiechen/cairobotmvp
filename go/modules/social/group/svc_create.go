@@ -7,18 +7,20 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	"github.com/jimiechen/mineplanet/go/modules/social/event"
 )
 
 // SvcCreate 创建圈子服务（minType=2005 CreateGroup）
 // 负责创建群组记录并将创建者加入为群主
 // 不负责权限校验（创建为公开操作），不负责付费配置校验（MVP-P0 简化）
 type SvcCreate struct {
-	repo Repository
+	repo      Repository
+	publisher event.Publisher
 }
 
 // NewSvcCreate 创建服务实例
-func NewSvcCreate(repo Repository) *SvcCreate {
-	return &SvcCreate{repo: repo}
+func NewSvcCreate(repo Repository, publisher event.Publisher) *SvcCreate {
+	return &SvcCreate{repo: repo, publisher: publisher}
 }
 
 // Handle 处理创建圈子请求，遵循 DevGuide §7 五步模式
@@ -78,7 +80,27 @@ func (s *SvcCreate) Handle(ctx context.Context, req *pb.CreateGroupRequest) (*pb
 		return nil, fmt.Errorf("创建群主成员记录失败: %w", err)
 	}
 
-	// Step 4: 领域事件 — 无（MVP-P0 简化）
+	// Step 4: 领域事件 — 发布 GroupCreated 事件
+	if s.publisher != nil {
+		groupEvt, err := event.NewDomainEvent(event.NewEventOptions{
+			Type:          event.EventGroupCreated,
+			AggregateType: event.AggregateGroup,
+			AggregateID:   group.ID,
+			ActorID:       ownerID,
+			Payload: event.GroupCreatedPayload{
+				GroupID:    group.ID,
+				OwnerID:    ownerID,
+				Type:       "free",
+				Visibility: group.Visibility,
+				JoinMode:   group.JoinMode,
+			},
+		})
+		if err != nil {
+			fmt.Printf("[EVENT] 构造 GroupCreated 事件失败: %v\n", err)
+		} else if pubErr := s.publisher.Publish(ctx, groupEvt); pubErr != nil {
+			fmt.Printf("[EVENT] 发布 GroupCreated 事件失败: %v\n", pubErr)
+		}
+	}
 
 	// Step 5: 返回响应
 	return &pb.CreateGroupResponse{
