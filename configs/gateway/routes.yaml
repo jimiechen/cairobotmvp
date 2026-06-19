@@ -404,6 +404,56 @@ routes:
     auth_required: true
     audit_required: false
 
+  # 1033/1034: 更新成员状态
+  - request_max: 1000
+    request_min: 1033
+    route_key: "1000:1033"
+    command_name: UpdateMemberStatus
+    description: 更新成员状态
+
+    request_proto: com.mineplanet.pojo.social.member.UpdateMemberStatusRequest
+    response_max: 1000
+    response_min: 1034
+    response_proto: com.mineplanet.pojo.social.member.UpdateMemberStatusResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleMember
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: true
+
+  # 1045/1046: 获取用户统计
+  - request_max: 1000
+    request_min: 1045
+    route_key: "1000:1045"
+    command_name: GetUserStats
+    description: 获取用户统计信息
+
+    request_proto: com.mineplanet.pojo.social.member.GetUserStatsRequest
+    response_max: 1000
+    response_min: 1046
+    response_proto: com.mineplanet.pojo.social.member.GetUserStatsResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleMember
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
   # ===== 社交域 Group 协议（2000 段）=====
 
   # 2005/2006: 创建群组
@@ -656,6 +706,81 @@ routes:
     auth_required: true
     audit_required: false
 
+  # 2039/2040: 获取群组统计
+  - request_max: 2000
+    request_min: 2039
+    route_key: "2000:2039"
+    command_name: GetGroupStats
+    description: 获取群组统计信息
+
+    request_proto: com.mineplanet.pojo.social.group.GetGroupStatsRequest
+    response_max: 2000
+    response_min: 2040
+    response_proto: com.mineplanet.pojo.social.group.GetGroupStatsResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleGroup
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
+  # 2047/2048: 批量获取群组信息
+  - request_max: 2000
+    request_min: 2047
+    route_key: "2000:2047"
+    command_name: BatchGetGroups
+    description: 批量获取群组信息
+
+    request_proto: com.mineplanet.pojo.social.group.BatchGetGroupsRequest
+    response_max: 2000
+    response_min: 2048
+    response_proto: com.mineplanet.pojo.social.group.BatchGetGroupsResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleGroup
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 5000
+    auth_required: true
+    audit_required: false
+
+  # 2077/2078: 获取群组成员用户ID列表
+  - request_max: 2000
+    request_min: 2077
+    route_key: "2000:2077"
+    command_name: GetGroupMemberUserIds
+    description: 获取群组成员用户ID列表
+
+    request_proto: com.mineplanet.pojo.social.group.GetGroupMemberUserIdsRequest
+    response_max: 2000
+    response_min: 2078
+    response_proto: com.mineplanet.pojo.social.group.GetGroupMemberUserIdsResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleGroup
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
   # ===== 社交域 Topic 协议（3000 段）=====
 
   # 3001/3002: 创建主题
@@ -880,5 +1005,30 @@ routes:
     tars_response_type: vector<byte>
 
     timeout_ms: 3000
+    auth_required: true
+    audit_required: false
+
+  # 3065/3066: 获取评论列表
+  - request_max: 3000
+    request_min: 3065
+    route_key: "3000:3065"
+    command_name: GetReplyList
+    description: 获取主题评论列表
+
+    request_proto: com.mineplanet.pojo.social.topic.GetReplyListRequest
+    response_max: 3000
+    response_min: 3066
+    response_proto: com.mineplanet.pojo.social.topic.GetReplyListResponse
+
+    tars_app: CaiRobot
+    tars_server: SocialServer
+    tars_servant: SocialObj
+    tars_module: CaiRobotSocialApp
+    tars_interface: SocialObj
+    tars_method: HandleTopic
+    tars_request_type: vector<byte>
+    tars_response_type: vector<byte>
+
+    timeout_ms: 5000
     auth_required: true
     audit_required: false

@@ -1,0 +1,338 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+
+package com.mineplanet.pojo.app;
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option optimize_for = LITE_RUNTIME;
+
+import "base/result.proto";
+
+// 圈子支付方式枚举
+// 付费周期
+enum AppCirclePayMethod {
+  METHOD_UNKNOWN = 0;
+  METHOD_ONE_MONTH = 1;
+  METHOD_THREE_MONTH = 2;
+  METHOD_SIX_MONTH = 3;
+  METHOD_ONE_YEAR = 4;
+}
+
+// 金额范围
+message AppPayNumberRang {
+  double min = 1;
+  double max = 2;
+}
+
+// 圈子付费配置项
+message AppCirclePayInfo {
+  AppCirclePayMethod method = 1;
+  string display_name = 2;
+  AppPayNumberRang rang = 3;
+}
+
+// 支付配置
+message AppPayConfigs {
+  repeated AppCirclePayInfo circle_pays = 1;
+}
+
+// 正则配置
+message AppRegexConfigs {
+  string regex_email = 1;
+  string regex_password = 2;
+  string regex_phone = 3;
+  string regex_nick = 4;
+  string regex_circle_name = 5;
+}
+
+// 基础配置
+message AppBaseConfigs {
+  string domain_root = 1;
+  string domain_wap = 2;
+  string sign_rand = 3;
+  string construct_email = 4;
+  int32 max_free_group_normal = 5;       // 普通用户创建免费圈上限
+  int32 max_free_group_premium = 6;      // 高级用户创建免费圈上限
+  int32 max_free_group_premium_plus = 7; // 高级+用户创建免费圈上限
+  // 新增字段
+  int32 max_paid_group_normal = 8;       // 普通用户创建付费圈上限
+  int32 max_paid_group_premium = 9;      // 高级用户创建付费圈上限
+  int32 max_paid_group_premium_plus = 10; // 高级+用户创建付费圈上限
+  
+  //注销3个字段 新增字段 11-20（私密提问配额配置,只有高级会员可用提问，普通会员不能私密提问,数量=0）
+  int32 question_quota_normal = 11;       // 普通会员每月提问配额
+  int32 question_quota_premium = 12;      // 高级会员每月提问配额
+  int32 question_quota_premium_plus = 13; // 超级会员每月提问配额
+  
+  // 新增字段 21-30（字数限制配置）
+  int32 topic_normal_max_length = 21;     // 常规帖子最大字数
+  int32 topic_normal_min_length = 22;     // 常规帖子最小字数
+  int32 topic_question_max_length = 23;   // 提问类型最大字数
+  int32 topic_question_min_length = 24;   // 提问类型最小字数
+  int32 topic_article_max_length = 25;    // 文章类型最大字数
+  int32 topic_article_min_length = 26;    // 文章类型最小字数
+  
+  // 新增字段 31-40（预留）
+  int32 topic_title_max_length = 31;      // 主题标题最大字数
+  int32 topic_title_min_length = 32;      // 主题标题最小字数
+  
+  // 新增字段 33（摘要长度配置）
+  int32 summary_length = 33;              // 主题摘要自动截断长度，默认50字
+}
+
+// WAP URL 配置
+message AppWapUrlConfigs {
+  string user_agreement_url = 1;
+  string privacy_policy_url = 2;
+}
+
+// OSS 配置
+message AppOssConfigs {
+  string oss_host = 1;
+  string oss_domain = 2;
+  string cdn_domain = 3;
+}
+
+message AppLanguage {
+  bool is_official = 1;   // 是否为官方支持的语言
+  bool is_rtl = 2;        // 是否为从右到左（RTL）书写的语言，如阿拉伯语、希伯来语
+  bool is_beta = 3;       // 是否为测试版语言（翻译未完成）
+  string name = 4;        // 语言的英文名称，如 'English', 'Chinese'
+  string native_name = 5; // 语言的本地化名称，如 '中文', 'العربية'
+  string lang_code = 6;   // 语言代码，如 'en', 'zh-CN', 'ar'
+  string base_lang_code = 7; // 基础语言代码（用于回退），如 'zh-CN' 的基础语言是 'zh'
+  string plural_code = 8;    // 复数形式代码，用于处理不同语言的复数规则，如 'en', 'ar', 'ru'
+  int32 strings_count = 9;   // 该语言的翻译字符串总数
+  int32 translated_count = 10; // 已翻译的字符串数量
+  string translations_url = 11; // 翻译文件的 URL 地址
+  int32 version = 12;           // 版本
+  string description = 13;      // 描述信息
+}
+
+// 语言 配置
+message AppLanguageConfigs {
+  repeated AppLanguage languages = 1;  // 支持的语言
+  string lang_code = 2;                // 默认语言
+}
+
+// 禁言时长选项配置
+message AppMuteDurationOption {
+  int32 duration_hours = 1;   // 时长（小时），0=永久
+  string display_name = 2;    // 显示名称，如 "1小时"、"7天"、"永久"
+  bool is_default = 3;        // 是否默认选中
+}
+
+// 禁言配置
+message AppMuteConfigs {
+  repeated AppMuteDurationOption durations = 1;  // 可选时长列表
+  int32 max_mute_duration_hours = 2;             // 最大禁言时长限制（小时）
+  bool allow_permanent_mute = 3;                 // 是否允许永久禁言
+}
+
+// 圈子配置
+message AppGroupConfigs {
+  string group_config_pay_notice = 1;  // 圈子入圈提示多语言Key
+}
+
+// 接口用途：获取应用配置（基础域名、WAP、正则、支付、OSS）
+message AppConfigsReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6001;
+  }
+}
+
+// 接口用途：返回应用配置结果集
+message AppConfigsRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6002;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;         // 标准结果（code/message）
+  AppBaseConfigs base_cfg = 2;                      // 基础配置
+  AppWapUrlConfigs wap_cfg = 3;                     // WAP URL 配置
+  AppRegexConfigs regex_cfg = 4;                    // 正则校验配置
+  AppPayConfigs pay_cfg = 5;                        // 支付配置
+  AppOssConfigs oss_cfg = 6;                        // OSS 配置
+  AppLanguageConfigs lang_cfg = 7;                  // 语言 配置
+  AppMuteConfigs mute_cfg = 8;                      // 禁言配置（新增）
+  AppGroupConfigs group_cfg = 9;                    // 圈子配置（新增）
+  AppThemeConfigs theme_cfg = 10;                   // 主题配置
+}
+
+// 语言包二进制结构
+message AppLanguagePacket {
+  int32 version = 1;                         // 版本
+  string lang_code = 2;                      // 语言代码，如 'en', 'zh-CN', 'ar'
+  map<string,string> strings = 3;            // 语言配置
+}
+
+// 在线获取语言配置（使用二级表 sys_lang_pack + sys_lang_string）
+message AppFetchLanguageReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6003;
+  }
+
+  string lang_code = 1;  // 语言代码: zh/en
+}
+
+// 在线获取语言配置回包
+message AppFetchLanguageRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6004;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果（code/message）
+  AppLanguage lang = 2;                      // 语言元数据
+  string lang_code = 3;                      // 语言代码
+  int32 version = 4;                         // 当前版本号
+  string oss_url = 5;                        // OSS下载地址（可选，保留兼容）
+}
+
+// 获取语言包（从二级表读取）
+message AppFetchLangPackReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6005;
+  }
+
+  string lang_code = 1;           // 语言代码: zh/en
+  int32 client_version = 2;       // 客户端当前版本（0表示获取最新）
+}
+
+// 获取语言包回包
+message AppFetchLangPackRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6006;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果（code/message）
+  int32 version = 2;                         // 服务端最新版本
+  string lang_code = 3;                      // 语言代码
+  map<string,string> strings = 4;            // 语言字符串（从 sys_lang_string 读取）
+  int32 total_count = 5;                     // 总字符串数
+}
+
+// 获取语言增量包（基于版本对比）
+message AppFetchLangDifferenceReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6007;
+  }
+
+  string lang_code = 1;           // 语言代码: zh/en
+  int32 client_version = 2;       // 客户端当前版本
+}
+
+// 获取语言增量包回包
+message AppFetchLangDifferenceRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6008;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;   // 标准结果（code/message）
+  int32 current_version = 2;                  // 服务端当前版本
+  string lang_code = 3;                       // 语言代码
+  map<string,string> additions = 4;           // 新增/修改的字符串
+  repeated string deletions = 5;              // 删除的key列表
+  // bool has_full_pack = 6;                  // 已移除：不增加此字段，保持简单增量更新逻辑
+}
+
+// 主题 配置
+message AppThemeConfigs {
+  int64  hash             = 1;  // 服务端主题列表 hash，用于增量更新
+  repeated Theme themes   = 2;  // 主题列表
+}
+
+// 基础主题类型（底层配色方案）
+enum BaseThemeType {
+  BASE_THEME_UNKNOWN     = 0;  // 未知
+  BASE_THEME_UNSPECIFIED = 1;  // 未指定（使用客户端默认）
+  BASE_THEME_CLASSIC     = 2;  // 经典主题
+  BASE_THEME_DAY         = 3;  // 日间浅色主题
+  BASE_THEME_NIGHT       = 4;  // 夜间深色主题
+  BASE_THEME_TINTED      = 5;  // 着色主题
+  BASE_THEME_ARCTIC      = 6;  // 极地主题
+}
+
+// 主题外观设置
+message ThemeSettings {
+  uint32        flags                = 1;  // 标志位（预留扩展）
+  BaseThemeType base_theme           = 2;  // 基础主题类型
+  uint32        accent_color         = 3;  // 强调色，ARGB 格式 0xAARRGGBB
+  uint32        message_top_color    = 4;  // 发出消息气泡渐变顶部色，ARGB 格式
+  uint32        message_bottom_color = 5;  // 发出消息气泡主色，ARGB 格式
+}
+
+// 应用主题
+message Theme {
+  uint32 flags                    = 1;  // 标志位
+  bool   creator                  = 2;  // 是否为用户自建主题
+  bool   is_default               = 3;  // 是否为系统默认主题
+  int64  id                       = 4;  // 主题 ID
+  int64  access_hash              = 5;  // 访问哈希，用于校验请求合法性
+  string slug                     = 6;  // 主题唯一标识（URL 友好）
+  string title                    = 7;  // 主题名称
+  string local_attheme_path       = 8;  // 内置主题资源文件名
+  ThemeSettings settings          = 9;  // 主题外观设置；非空时表示 accent 变体，通过 base_theme 关联父主题
+  uint32 installs_count           = 10; // 安装/使用次数
+  int32  sort_index               = 11; // 排序权重，越小越靠前
+  uint32 preview_background_color = 12; // 主题选择器预览背景色 ARGB
+  uint32 preview_in_color         = 13; // 预览：接收消息气泡色 ARGB
+  uint32 preview_out_color        = 14; // 预览：发出消息气泡色 ARGB
+}
+
+// 获取主题列表
+message AppGetThemesReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6009;
+  }
+
+  string platform   = 1;  // 客户端平台：android/ios/h5
+  int64  hash       = 2;  // 本地缓存 hash，0 表示全量拉取
+}
+
+// 获取主题列表回包
+message AppGetThemesRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6010;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果（code/message）
+  int64  hash                          = 2;  // 服务端主题列表 hash，用于增量更新
+  repeated Theme themes                = 3;  // 主题列表
+}
+
+// 获取服务端时间请求（空请求，无参数）
+message AppGetServerTimeReq {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6011;
+  }
+}
+
+// 获取服务端时间响应
+message AppGetServerTimeRsp {
+  enum Type {
+    none = 0;
+    max = 6000;
+    min = 6012;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果（code/message）
+  int64 server_time = 2;                     // 服务端当前时间戳（秒，UTC+0）
+  string timezone = 3;                       // 服务端时区标识，如 "UTC", "UTC+0"
+}

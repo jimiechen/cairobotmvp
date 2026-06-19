@@ -1,0 +1,149 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+import "base/result.proto";
+import "base/common.proto";
+import "base/user_base.proto";
+import "base/topic_base.proto";
+import "base/group_base.proto";
+
+package com.mineplanet.pojo.query;
+option java_outer_classname = "QueryServiceProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+
+// 聚合查询服务 (Read-Only)
+// MaxType: 7000
+
+// 1. 获取首页 Feed 流 (User + Topic + Group Aggregation) - 已废弃，使用7011
+// message GetHomeFeedRequest { ... }
+// message GetHomeFeedResponse { ... }
+
+// 2. 获取聚合用户信息 (Profile + Stats + Recent Activity)
+message GetUserProfileRequest {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7003;
+    }
+    string user_id = 1;
+    bool include_recent_topics = 2;
+    bool include_joined_groups = 3;
+}
+
+message GetUserProfileResponse {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7004;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    com.mineplanet.pojo.common.UserInfo user = 2;
+    repeated com.mineplanet.pojo.topic.TopicInfo recent_topics = 3;
+    repeated com.mineplanet.pojo.group.GroupInfo joined_groups = 4;
+    com.mineplanet.pojo.user.UserStats stats = 5;
+}
+
+// 3. 日志搜索服务 (Log Search)
+message SearchLogRequest {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7005;
+    }
+    string trace_id = 1; // 必填
+    int32 limit = 2;     // 可选，默认全部
+}
+
+message LogEntry {
+    string file_path = 1;
+    int32 line_number = 2;
+    string content = 3;
+    string timestamp = 4;
+}
+
+message SearchLogResponse {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7006;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated LogEntry entries = 2;
+}
+
+// 4. 获取首页 Feed 流 ID 列表（轻量版）- 7011/7012
+// 评审意见：极简设计，仅返回 topic_ids 数组
+message GetHomeFeedIdsRequest {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7011;
+    }
+    int32 page = 1;              // 页码（从1开始）
+    int32 page_size = 2;         // 每页大小（建议10-50）
+    int64 since_ts = 3;          // 增量时间戳（毫秒）
+}
+
+message GetHomeFeedIdsResponse {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7012;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated string topic_ids = 2;  // 主题ID数组（极简，仅返回topic_id）
+    bool has_more = 3;             // 是否有更多数据
+    int32 page = 4;                // 当前页码
+    int32 page_size = 5;           // 每页大小
+}
+
+// ============================================================
+// 7001: 获取圈子 Feed 流（极简版）
+// 用途: 获取当前登录用户的圈子列表状态
+// 特点: 仅返回圈子ID + 用户状态 + 最新主题类型
+// ============================================================
+
+message GetGroupFeedRequest {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7001;
+    }
+    int32 page = 1;
+    int32 page_size = 2;
+    int64 since_ts = 3;
+}
+
+message GetGroupFeedResponse {
+    enum Type {
+        none = 0;
+        max = 7000;
+        min = 7002;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated GroupFeedVO groups = 2;
+    bool has_more = 3;
+    int32 page = 4;
+    int32 page_size = 5;
+}
+
+// ============================================================
+// GroupFeedVO: 圈子Feed视图对象（极简版 - 仅3个字段）
+// 说明: 7001协议只获取用户在圈子的状态和最新主题类型
+//       其他属性（名称、头像、成员数等）由客户端通过group_id批量获取
+// ============================================================
+
+message GroupFeedVO {
+    string group_id = 1;                 // 圈子ID
+    string recommendation_reason = 2;    // 状态标签文本（包含最新主题媒体类型）
+    GroupExpiryStatus expiry_status = 3; // 过期状态枚举
+    int32 members_count = 4; //会员数
+    int32 topics_count = 5; //主题数
+    bool is_owner = 6; //是否圈主
+}
+
+// 圈子过期状态枚举
+enum GroupExpiryStatus {
+    EXPIRY_VALID = 0;     // 未过期（正常显示）
+    EXPIRY_SOON = 1;      // 即将过期（显示警告标签）
+    EXPIRY_EXPIRED = 2;   // 已过期（灰色样式）
+}

@@ -13,8 +13,9 @@ const (
 type contextKey string
 
 // CtxKeyUserID 是认证中间件注入当前登录用户 ID 的 context key。
-// 其他包（如 permission）需要读取当前用户 ID 时，应 import member 包并引用此常量。
-const CtxKeyUserID contextKey = "userID"
+// 值必须与 Gateway AuthMiddleware.Extend["user_id"] 保持一致（"user_id"）
+// 其他包（如 topic、permission）需要读取当前用户 ID 时，应 import member 包并引用此常量。
+const CtxKeyUserID contextKey = "user_id"
 
 // Token 类型标识（generateToken / SvcRefresh 使用）
 // 禁止在 svc_*.go 中直接使用 "access" / "refresh" 字符串字面量

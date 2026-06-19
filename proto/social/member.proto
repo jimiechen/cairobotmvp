@@ -371,7 +371,34 @@ message UpdateUserInfoResponse {
 
   com.mineplanet.pojo.pb.Result result = 1;
   com.mineplanet.pojo.common.UserInfo user_info = 2;       // 更新后的用户信息
-  string user_id = 3;                                      // 新增：透传 user_id
+  string user_id = 3;                                      // 新增：透传用户ID
+}
+
+// 更新用户状态请求 (min=1033)
+// 接口用途：管理员更新用户状态（封禁/解封/注销等）
+message UpdateMemberStatusRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1033;
+  }
+  string user_id = 1;         // 必填，目标用户ID
+  int32 status = 2;           // 必填，目标状态（1=正常 2=已封禁 3=已注销）
+  string reason = 3;          // 非必填，状态变更原因
+}
+
+// 更新用户状态响应
+message UpdateMemberStatusResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1034;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string user_id = 2;         // 透传用户ID
+  int32 status = 3;           // 更新后的状态
 }
 
 

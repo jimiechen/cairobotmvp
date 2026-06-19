@@ -1,0 +1,40 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo.pb;
+
+option java_package = "com.mineplanet.pojo.common";
+option java_outer_classname = "CommonResult";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+
+/**
+*   通用返回结果类
+*/
+message Result {
+	int32 code = 1; // 响应码，成功返回10200
+	string message = 2; // 返回消息
+}
+
+// 分页信息
+message PageInfo {
+  int32 page = 1;               // 当前页码
+  int32 page_size = 2;          // 页大小
+  int32 total = 3;              // 总数量
+  int32 total_pages = 4;        // 总页数
+  bool has_next = 5;            // 是否有下一页
+  bool has_prev = 6;            // 是否有上一页
+}
+
+// 错误详情
+message ErrorDetail {
+  string field = 1;             // 字段名
+  string code = 2;              // 错误代码
+  string message = 3;           // 错误消息
+  string value = 4;             // 字段值
+}
+
+// 验证结果
+message ValidationResult {
+  bool valid = 1;               // 是否有效
+  repeated ErrorDetail errors = 2; // 错误列表
+  map<string, string> warnings = 3; // 警告信息
+}

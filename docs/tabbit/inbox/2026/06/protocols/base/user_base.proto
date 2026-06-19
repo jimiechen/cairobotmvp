@@ -1,0 +1,704 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+import "base/result.proto";
+import "base/common.proto";
+
+package com.mineplanet.pojo.user;
+option java_outer_classname = "UserLoginServiceProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+
+
+
+// 用户黑名单信息（极简版）
+message UserBlock {
+  // string block_id = 1;     // 【已移除】拉黑记录ID为内部字段，客户端无需感知
+  string user_id = 2;         // 被拉黑用户ID
+  string blocked_by = 3;      // 拉黑操作者ID
+  // string reason = 4;       // 【已移除】拉黑原因（产品无需填写）
+  // string block_type = 5;   // 【已移除】拉黑类型（仅支持永久拉黑）
+  // int64 expires_at = 6;    // 【已移除】过期时间（无临时拉黑）
+  // bool is_active = 7;      // 【已移除】返回列表均为活跃记录，无需此字段
+  int64 created_at = 8;       // 创建时间
+  int64 updated_at = 9;       // 更新时间
+  string group_id = 10;       // 【新增】圈子ID，为空表示全局拉黑
+}
+
+
+// 接口用途：用户登录
+message UserLoginRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1023;
+  }
+  string username = 1;         // 必填，用户名
+  string password = 2;         // 必填，密码
+}
+
+// 接口用途：返回登录结果与令牌
+message UserLoginResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1024;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  com.mineplanet.pojo.common.UserInfo user_info = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  int64 expires_at = 5;
+  string user_id = 6; // 新增：透传 user_id
+}
+
+// 接口用途：用户注册
+message UserRegisterRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1021;
+  }
+  string username = 1;         // 必填，用户名
+  string password = 2;         // 必填，密码
+  string email = 3;            // 非必填，邮箱
+  string nickname = 5;         // 非必填，昵称
+}
+
+// 接口用途：返回注册结果与令牌
+message UserRegisterResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1022;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string user_id = 2; // 新增：透传 user_id
+}
+
+// 接口用途：批量获取用户信息（可选圈子视角）
+message BatchGetUserInfoRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1049;
+  }
+  repeated string uids = 1;   // 非必填，用户UID列表（数组）
+  string keyword = 2;         // 非必填，关键词（用户名/昵称模糊查询）
+  bool include_blocked = 3;   // 非必填，是否包含拉黑用户
+  string group_id = 4;        // 非必填，圈子ID（返回圈子角色）
+}
+
+enum GroupMemberRole {
+  GROUP_ROLE_UNKNOWN = 0;   // 未知角色
+  GROUP_ROLE_OWNER = 1;     // 群主
+  GROUP_ROLE_ADMIN = 2;     // 管理员
+  GROUP_ROLE_MEMBER = 3;    // 普通成员
+  GROUP_ROLE_GUEST = 4;     // 嘉宾
+  GROUP_ROLE_BANNED = 5;    // 封禁成员
+  GROUP_ROLE_VISITOR = 6;   // 访客（非成员）
+}
+
+message GroupUserInfo {
+  string uid = 1;
+  string group_id = 2;
+  GroupMemberRole group_role = 3;
+  com.mineplanet.pojo.common.UserInfo profile = 4;
+}
+
+// 接口用途：返回用户信息列表与总数
+message BatchGetUserInfoResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1050; // 唯一协议号
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 状态码与错误信息
+  repeated com.mineplanet.pojo.common.UserInfo user_info_list = 2;         // 用户信息列表
+  int32 total_count = 3;      // 总数量
+  repeated GroupUserInfo group_user_info_list = 4;              // 圈子视角的用户信息（仅当传入group_id时填充）
+  string group_id = 5;        // 新增：透传 group_id
+  repeated string uids = 6;   // 新增：透传 uids
+}
+
+
+// 接口用途：获取当前用户信息
+message GetUserInfoRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1029;
+  }
+}
+
+// 接口用途：返回当前用户信息
+message GetUserInfoResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1030;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  com.mineplanet.pojo.common.UserInfo user_info = 2;
+  string user_id = 3;
+}
+
+
+// 用户登出请求 (min=1025)
+// 接口用途：用户登出
+message UserLogoutRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1025;
+  }
+  string user_id = 1;
+  string access_token = 2;
+  string device_id = 3;
+}
+
+// 用户登出响应
+// 接口用途：返回登出结果
+message UserLogoutResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1026;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string user_id = 2; // 新增：透传 user_id
+}
+
+
+// 刷新令牌请求 (min=1027)
+// 接口用途：刷新令牌
+message RefreshTokenRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1027;
+  }
+  string refresh_token = 1;   // 必填，刷新令牌
+}
+
+// 刷新令牌响应
+// 接口用途：返回新的访问/刷新令牌
+message RefreshTokenResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1028;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string access_token = 2;    // 新的访问令牌
+  string refresh_token = 3;   // 新的刷新令牌
+  int64 expires_at = 4;       // 过期时间
+  string user_id = 5;         // 透传 user_id
+}
+
+
+// 会员升级请求 (min=1051)
+// 接口用途：会员升级
+message UpgradeMembershipRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1051;
+  }
+  com.mineplanet.pojo.common.MembershipLevel target_level = 1; // 必填，目标会员等级
+  string payment_tx_id = 2;                                   // 非必填，支付交易ID
+}
+
+// 会员升级响应 (min=1052)
+// 接口用途：返回会员等级
+message UpgradeMembershipResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1052;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  com.mineplanet.pojo.common.MembershipLevel membership_level = 2;
+  string user_id = 3;
+}
+
+
+// 拉黑用户请求 (min=1039)
+// 接口用途：拉黑指定用户（简化版：永久拉黑，无需原因）
+message BlockUserRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1039;
+  }
+  // string reason = 1;       // 【已移除】拉黑原因（产品无需填写）
+  string blocked_by = 2;      // 非必填，拉黑操作者ID
+  // string block_type = 3;   // 【已移除】拉黑类型（仅支持永久拉黑）
+  // int64 expires_at = 4;    // 【已移除】过期时间（无临时拉黑）
+  string user_id = 5;         // 必填，被拉黑用户ID
+  string group_id = 6;        // 【新增】必填，圈子ID（圈内屏蔽必须传入）
+}
+
+// 拉黑用户响应
+// 接口用途：返回拉黑信息
+message BlockUserResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1040;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;
+  // string block_id = 2;    // 【已移除】拉黑记录ID为内部字段
+  UserBlock block_info = 3; // 返回详细的拉黑信息
+}
+
+
+// 解除拉黑请求 (min=1041)
+// 接口用途：解除拉黑（简化版）
+message UnblockUserRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1041;
+  }
+  string user_id = 1;         // 必填，被解封用户ID
+  string unblocked_by = 2;    // 非必填，操作者ID
+  // string reason = 3;       // 【已移除】解封原因（产品无需填写）
+  string group_id = 4;        // 【新增】必填，圈子ID（圈内解封必须传入）
+}
+
+// 解除拉黑响应
+// 接口用途：返回解除拉黑结果
+message UnblockUserResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1042;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;
+  string user_id = 2; // 新增：透传 user_id
+}
+
+
+// 获取黑名单请求 (min=1043)
+// 接口用途：获取黑名单列表
+message GetBlockListRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1043;
+  }
+  int32 page = 1;             // 页码
+  int32 page_size = 2;        // 每页数量
+  // string type = 3;         // 【已移除】无临时拉黑，无需类型筛选
+  string group_id = 4;        // 【新增】圈子ID，为空表示查询全局拉黑
+}
+
+// 黑名单列表响应 (min=1044)
+// 接口用途：返回黑名单
+message GetBlockListResponse {
+    enum Type {
+        none = 0;
+        max = 1000;
+        min = 1044;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated UserBlock blocks = 2;
+    int64 total = 3;
+    string type = 4; // 新增：透传 type
+    int32 page = 5;
+    int32 page_size = 6;
+}
+
+
+// 获取拉黑数量请求 (min=1047)
+// 接口用途：获取当前用户的永久拉黑数量
+message GetBlockCountRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1047;
+  }
+  // 无需额外参数，使用当前登录用户身份
+}
+
+// 拉黑数量响应 (min=1048)
+// 接口用途：返回永久拉黑总数
+message GetBlockCountResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1048;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;   // 操作结果
+  int64 total = 2;                             // 永久拉黑总数
+}
+
+
+// 更新用户信息请求 (min=1031)
+message UpdateUserInfoRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1031;
+  }
+  string nickname = 1;        // 非必填，昵称
+  string avatar = 2;          // 非必填，头像 URL
+  string email = 3;           // 非必填，邮箱
+  string phone = 4;           // 非必填，手机号
+}
+
+// 更新用户信息响应
+message UpdateUserInfoResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1032;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;
+  com.mineplanet.pojo.common.UserInfo user_info = 2;       // 更新后的用户信息
+  string user_id = 3;                                      // 新增：透传 user_id
+}
+
+
+// 用户统计信息
+message UserStats {
+  string user_id = 1;         // 用户ID
+  int32 topics_count = 2;     // 话题数量
+  int32 comments_count = 3;   // 评论数量
+  int32 likes_given = 4;      // 给出的点赞数
+  int32 likes_received = 5;   // 收到的点赞数
+  int32 groups_count = 6;     // 加入的群组数量
+  int32 reputation_score = 7; // 声誉分数
+  int32 level = 8;            // 用户等级
+  int32 experience_points = 9; // 经验值
+  int64 last_calculated_at = 10; // 最后计算时间
+  int64 created_at = 11;      // 创建时间
+  int64 updated_at = 12;      // 更新时间
+}
+
+// 获取用户统计请求 (min=1045)
+// 接口用途：获取用户统计
+message GetUserStatsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1045;
+  }
+  bool include_details = 1;   // 非必填，是否包含详细信息
+}
+
+// 获取用户统计响应
+// 接口用途：返回用户统计信息
+message GetUserStatsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1046;
+  }
+
+  com.mineplanet.pojo.pb.Result result = 1;
+  UserStats user_stats = 2;   // 用户统计信息
+  string user_id = 3;         // 新增：透传 user_id
+}
+
+// 接口用途：获取腾讯云 IM 登录签名 (UserSig)
+// MinType: 1074
+message GetIMUserSigRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1074;
+  }
+  string sdk_appid = 1; // 选填，用于校验客户端配置
+}
+
+// 接口用途：返回 IM 签名
+// MinType: 1075
+message GetIMUserSigResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1075;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string user_id = 2;       // 当前用户的 32位 ID (用于登录 SDK)
+  string user_sig = 3;      // 腾讯云 UserSig 签名
+  int64 expires_at = 4;     // 签名过期时间戳
+  int32 sdk_appid = 5;      // 对应的 AppID
+}
+
+// ----------------------------------------------------------------
+// 3. Login / Authentication (Passkey & 2FA)
+// ----------------------------------------------------------------
+
+// Passkey/TOTP Login messages moved to third_base.proto
+
+// ----------------------------------------------------------------
+// 4. 用户配置 / 弹框状态管理 (1091-1100)
+// ----------------------------------------------------------------
+
+// 用户配置作用域枚举
+enum UserConfigScope {
+  USER_CONFIG_SCOPE_UNKNOWN = 0;
+  USER_CONFIG_SCOPE_GLOBAL = 1;    // 全局配置
+  USER_CONFIG_SCOPE_USER = 2;      // 用户级别
+  USER_CONFIG_SCOPE_GROUP = 3;     // 圈子级别
+  USER_CONFIG_SCOPE_COMMON = 4;    // 通用配置
+}
+
+// 用户配置键名枚举（当前阶段只定义创建圈子提示）
+enum UserConfigKey {
+  USER_CONFIG_KEY_UNKNOWN = 0;
+
+  // 弹框提示类 (1-100)
+  USER_CONFIG_KEY_POPUP_CREATE_GROUP_TIP = 1;  // 创建圈子提示
+
+  // 预留其他键名
+  // USER_CONFIG_KEY_POPUP_NEW_FEATURE_V1 = 2;
+  // USER_CONFIG_KEY_POPUP_UPDATE_REMINDER = 3;
+
+  // 用户偏好类 (101-200)
+  // USER_CONFIG_KEY_PREF_DARK_MODE = 101;
+  // USER_CONFIG_KEY_PREF_NOTIF_SOUND = 102;
+}
+
+// 用户配置项类型枚举
+enum UserConfigValueType {
+  USER_CONFIG_VALUE_TYPE_UNKNOWN = 0;
+  USER_CONFIG_VALUE_TYPE_STRING = 1;
+  USER_CONFIG_VALUE_TYPE_BOOLEAN = 2;
+  USER_CONFIG_VALUE_TYPE_INT = 3;
+  USER_CONFIG_VALUE_TYPE_JSON = 4;
+}
+
+// 用户配置项（精简版）
+message UserConfigItem {
+  string key = 1;    // 配置键名
+  string value = 2;  // 配置值
+}
+
+// 接口用途：获取用户配置
+// MinType: 1091
+message GetUserConfigRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1091;
+  }
+  repeated string keys = 1;          // 非必填，指定键名列表，空则返回全部
+}
+
+// 接口用途：返回用户配置列表
+// MinType: 1092
+message GetUserConfigResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1092;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated UserConfigItem configs = 2;   // 配置列表
+  int64 server_time = 3;                 // 服务器时间戳
+}
+
+// 接口用途：更新用户配置（单条）
+// MinType: 1093
+message UpdateUserConfigRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1093;
+  }
+  string key = 1;      // 必填，配置键名
+  string value = 2;    // 必填，配置值
+}
+
+// 接口用途：返回更新后的配置
+// MinType: 1094
+message UpdateUserConfigResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1094;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  UserConfigItem config = 2;         // 更新后的配置
+}
+
+// 接口用途：批量更新用户配置
+// MinType: 1095
+message BatchUpdateUserConfigRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1095;
+  }
+  repeated UserConfigItem configs = 1;  // 配置列表
+}
+
+// 接口用途：返回批量更新结果
+// MinType: 1096
+message BatchUpdateUserConfigResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1096;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated UserConfigItem configs = 2;  // 更新后的配置列表
+  int32 success_count = 3;              // 成功数量
+  int32 fail_count = 4;                 // 失败数量
+}
+
+// 接口用途：删除用户配置
+// MinType: 1097
+message DeleteUserConfigRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1097;
+  }
+  string key = 1;      // 必填，配置键名
+}
+
+// 接口用途：返回删除结果
+// MinType: 1098
+message DeleteUserConfigResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1098;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string key = 2;      // 被删除的键名
+}
+
+// 接口用途：关闭弹框（专门用于"不再提示"场景）
+// MinType: 1099
+message DismissPopupRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1099;
+  }
+  UserConfigKey popup_key = 1;       // 必填，弹框键名枚举
+  string popup_key_str = 2;          // 非必填，弹框键名字符串
+  UserConfigScope scope = 3;         // 非必填，作用域，默认 GLOBAL
+  string scope_id = 4;               // 非必填，作用域ID（如 group_id）
+  bool permanent = 5;                // 是否永久关闭，默认 true
+  int64 expire_at = 6;               // 非必填，过期时间
+}
+
+// 接口用途：返回关闭弹框结果
+// MinType: 1100
+message DismissPopupResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1100;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  UserConfigKey popup_key = 2;       // 弹框键名
+  string popup_key_str = 3;          // 弹框键名字符串
+  bool dismissed = 4;                // 是否成功关闭
+  int64 dismiss_count = 5;           // 累计关闭次数
+}
+
+// ----------------------------------------------------------------
+// 5. 用户通知设置 (1053-1056)
+// ----------------------------------------------------------------
+
+// 通知投递模式枚举
+enum NotificationDeliveryMode {
+  NOTIFICATION_DELIVERY_MODE_UNKNOWN        = 0;  // 未知
+  NOTIFICATION_DELIVERY_MODE_EMAIL_AND_PUSH = 1;  // 邮件 + 推送
+  NOTIFICATION_DELIVERY_MODE_EMAIL_ONLY     = 2;  // 仅邮件
+}
+
+// 通知类别枚举
+enum NotificationCategory {
+  NOTIFICATION_CATEGORY_UNKNOWN        = 0;  // 未知
+  NOTIFICATION_CATEGORY_POSTS          = 1;  // 帖子通知（新帖子、@提及等）
+  NOTIFICATION_CATEGORY_REPLIES        = 2;  // 回复/评论通知
+  NOTIFICATION_CATEGORY_DIRECT_MSG     = 3;  // 私信通知
+  NOTIFICATION_CATEGORY_SYSTEM         = 4;  // 系统通知（维护、公告等）
+}
+
+// 通知设置载荷
+message NotificationSettingsPayload {
+  NotificationDeliveryMode delivery_mode = 1;              // 投递方式
+  bool posts_enabled = 2;                                  // 帖子通知开关
+  bool replies_enabled = 3;                                // 回复通知开关
+  bool direct_messages_enabled = 4;                        // 私信通知开关
+  bool system_notifications_enabled = 5;                   // 系统通知开关
+}
+
+// 单个类别开关项
+message NotificationCategoryToggle {
+  NotificationCategory category = 1;                        // 类别
+  bool enabled = 2;                                        // 是否启用
+}
+
+// 接口用途：获取用户通知设置
+// MinType: 1053
+message GetNotificationSettingsRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1053;
+  }
+}
+
+// 接口用途：返回用户通知设置
+// MinType: 1054
+message GetNotificationSettingsResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1054;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  NotificationSettingsPayload settings = 2;
+}
+
+// 接口用途：更新用户通知设置
+// MinType: 1055
+message UpdateNotificationSettingsRequest {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1055;
+  }
+  NotificationDeliveryMode delivery_mode = 1;                   // 可选，有值则更新投递方式
+  repeated NotificationCategoryToggle category_toggles = 2;     // 可选，传了则更新对应类别开关
+}
+
+
+
+// 接口用途：返回更新后的通知设置
+// MinType: 1056
+message UpdateNotificationSettingsResponse {
+  enum Type {
+    none = 0;
+    max = 1000;
+    min = 1056;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  NotificationSettingsPayload settings = 2;
+}

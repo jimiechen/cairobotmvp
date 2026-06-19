@@ -4,6 +4,7 @@ package permission
 
 import (
 	"context"
+	"time"
 
 	"github.com/jimiechen/mineplanet/go/modules/social/group"
 	"github.com/jimiechen/mineplanet/go/modules/social/member"
@@ -164,10 +165,17 @@ func (s *service) CanReadTopic(ctx context.Context, groupID, topicID, userID str
 		return true
 	case topic.TopicVisibilityGroupMember: // GROUP_MEMBER: 复用 CanViewGroup 逻辑（含广场虚拟成员特化）
 		return s.CanViewGroup(ctx, tv.GroupID, userID)
-	case topic.TopicVisibilityPaidMember: // PAID_MEMBER: 需检查权益有效性
-		// TODO(group, MVP): 调用 groupRepo.GetEntitlementByGroupAndUser
-		// 检查 entitlement.status==1 && entitlement.expired_at > now()
-		return false
+	case topic.TopicVisibilityPaidMember: // PAID_MEMBER: 检查权益有效性
+		// 通过 groupRepo.GetMember 查询成员记录的 MembershipExpiresAt
+		m, err := s.groupRepo.GetMember(ctx, tv.GroupID, userID)
+		if err != nil || m == nil {
+			return false // 非成员或 DB 异常 → 保守拒绝
+		}
+		// MembershipExpiresAt > 当前时间 = 权益有效（免费成员该字段为 0，也视为有效）
+		if m.MembershipExpiresAt == 0 {
+			return true // 免费成员或无到期时间 → 放行
+		}
+		return m.MembershipExpiresAt > time.Now().UnixMilli()
 	case topic.TopicVisibilityOwnerOnly: // OWNER_ONLY: 仅 owner/admin
 		m := s.getMemberRole(ctx, tv.GroupID, userID)
 		return m != nil && (m.Role == RoleStrOwner || m.Role == RoleStrAdmin)
@@ -254,13 +262,18 @@ func (s *service) CanManageMember(ctx context.Context, groupID, operatorID, targ
 // CanAuditContent 判断用户是否可审核内容（平台管理员专属）
 //
 // 不依赖群组上下文，仅检查用户的全局管理员角色。
-// 通过 memberRepo 查询用户角色标识。
+// 通过 memberRepo 查询用户的 membership_level 字段判断。
 func (s *service) CanAuditContent(ctx context.Context, userID string) bool {
-	// TODO(member, MVP): 调用 memberRepo 查询用户是否具有平台管理员角色
-	// 可能的实现方式:
-	//   1. users 表有 is_platform_admin 字段
-	//   2. 或独立的 platform_admins 表
-	//   3. 或通过 membership_level / 特殊 role 判断
-	// 待确认具体方案后补充查询逻辑
-	return false
+	user, err := s.memberRepo.GetUserByID(ctx, userID)
+	if err != nil || user == nil {
+		return false // DB 异常或用户不存在 → 保守拒绝
+	}
+	// 平台管理员角色通过 MembershipLevel 字段标识
+	// admin / platform_admin / super_admin 均具备审核权限
+	switch user.MembershipLevel {
+	case "admin", "platform_admin", "super_admin":
+		return true
+	default:
+		return false
+	}
 }

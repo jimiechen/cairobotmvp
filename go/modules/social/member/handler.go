@@ -15,6 +15,10 @@ import (
 type Handler struct {
 	// 领域事件发布器（可为 nil，nil 时不发布事件）
 	publisher event.Publisher
+	// JWT 令牌管理器
+	jwtManager *JWTManager
+	// 令牌黑名单存储
+	tokenStore TokenStore
 	// 用户注册/登录
 	registerSvc *SvcRegister
 	loginSvc    *SvcLogin
@@ -28,22 +32,54 @@ type Handler struct {
 	blockSvc      *SvcBlock
 	unblockSvc    *SvcUnblock
 	getBlockListSvc *SvcGetBlockList
+	// 用户状态/统计查询（P1-E 补齐）
+	updateMemberStatusSvc *SvcUpdateMemberStatus
+	getUserStatsSvc      *SvcGetUserStats
+}
+
+// HandlerOption Handler 可选配置函数
+type HandlerOption func(*Handler)
+
+// WithJWTManager 注入 JWT 管理器
+func WithJWTManager(m *JWTManager) HandlerOption {
+	return func(h *Handler) {
+		h.jwtManager = m
+	}
+}
+
+// WithTokenStore 注入令牌黑名单存储
+func WithTokenStore(ts TokenStore) HandlerOption {
+	return func(h *Handler) {
+		h.tokenStore = ts
+	}
 }
 
 // NewHandler 创建 Handler 实例，注入所有 svc 依赖
-func NewHandler(repo Repository, publisher event.Publisher) *Handler {
-	return &Handler{
+func NewHandler(repo Repository, publisher event.Publisher, opts ...HandlerOption) *Handler {
+	h := &Handler{
 		publisher:         publisher,
 		registerSvc:      NewSvcRegister(repo, publisher),
-		loginSvc:         NewSvcLogin(repo),
-		logoutSvc:        NewSvcLogout(),
-		refreshSvc:       NewSvcRefresh(),
+		loginSvc:         NewSvcLogin(repo, nil), // 延迟：通过 opts 注入 jwtManager
+		logoutSvc:        NewSvcLogout(nil, nil), // 延迟：通过 opts 注入 tokenStore + jwtManager
+		refreshSvc:       NewSvcRefresh(nil, nil, repo), // 延迟：通过 opts 注入 tokenStore + jwtManager
 		getUserInfoSvc:   NewSvcGetUserInfo(repo),
 		updateUserInfoSvc: NewSvcUpdateUserInfo(repo),
 		blockSvc:         NewSvcBlock(repo),
 		unblockSvc:       NewSvcUnblock(repo),
 		getBlockListSvc:  NewSvcGetBlockList(repo),
+		updateMemberStatusSvc: NewSvcUpdateMemberStatus(repo, publisher),
+		getUserStatsSvc:      NewSvcGetUserStats(repo),
 	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	// 重新创建依赖 JWTManager/TokenStore 的 svc
+	if h.jwtManager != nil {
+		h.loginSvc = NewSvcLogin(repo, h.jwtManager)
+		h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
+		h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, repo)
+	}
+	return h
 }
 
 // Dispatch 根据 minType 分发到对应的 svc 处理
@@ -153,6 +189,30 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 			return nil, fmt.Errorf("unmarshal GetBlockListRequest failed: %w", err)
 		}
 		rsp, err := h.getBlockListSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 更新用户状态（minType=1033）
+	case "1033":
+		var req pb.UpdateMemberStatusRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal UpdateMemberStatusRequest failed: %w", err)
+		}
+		rsp, err := h.updateMemberStatusSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 获取用户统计（minType=1045）
+	case "1045":
+		var req pb.GetUserStatsRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal GetUserStatsRequest failed: %w", err)
+		}
+		rsp, err := h.getUserStatsSvc.Handle(ctx, &req)
 		if err != nil {
 			return nil, err
 		}

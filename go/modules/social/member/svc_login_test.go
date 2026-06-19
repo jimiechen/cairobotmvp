@@ -7,10 +7,22 @@ import (
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 )
 
+// newTestJWTManager 创建测试用 JWTManager（使用固定密钥，满足 >=32 字节要求）
+func newTestJWTManager(t *testing.T) *JWTManager {
+	t.Helper()
+	jwtCfg := DefaultJWTConfig().SetSecretKey("test-secret-key-for-jwt-unit-tests-32b")
+	jwtManager, err := NewJWTManager(jwtCfg)
+	if err != nil {
+		t.Fatalf("创建 JWTManager 失败: %v", err)
+	}
+	return jwtManager
+}
+
 // TestSvcLogin_正常登录 当用户名密码正确时_应返回成功响应包含令牌和用户信息
 func TestSvcLogin_正常登录(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
+	jwtManager := newTestJWTManager(t)
 	// 预先创建一个用户（模拟已注册）
 	hashedPwd, _ := hashPassword("password123")
 	existingUser := &User{
@@ -23,7 +35,7 @@ func TestSvcLogin_正常登录(t *testing.T) {
 	}
 	mockRepo.users[existingUser.ID] = existingUser
 
-	svc := NewSvcLogin(mockRepo)
+	svc := NewSvcLogin(mockRepo, jwtManager)
 
 	req := &pb.UserLoginRequest{
 		Username: "testuser",
@@ -55,7 +67,8 @@ func TestSvcLogin_正常登录(t *testing.T) {
 func TestSvcLogin_用户不存在(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
-	svc := NewSvcLogin(mockRepo)
+	jwtManager := newTestJWTManager(t)
+	svc := NewSvcLogin(mockRepo, jwtManager)
 
 	req := &pb.UserLoginRequest{
 		Username: "nonexistent",
@@ -78,6 +91,7 @@ func TestSvcLogin_用户不存在(t *testing.T) {
 func TestSvcLogin_密码错误(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
+	jwtManager := newTestJWTManager(t)
 	existingUser := &User{
 		ID:       "user-001",
 		Username: "testuser",
@@ -86,7 +100,7 @@ func TestSvcLogin_密码错误(t *testing.T) {
 	}
 	mockRepo.users[existingUser.ID] = existingUser
 
-	svc := NewSvcLogin(mockRepo)
+	svc := NewSvcLogin(mockRepo, jwtManager)
 
 	req := &pb.UserLoginRequest{
 		Username: "testuser",

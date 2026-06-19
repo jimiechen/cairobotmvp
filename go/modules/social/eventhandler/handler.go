@@ -195,9 +195,11 @@ func (h *CacheHandler) Handle(ctx context.Context, evt event.DomainEvent) error 
 		if err := json.Unmarshal(evt.Payload, &payload); err != nil {
 			return err
 		}
-		return h.invalidator.Delete(ctx,
+		if err := h.invalidator.Delete(ctx,
 			cache.TopicDetailKey(payload.TopicID),
-		)
+		); err != nil {
+			return err
+		}
 		return h.invalidator.DeletePattern(ctx, cache.GroupTopicsKey(payload.GroupID, 0))
 	case event.EventTopicCommentCreated:
 		var payload event.TopicCommentCreatedPayload

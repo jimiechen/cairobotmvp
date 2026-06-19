@@ -1,0 +1,294 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo.inbox;
+option java_package = "com.mineplanet.pojo.inbox";
+option java_outer_classname = "InboxBase";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+import "base/result.proto";
+import "base/common.proto";
+
+enum LinkType {
+  LINK_TYPE_UNSPECIFIED = 0;
+  LINK_TYPE_DEEPLINK = 1;
+  LINK_TYPE_WEB = 2;
+}
+
+message InboxMessageCard {
+  string type = 1;
+  string title = 2;
+  string sub_title = 3;
+  string content = 4;
+  string avatar = 5;
+  LinkType link_type = 6;
+  string link = 7;
+  map<string, string> extra = 8;
+  repeated CardField fields = 9;
+  int64 template_id = 10;
+  int32 unread_count = 11;
+}
+
+message CardField {
+  string key = 1;
+  string value = 2;
+}
+
+// 列表与增量相关枚举与结构
+enum MessageType {
+  MESSAGE_TYPE_UNKNOWN = 0;
+  MESSAGE_TYPE_SYSTEM = 1;
+  MESSAGE_TYPE_QA_QUESTION = 2;
+  MESSAGE_TYPE_QA_ANSWER = 3;
+  MESSAGE_TYPE_LIKE_EVENT = 4;
+  MESSAGE_TYPE_SUBSCRIBE_EVENT = 5;
+  MESSAGE_TYPE_GROUP_EXPIRY = 6;
+  MESSAGE_TYPE_DM_JOIN = 7;
+}
+
+enum InboxMessageSortField {
+  SORT_FIELD_UNSPECIFIED = 0;
+  SORT_FIELD_TIMESTAMP = 1;
+  SORT_FIELD_TYPE = 2;
+  SORT_FIELD_READ = 3;
+}
+
+message TimeRange {
+  int64 start_time = 1;
+  int64 end_time = 2;
+}
+
+message InboxMessage {
+  string message_id = 1;       // 原 id
+  MessageType type = 2;
+  string title = 3;
+  string content = 4;
+  int64 since_ts = 5;
+  bool read = 6;
+  string user_id = 7;
+  string group_id = 8;
+  string related_id = 9;
+  string badge_count_text = 10;
+  string avatar = 11;
+  string snippet = 12;
+  int64 display_time = 13;
+  LinkType link_type = 14;
+  string link = 15;
+  int32 unread_count = 16;
+  bool red_dot = 17;
+  InboxMessageCard card = 18;
+  string from_user_id = 20; // 私信发送者ID
+  string to_user_id = 21;   // 私信接收者ID
+}
+
+// 接口用途：分页查询消息
+message InboxQueryMessagesRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5051;
+  }
+  int32 page = 1;                       // 非必填，页码
+  int32 page_size = 2;                  // 非必填，每页大小
+  repeated MessageType types = 3;       // 非必填，消息类型筛选
+  TimeRange time_range = 4;             // 非必填，时间范围
+  InboxMessageSortField sort_field = 5; // 非必填，排序字段
+  com.mineplanet.pojo.common.SortOrder sort_order = 6; // 非必填，排序方向
+  string group_id = 7;                   // 非必填，群组ID
+  bool only_unread = 8;                 // 非必填，仅未读
+  string peer_user_id = 9;               // 非必填，私信对端用户ID
+  bool only_private = 10;               // 非必填，仅私信消息
+}
+
+// 接口用途：返回消息分页结果
+message InboxQueryMessagesResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5052;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated InboxMessage messages = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  int32 total_pages = 5;
+  int64 total_records = 6;
+  string group_id = 7; // 新增：透传 group_id
+}
+
+// 接口用途：单条消息标记已读
+message InboxMarkMessageReadRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5053;
+  }
+  string message_id = 1; // 必填，消息ID
+}
+// 接口用途：返回标记已读结果
+message InboxMarkMessageReadResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5054;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string message_id = 2; // 新增：透传 message_id
+}
+// 接口用途：批量标记消息已读
+message InboxBatchMarkReadRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5055;
+  }
+  repeated string message_ids = 1; // 必填，消息ID列表
+}
+// 接口用途：返回批量标记已读结果
+message InboxBatchMarkReadResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5056;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  int32 success_count = 2;
+  repeated string failed_ids = 3;
+  repeated string message_ids = 4; // 新增：透传处理成功的 message_ids
+}
+
+// 接口用途：获取消息卡片列表
+message InboxGetMessageCardsRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5057;
+  }
+  string message_id = 1; // 必填，消息ID
+}
+// 接口用途：返回消息卡片列表
+message InboxGetMessageCardsResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5058;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated InboxMessageCard cards = 2;
+  string message_id = 3; // 新增：透传 message_id
+}
+
+// 接口用途：增量查询消息
+message InboxQueryMessagesIncrementalRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5059;
+  }
+  int64 since_ts = 1; // 非必填，增量起始时间戳
+  string group_id = 2; // 非必填，群组ID
+  repeated MessageType types = 3; // 非必填，消息类型筛选
+  bool only_unread = 4; // 非必填，仅未读
+}
+// 接口用途：返回增量消息列表
+message InboxQueryMessagesIncrementalResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5060;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated InboxMessage messages = 2;
+  string group_id = 3; // 新增：透传 group_id
+}
+
+// 接口用途：处理腾讯云 IM 回调
+message HandleIMCallbackRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5071;
+  }
+  string command = 1; // 回调命令字，如 State.StateChange
+  string body = 2;    // 回调 JSON Body
+  map<string, string> params = 3; // URL 参数
+}
+
+// 接口用途：返回 IM 回调处理结果
+message HandleIMCallbackResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5072;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string command = 2; // 新增：透传 command
+}
+
+// 接口用途：发送私信消息
+message InboxSendPrivateMessageRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5061;
+  }
+  string to_user_id = 1; // 必填，接收者用户ID
+  string content = 2; // 必填，消息内容
+}
+// 接口用途：返回私信发送结果
+message InboxSendPrivateMessageResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5062;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  InboxMessage message = 2;
+  string message_id = 3; // 新增：透传 message_id
+}
+
+// 接口用途：获取未读消息总数
+message InboxGetUnreadCountRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5063;
+  }
+}
+// 接口用途：返回未读消息总数
+message InboxGetUnreadCountResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5064;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64 total_unread = 2;
+}
+
+// 接口用途：获取按会话的未读统计
+message InboxGetUnreadByConversationRequest {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5065;
+  }
+}
+message UnreadByConversation {
+  string peer_user_id = 1;
+  int64 unread_count = 2;
+}
+// 接口用途：返回会话未读统计列表
+message InboxGetUnreadByConversationResponse {
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5066;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated UnreadByConversation items = 2;
+}
+
+
+
+
+
+// 统一分页与自动已读行为在 5051/5052，卡片与增量接口保留在其它模块，避免重复定义

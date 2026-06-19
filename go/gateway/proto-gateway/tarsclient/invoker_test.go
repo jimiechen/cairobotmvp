@@ -3,6 +3,7 @@ package tarsclient
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	socialpb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 )
 
 // mockHandler 用于测试
@@ -321,4 +323,94 @@ func TestNoopI18nServiceStub(t *testing.T) {
 	if diff == nil {
 		t.Fatal("expected non-nil diff response")
 	}
+}
+
+// TestRegisterSocialHandlers 验证 Social 域（Member + Group + Topic）handler 注册
+// 确保 1000/2000/3000 段协议通过 LocalInvoker 可路由
+func TestRegisterSocialHandlers(t *testing.T) {
+	invoker := NewLocalInvoker()
+	RegisterSocialHandlers(invoker)
+
+	// 定义 Social 域核心协议测试用例（每个域选一个代表性协议）
+	socialTargets := []struct {
+		name   string
+		target Target
+		req    proto.Message
+	}{
+		// Member 域：用户注册（1021）
+		{
+			name:   "Member: UserRegister (1000:1021)",
+			target: Target{App: "CaiRobot", Server: "SocialServer", Servant: "SocialObj", Method: "HandleMember"},
+			req:    &socialpb.UserRegisterRequest{Username: "test_user", Password: "test_pass", Email: "test@example.com"},
+		},
+		// Group 域：创建圈子（2005）
+		{
+			name:   "Group: CreateGroup (2000:2005)",
+			target: Target{App: "CaiRobot", Server: "SocialServer", Servant: "SocialObj", Method: "HandleGroup"},
+			req:    &socialpb.CreateGroupRequest{Name: "test_group", Slug: "test_slug", Description: "test desc", Category: "test_cat"},
+		},
+		// Topic 域：创建帖子（3001）
+		{
+			name:   "Topic: CreateTopic (3000:3001)",
+			target: Target{App: "CaiRobot", Server: "SocialServer", Servant: "SocialObj", Method: "HandleTopic"},
+			req:    &socialpb.CreateTopicRequest{Title: "test_topic", Content: "test content", GroupId: "g_test"},
+		},
+	}
+
+	for _, tt := range socialTargets {
+		t.Run(tt.name+" 已注册且返回有效响应", func(t *testing.T) {
+			reqBytes := mustMarshalProto(tt.req)
+			// 构造 extend map，包含 minType（从协议名推断）
+			extend := map[string]string{"minType": extractMinType(tt.name)}
+			code, resp, err := invoker.Invoke(context.Background(), tt.target, reqBytes, extend)
+
+			// 核心断言：绝不能返回 10404（handler not found）
+			if code == 10404 {
+				t.Fatalf("handler not found — 返回 10404，目标: %s", ToTargetKey(tt.target).String())
+			}
+			if err != nil {
+				t.Fatalf("invoke error: %v", err)
+			}
+			// 响应体必须非空
+			if len(resp) == 0 {
+				t.Fatal("expected non-empty response from Social handler")
+			}
+			t.Logf("✅ %s → code=%d, resp_size=%d", tt.name, code, len(resp))
+		})
+	}
+
+	// 验证未注册的 Social target 返回 10404
+	t.Run("未注册的 Social target 返回 10404", func(t *testing.T) {
+		unknownTarget := Target{
+			App:     "CaiRobot",
+			Server:  "SocialServer",
+			Servant: "SocialObj",
+			Method:  "UnknownMethod",
+		}
+		code, _, err := invoker.Invoke(context.Background(), unknownTarget, []byte{}, nil)
+		if code != 10404 {
+			t.Fatalf("expected 10404 for unregistered Social target, got %d", code)
+		}
+		if err == nil {
+			t.Fatal("expected error for unregistered Social target")
+		}
+	})
+}
+
+// extractMinType 从测试名称中提取 minType（简化版，仅用于测试）
+func extractMinType(name string) string {
+	// 格式：Domain: ProtocolName (maxType:minType)
+	// 示例：Member: UserRegister (1000:1021) → 返回 "1021"
+	if idx := strings.Index(name, ":"); idx != -1 {
+		rest := name[idx+1:]
+		if parenIdx := strings.Index(rest, "("); parenIdx != -1 {
+			numPart := rest[parenIdx+1:]
+			if colonIdx := strings.Index(numPart, ":"); colonIdx != -1 {
+				if endParen := strings.Index(numPart[colonIdx:], ")"); endParen != -1 {
+					return numPart[colonIdx+1 : colonIdx+endParen]
+				}
+			}
+		}
+	}
+	return ""
 }

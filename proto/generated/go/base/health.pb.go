@@ -116,15 +116,19 @@ func (x ServiceHealthCheckResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ServiceHealthCheckResponse_Type.Descriptor instead.
 func (ServiceHealthCheckResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_base_health_proto_rawDescGZIP(), []int{1, 0}
+	return file_base_health_proto_rawDescGZIP(), []int{2, 0}
 }
 
 // 服务健康检查请求，用于服务间心跳检测
-// 不携带业务数据，仅用于确认目标服务存活状态
+// 升级版：支持多语言 + 深度控制 + 依赖健康汇总
 type ServiceHealthCheckRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// service_name 表示请求方服务名称，用于日志追踪和调用链定位
-	ServiceName   string `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	ServiceName string `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	// lang_code 表示语言代码，如 zh-CN、en，用于响应文案渲染（新增）
+	LangCode string `protobuf:"bytes,2,opt,name=lang_code,json=langCode,proto3" json:"lang_code,omitempty"`
+	// depth 表示检查深度：0=仅自身存活，1=依赖 ping，2=依赖+实际查询（新增）
+	Depth         int32 `protobuf:"varint,3,opt,name=depth,proto3" json:"depth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,8 +170,96 @@ func (x *ServiceHealthCheckRequest) GetServiceName() string {
 	return ""
 }
 
-// 服务健康检查响应，返回目标服务的运行状态
-// 网关和 TarsCloud 调度层依赖此响应判断是否路由流量到该节点
+func (x *ServiceHealthCheckRequest) GetLangCode() string {
+	if x != nil {
+		return x.LangCode
+	}
+	return ""
+}
+
+func (x *ServiceHealthCheckRequest) GetDepth() int32 {
+	if x != nil {
+		return x.Depth
+	}
+	return 0
+}
+
+// 组件健康状态，用于描述单个依赖的健康情况
+// 后续每个业务模块的 Checker 实现都返回此结构
+type ComponentStatus struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name 表示组件名称，如 mysql、redis、config、i18n
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// healthy 表示组件是否健康
+	Healthy bool `protobuf:"varint,2,opt,name=healthy,proto3" json:"healthy,omitempty"`
+	// latency_ms 表示检查耗时（毫秒）
+	LatencyMs int64 `protobuf:"varint,3,opt,name=latency_ms,json=latencyMs,proto3" json:"latency_ms,omitempty"`
+	// error 表示错误信息，healthy=true 时为空
+	Error         string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ComponentStatus) Reset() {
+	*x = ComponentStatus{}
+	mi := &file_base_health_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComponentStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComponentStatus) ProtoMessage() {}
+
+func (x *ComponentStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_base_health_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComponentStatus.ProtoReflect.Descriptor instead.
+func (*ComponentStatus) Descriptor() ([]byte, []int) {
+	return file_base_health_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ComponentStatus) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ComponentStatus) GetHealthy() bool {
+	if x != nil {
+		return x.Healthy
+	}
+	return false
+}
+
+func (x *ComponentStatus) GetLatencyMs() int64 {
+	if x != nil {
+		return x.LatencyMs
+	}
+	return 0
+}
+
+func (x *ComponentStatus) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// 服务健康检查响应，返回目标服务的运行状态和各组件健康状态
+// 升级版：支持 i18n ICU plural 模板 + 多依赖健康汇总
 type ServiceHealthCheckResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// result 统一返回结果码，10200 表示健康
@@ -175,14 +267,20 @@ type ServiceHealthCheckResponse struct {
 	// status 表示服务状态字符串："OK" 或 "Unhealthy"
 	Status string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	// timestamp 表示服务端响应时间戳（Unix 秒），用于计算延迟
-	Timestamp     int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Timestamp int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// version 表示通过 configsdk 读取的构建版本号（新增）
+	Version string `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
+	// message 表示通过 i18nsdk 渲染的人性化状态摘要（新增）
+	Message string `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	// components 表示各依赖组件的健康状态列表（新增）
+	Components    []*ComponentStatus `protobuf:"bytes,6,rep,name=components,proto3" json:"components,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServiceHealthCheckResponse) Reset() {
 	*x = ServiceHealthCheckResponse{}
-	mi := &file_base_health_proto_msgTypes[1]
+	mi := &file_base_health_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +292,7 @@ func (x *ServiceHealthCheckResponse) String() string {
 func (*ServiceHealthCheckResponse) ProtoMessage() {}
 
 func (x *ServiceHealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_base_health_proto_msgTypes[1]
+	mi := &file_base_health_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +305,7 @@ func (x *ServiceHealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceHealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*ServiceHealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_base_health_proto_rawDescGZIP(), []int{1}
+	return file_base_health_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ServiceHealthCheckResponse) GetResult() *Result {
@@ -231,21 +329,55 @@ func (x *ServiceHealthCheckResponse) GetTimestamp() int64 {
 	return 0
 }
 
+func (x *ServiceHealthCheckResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *ServiceHealthCheckResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ServiceHealthCheckResponse) GetComponents() []*ComponentStatus {
+	if x != nil {
+		return x.Components
+	}
+	return nil
+}
+
 var File_base_health_proto protoreflect.FileDescriptor
 
 const file_base_health_proto_rawDesc = "" +
 	"\n" +
-	"\x11base/health.proto\x12\x1acom.mineplanet.pojo.health\x1a\x11base/result.proto\"d\n" +
+	"\x11base/health.proto\x12\x1acom.mineplanet.pojo.health\x1a\x11base/result.proto\"\x97\x01\n" +
 	"\x19ServiceHealthCheckRequest\x12!\n" +
-	"\fservice_name\x18\x01 \x01(\tR\vserviceName\"$\n" +
+	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1b\n" +
+	"\tlang_code\x18\x02 \x01(\tR\blangCode\x12\x14\n" +
+	"\x05depth\x18\x03 \x01(\x05R\x05depth\"$\n" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xb4\x10\x12\b\n" +
-	"\x03min\x10\xb1\x10\"\xb0\x01\n" +
+	"\x03min\x10\xb1\x10\"t\n" +
+	"\x0fComponentStatus\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
+	"\ahealthy\x18\x02 \x01(\bR\ahealthy\x12\x1d\n" +
+	"\n" +
+	"latency_ms\x18\x03 \x01(\x03R\tlatencyMs\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"\xb1\x02\n" +
 	"\x1aServiceHealthCheckResponse\x126\n" +
 	"\x06result\x18\x01 \x01(\v2\x1e.com.mineplanet.pojo.pb.ResultR\x06result\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"$\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x18\n" +
+	"\aversion\x18\x04 \x01(\tR\aversion\x12\x18\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\x12K\n" +
+	"\n" +
+	"components\x18\x06 \x03(\v2+.com.mineplanet.pojo.health.ComponentStatusR\n" +
+	"components\"$\n" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xb4\x10\x12\b\n" +
@@ -264,21 +396,23 @@ func file_base_health_proto_rawDescGZIP() []byte {
 }
 
 var file_base_health_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_base_health_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_base_health_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_base_health_proto_goTypes = []any{
 	(ServiceHealthCheckRequest_Type)(0),  // 0: com.mineplanet.pojo.health.ServiceHealthCheckRequest.Type
 	(ServiceHealthCheckResponse_Type)(0), // 1: com.mineplanet.pojo.health.ServiceHealthCheckResponse.Type
 	(*ServiceHealthCheckRequest)(nil),    // 2: com.mineplanet.pojo.health.ServiceHealthCheckRequest
-	(*ServiceHealthCheckResponse)(nil),   // 3: com.mineplanet.pojo.health.ServiceHealthCheckResponse
-	(*Result)(nil),                       // 4: com.mineplanet.pojo.pb.Result
+	(*ComponentStatus)(nil),              // 3: com.mineplanet.pojo.health.ComponentStatus
+	(*ServiceHealthCheckResponse)(nil),   // 4: com.mineplanet.pojo.health.ServiceHealthCheckResponse
+	(*Result)(nil),                       // 5: com.mineplanet.pojo.pb.Result
 }
 var file_base_health_proto_depIdxs = []int32{
-	4, // 0: com.mineplanet.pojo.health.ServiceHealthCheckResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 0: com.mineplanet.pojo.health.ServiceHealthCheckResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	3, // 1: com.mineplanet.pojo.health.ServiceHealthCheckResponse.components:type_name -> com.mineplanet.pojo.health.ComponentStatus
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_base_health_proto_init() }
@@ -293,7 +427,7 @@ func file_base_health_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_base_health_proto_rawDesc), len(file_base_health_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

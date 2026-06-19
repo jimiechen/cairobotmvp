@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from base import result_pb2 as base_dot_result__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x62\x61se/health.proto\x12\x1a\x63om.mineplanet.pojo.health\x1a\x11\x62\x61se/result.proto\"W\n\x19ServiceHealthCheckRequest\x12\x14\n\x0cservice_name\x18\x01 \x01(\t\"$\n\x04Type\x12\x08\n\x04none\x10\x00\x12\x08\n\x03max\x10\xb4\x10\x12\x08\n\x03min\x10\xb1\x10\"\x95\x01\n\x1aServiceHealthCheckResponse\x12.\n\x06result\x18\x01 \x01(\x0b\x32\x1e.com.mineplanet.pojo.pb.Result\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x03\"$\n\x04Type\x12\x08\n\x04none\x10\x00\x12\x08\n\x03max\x10\xb4\x10\x12\x08\n\x03min\x10\xb2\x10\x42TB\x0bHealthProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x62\x61se/health.proto\x12\x1a\x63om.mineplanet.pojo.health\x1a\x11\x62\x61se/result.proto\"y\n\x19ServiceHealthCheckRequest\x12\x14\n\x0cservice_name\x18\x01 \x01(\t\x12\x11\n\tlang_code\x18\x02 \x01(\t\x12\r\n\x05\x64\x65pth\x18\x03 \x01(\x05\"$\n\x04Type\x12\x08\n\x04none\x10\x00\x12\x08\n\x03max\x10\xb4\x10\x12\x08\n\x03min\x10\xb1\x10\"S\n\x0f\x43omponentStatus\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07healthy\x18\x02 \x01(\x08\x12\x12\n\nlatency_ms\x18\x03 \x01(\x03\x12\r\n\x05\x65rror\x18\x04 \x01(\t\"\xf8\x01\n\x1aServiceHealthCheckResponse\x12.\n\x06result\x18\x01 \x01(\x0b\x32\x1e.com.mineplanet.pojo.pb.Result\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x03\x12\x0f\n\x07version\x18\x04 \x01(\t\x12\x0f\n\x07message\x18\x05 \x01(\t\x12?\n\ncomponents\x18\x06 \x03(\x0b\x32+.com.mineplanet.pojo.health.ComponentStatus\"$\n\x04Type\x12\x08\n\x04none\x10\x00\x12\x08\n\x03max\x10\xb4\x10\x12\x08\n\x03min\x10\xb2\x10\x42TB\x0bHealthProtoH\x03Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\xa2\x02\x05PROTOb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,11 +34,13 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'B\013HealthProtoH\003Z;github.com/jimiechen/mineplanet/protocols/generated/go/base\242\002\005PROTO'
   _globals['_SERVICEHEALTHCHECKREQUEST']._serialized_start=68
-  _globals['_SERVICEHEALTHCHECKREQUEST']._serialized_end=155
-  _globals['_SERVICEHEALTHCHECKREQUEST_TYPE']._serialized_start=119
-  _globals['_SERVICEHEALTHCHECKREQUEST_TYPE']._serialized_end=155
-  _globals['_SERVICEHEALTHCHECKRESPONSE']._serialized_start=158
-  _globals['_SERVICEHEALTHCHECKRESPONSE']._serialized_end=307
-  _globals['_SERVICEHEALTHCHECKRESPONSE_TYPE']._serialized_start=271
-  _globals['_SERVICEHEALTHCHECKRESPONSE_TYPE']._serialized_end=307
+  _globals['_SERVICEHEALTHCHECKREQUEST']._serialized_end=189
+  _globals['_SERVICEHEALTHCHECKREQUEST_TYPE']._serialized_start=153
+  _globals['_SERVICEHEALTHCHECKREQUEST_TYPE']._serialized_end=189
+  _globals['_COMPONENTSTATUS']._serialized_start=191
+  _globals['_COMPONENTSTATUS']._serialized_end=274
+  _globals['_SERVICEHEALTHCHECKRESPONSE']._serialized_start=277
+  _globals['_SERVICEHEALTHCHECKRESPONSE']._serialized_end=525
+  _globals['_SERVICEHEALTHCHECKRESPONSE_TYPE']._serialized_start=489
+  _globals['_SERVICEHEALTHCHECKRESPONSE_TYPE']._serialized_end=525
 # @@protoc_insertion_point(module_scope)

@@ -1,0 +1,489 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo.queue;
+option java_package = "com.mineplanet.pojo.queue";
+option java_outer_classname = "QueueIn";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/queue;queue";
+import "base/result.proto";
+
+// 事件状态枚举
+enum EventStatus {
+  EVENT_STATUS_UNKNOWN = 0;     // 未知状态
+  EVENT_STATUS_PENDING = 1;     // 待处理
+  EVENT_STATUS_PROCESSING = 2;  // 处理中
+  EVENT_STATUS_COMPLETED = 3;   // 已完成
+  EVENT_STATUS_FAILED = 4;      // 失败
+  EVENT_STATUS_RETRYING = 5;    // 重试中
+  EVENT_STATUS_DEAD_LETTER = 6; // 死信
+}
+
+// 事件类型枚举
+enum EventType {
+  EVENT_TYPE_UNKNOWN = 0;       // 未知类型
+  EVENT_TYPE_USER_CREATED = 1;  // 用户创建
+  EVENT_TYPE_USER_UPDATED = 2;  // 用户更新
+  EVENT_TYPE_USER_DELETED = 3;  // 用户删除
+  EVENT_TYPE_GROUP_CREATED = 4; // 群组创建
+  EVENT_TYPE_GROUP_UPDATED = 5; // 群组更新
+  EVENT_TYPE_GROUP_DELETED = 6; // 群组删除
+  EVENT_TYPE_MEMBER_JOINED = 7; // 成员加入
+  EVENT_TYPE_MEMBER_LEFT = 8;   // 成员离开
+  EVENT_TYPE_NOTIFICATION = 9;  // 通知事件
+  EVENT_TYPE_AUDIT = 10;        // 审计事件
+}
+
+// 事件信息
+message InboxEvent {
+  string event_id = 1;          // 事件唯一ID
+  string user_id = 2;            // 用户ID
+  string group_id = 3;           // 群组ID
+  string type = 4;              // 事件类型
+  string source = 5;            // 事件源
+  bytes data = 6;               // 事件数据(JSON)
+  int64 timestamp = 7;          // 事件时间戳
+  EventStatus status = 8;       // 事件状态
+  int32 retry_count = 9;        // 重试次数
+  string error_message = 10;    // 错误信息
+  int64 created_at = 11;        // 创建时间
+  int64 updated_at = 12;        // 更新时间
+}
+
+// 处理日志
+message InboxProcessingLog {
+  string log_id = 1;            // 日志ID
+  string event_id = 2;          // 事件ID
+  string consumer_group = 3;    // 消费者组
+  string consumer_id = 4;       // 消费者ID
+  EventStatus status = 5;       // 处理状态
+  string error_message = 6;     // 错误信息
+  int64 processing_time = 7;    // 处理时间(毫秒)
+  int64 created_at = 8;         // 创建时间
+}
+
+// 消费者组信息
+message InboxConsumerGroup {
+  string group_name = 1;        // 组名
+  string stream_name = 2;       // 流名称
+  int32 consumer_count = 3;     // 消费者数量
+  int64 pending_count = 4;      // 待处理数量
+  int64 last_delivered_id = 5;  // 最后投递ID
+  int64 created_at = 6;         // 创建时间
+}
+
+// 死信事件
+message InboxDeadLetter {
+  string event_id = 1;          // 事件ID
+  string consumer_group = 2;    // 消费者组
+  InboxEvent original_event = 3; // 原始事件
+  string failure_reason = 4;    // 失败原因
+  int32 retry_count = 5;        // 重试次数
+  int64 created_at = 6;         // 创建时间
+}
+
+// 接口用途：发布事件
+message InboxPublishEventRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5001;
+  }
+  string event_id = 1;          // 非必填，事件唯一ID
+  string user_id = 2;            // 非必填，用户ID
+  string group_id = 3;           // 非必填，群组ID
+  string type = 4;              // 非必填，事件类型
+  string source = 5;            // 非必填，事件源
+  bytes data = 6;               // 非必填，事件数据(JSON)
+  int64 timestamp = 7;          // 非必填，事件时间戳
+}
+
+// 接口用途：返回事件发布结果
+message InboxPublishEventResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5002;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string event_id = 2;          // 事件ID
+  string status = 3;            // 发布状态
+}
+
+// 接口用途：批量发布事件
+message InboxPublishBatchEventsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5003;
+  }
+  repeated InboxEvent events = 1; // 非必填，事件列表
+  string batch_id = 2;          // 非必填，批次ID
+}
+
+// 接口用途：返回批量发布结果
+message InboxPublishBatchEventsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5004;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string batch_id = 2;          // 批次ID
+  int32 success_count = 3;      // 成功数量
+  int32 failed_count = 4;       // 失败数量
+  repeated string failed_event_ids = 5; // 失败事件ID列表
+}
+
+// 接口用途：消费事件
+message InboxConsumeEventsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5011;
+  }
+  string consumer_group = 1;    // 非必填，消费者组
+  string consumer_id = 2;       // 非必填，消费者ID
+  int32 count = 3;              // 非必填，消费数量
+  int64 timeout = 4;            // 非必填，超时时间(毫秒)
+}
+
+// 接口用途：返回消费的事件列表
+message InboxConsumeEventsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5012;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated InboxEvent events = 2; // 事件列表
+  int32 consumed_count = 3;     // 消费数量
+}
+
+// 接口用途：确认事件（ACK）
+message InboxAckEventRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5013;
+  }
+  string event_id = 1;          // 非必填，事件ID
+  string consumer_group = 2;    // 非必填，消费者组
+  string consumer_id = 3;       // 非必填，消费者ID
+}
+
+// 接口用途：返回确认结果
+message InboxAckEventResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5014;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string event_id = 2;          // 事件ID
+  bool acknowledged = 3;        // 是否确认成功
+}
+
+// 接口用途：拒绝事件
+message InboxRejectEventRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5015;
+  }
+  string event_id = 1;          // 非必填，事件ID
+  string consumer_group = 2;    // 非必填，消费者组
+  string consumer_id = 3;       // 非必填，消费者ID
+  string reason = 4;            // 非必填，拒绝原因
+}
+
+// 接口用途：返回拒绝结果
+message InboxRejectEventResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5016;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string event_id = 2;          // 事件ID
+  bool rejected = 3;            // 是否拒绝成功
+}
+
+// 接口用途：获取事件状态
+message InboxGetEventStatusRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5021;
+  }
+  string event_id = 1;          // 非必填，事件ID
+}
+
+// 接口用途：返回事件状态与处理日志
+message InboxGetEventStatusResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5022;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  InboxEvent event = 2;         // 事件详情
+  repeated InboxProcessingLog processing_logs = 3; // 处理日志
+}
+
+// 接口用途：查询事件历史
+message InboxGetEventHistoryRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5023;
+  }
+  string user_id = 1;            // 非必填，用户ID
+  string group_id = 2;           // 非必填，群组ID
+  string event_type = 3;        // 非必填，事件类型
+  int64 start_time = 4;         // 非必填，开始时间
+  int64 end_time = 5;           // 非必填，结束时间
+  int32 page = 6;               // 非必填，页码
+  int32 page_size = 7;          // 非必填，页大小
+}
+
+// 接口用途：返回事件历史分页结果
+message InboxGetEventHistoryResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5024;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated InboxEvent events = 2; // 事件列表
+  int32 total = 3;              // 总数
+  int32 page = 4;               // 当前页
+  int32 page_size = 5;          // 页大小
+}
+
+// 接口用途：重放事件
+message InboxReplayEventsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5025;
+  }
+  repeated string event_ids = 1; // 非必填，事件ID列表
+  string reason = 2;            // 非必填，重放原因
+}
+
+// 接口用途：返回重放结果
+message InboxReplayEventsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5026;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  int32 replayed_count = 2;     // 重放数量
+  repeated string failed_event_ids = 3; // 失败事件ID列表
+}
+
+// 接口用途：向群组广播事件
+message InboxBroadcastToGroupRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5031;
+  }
+  string group_id = 1;           // 非必填，群组ID
+  string event_type = 2;        // 非必填，事件类型
+  bytes data = 3;               // 非必填，广播数据
+  repeated string exclude_users = 4; // 非必填，排除用户列表
+}
+
+// 接口用途：返回广播情况
+message InboxBroadcastToGroupResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5032;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string broadcast_id = 2;      // 广播ID
+  int32 target_count = 3;       // 目标用户数
+}
+
+// 接口用途：获取群组成员 ID 列表
+message InboxGetGroupMembersRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5033;
+  }
+  string group_id = 1;           // 非必填，群组ID
+  bool active_only = 2;         // 非必填，仅活跃成员
+}
+
+// 接口用途：返回群组成员 ID 列表
+message InboxGetGroupMembersResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5034;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated string member_ids = 2; // 成员ID列表
+  int32 total_count = 3;        // 总数
+}
+
+// 接口用途：获取消费者组列表
+message InboxGetConsumerGroupsRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5041;
+  }
+  string stream_name = 1;       // 非必填，流名称
+}
+
+// 接口用途：返回消费者组列表
+message InboxGetConsumerGroupsResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5042;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated InboxConsumerGroup consumer_groups = 2; // 消费者组列表
+}
+
+// 接口用途：重置消费者组光标
+message InboxResetConsumerGroupRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5043;
+  }
+  string consumer_group = 1;    // 非必填，消费者组
+  string stream_name = 2;       // 非必填，流名称
+  string message_id = 3;        // 非必填，消息ID
+}
+
+// 接口用途：返回重置结果
+message InboxResetConsumerGroupResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5044;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  bool reset_success = 2;       // 重置是否成功
+}
+
+// 接口用途：获取死信队列
+message InboxGetDeadLetterQueueRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5045;
+  }
+  string consumer_group = 1;    // 非必填，消费者组
+  int32 page = 2;               // 非必填，页码
+  int32 page_size = 3;          // 非必填，页大小
+}
+
+// 接口用途：返回死信队列分页结果
+message InboxGetDeadLetterQueueResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5046;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  repeated InboxDeadLetter dead_letters = 2; // 死信列表
+  int32 total = 3;              // 总数
+}
+
+// 接口用途：Inbox 服务健康检查
+message InboxHealthCheckRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5047;
+  }
+  string service_name = 1;      // 非必填，服务名称
+}
+
+// 接口用途：返回服务健康信息
+message InboxHealthCheckResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5048;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string status = 2;            // 健康状态
+  string version = 3;           // 服务版本
+  int64 uptime = 4;             // 运行时间
+  map<string, string> details = 5; // 详细信息
+}
+
+// 接口用途：Hello 测试（回显）
+message InboxHelloTestRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5049;
+  }
+  string message = 1;           // 非必填，测试消息
+}
+
+// 接口用途：返回 Hello 测试结果
+message InboxHelloTestResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 5000;
+    min = 5050;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string response = 2;          // 响应消息
+  int64 timestamp = 3;          // 时间戳
+}

@@ -1,0 +1,19 @@
+[INFO] 开始扫描: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/app_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/common.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/group_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/inbox_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/message.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/query_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/result.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/third_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/topic_base.proto
+[INFO] 处理: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols/base/user_base.proto
+[INFO] 处理文件数量: 10
+[INFO] 成功数量: 10
+[INFO] 失败数量: 0
+[INFO] 输出模板聚合: /Users/mac/StudioProjects/MineplanetGo/outModules/protocols-n8n/public/json/test-templates.json
+[INFO] 完成
+[INFO] 更新 React builders...
+[ERROR] Failed to update builders
+[INFO] 集成前端 Response & 依赖...

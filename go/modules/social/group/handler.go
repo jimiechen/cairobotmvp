@@ -27,6 +27,10 @@ type Handler struct {
 	banSvc         *SvcBanMember
 	removeSvc      *SvcRemoveMember
 	updateRoleSvc  *SvcUpdateMemberRole
+	// 群组查询（P1-E 补齐）
+	batchGetGroupsSvc     *SvcBatchGetGroups
+	getGroupStatsSvc      *SvcGetGroupStats
+	getMemberUserIdsSvc   *SvcGetGroupMemberUserIds
 }
 
 // NewHandler 创建 Handler 实例，注入 Repository 并初始化所有 svc
@@ -43,6 +47,9 @@ func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 		banSvc:         NewSvcBanMember(repo, publisher),
 		removeSvc:      NewSvcRemoveMember(repo, publisher),
 		updateRoleSvc:  NewSvcUpdateMemberRole(repo),
+		batchGetGroupsSvc:   NewSvcBatchGetGroups(repo),
+		getGroupStatsSvc:    NewSvcGetGroupStats(repo),
+		getMemberUserIdsSvc: NewSvcGetGroupMemberUserIds(repo),
 	}
 }
 
@@ -165,6 +172,42 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 			return nil, fmt.Errorf("unmarshal UpdateMemberRoleRequest failed: %w", err)
 		}
 		rsp, err := h.updateRoleSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 获取圈子统计（minType=2039）
+	case "2039":
+		var req pb.GetGroupStatsRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal GetGroupStatsRequest failed: %w", err)
+		}
+		rsp, err := h.getGroupStatsSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 批量获取圈子信息（minType=2047）
+	case "2047":
+		var req pb.BatchGetGroupsRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal BatchGetGroupsRequest failed: %w", err)
+		}
+		rsp, err := h.batchGetGroupsSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 分页查询成员 UserID 列表（minType=2077）
+	case "2077":
+		var req pb.GetGroupMemberUserIdsRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal GetGroupMemberUserIdsRequest failed: %w", err)
+		}
+		rsp, err := h.getMemberUserIdsSvc.Handle(ctx, &req)
 		if err != nil {
 			return nil, err
 		}

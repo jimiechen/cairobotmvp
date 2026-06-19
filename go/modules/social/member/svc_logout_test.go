@@ -7,10 +7,23 @@ import (
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 )
 
+// newTestLogoutDependencies 创建登出测试依赖（JWTManager + MemoryTokenStore）
+func newTestLogoutDependencies(t *testing.T) (*JWTManager, TokenStore) {
+	t.Helper()
+	jwtCfg := DefaultJWTConfig().SetSecretKey("test-secret-key-for-jwt-unit-tests-32b")
+	jwtManager, err := NewJWTManager(jwtCfg)
+	if err != nil {
+		t.Fatalf("创建 JWTManager 失败: %v", err)
+	}
+	tokenStore := NewMemoryTokenStore()
+	return jwtManager, tokenStore
+}
+
 // TestSvcLogout_正常登出 当提供有效用户ID时_应返回成功响应
 func TestSvcLogout_正常登出(t *testing.T) {
 	// Arrange
-	svc := NewSvcLogout()
+	jwtManager, tokenStore := newTestLogoutDependencies(t)
+	svc := NewSvcLogout(tokenStore, jwtManager)
 
 	req := &pb.UserLogoutRequest{
 		UserId:      "user-001",
@@ -39,7 +52,8 @@ func TestSvcLogout_正常登出(t *testing.T) {
 // TestSvcLogout_缺少用户ID 当user_id为空时_应返回参数校验错误
 func TestSvcLogout_缺少用户ID(t *testing.T) {
 	// Arrange
-	svc := NewSvcLogout()
+	jwtManager, tokenStore := newTestLogoutDependencies(t)
+	svc := NewSvcLogout(tokenStore, jwtManager)
 
 	req := &pb.UserLogoutRequest{
 		UserId: "",

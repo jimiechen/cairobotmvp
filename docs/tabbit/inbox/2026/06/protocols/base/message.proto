@@ -1,0 +1,27 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo;
+
+option java_package = "com.mineplanet.pojo";
+option java_outer_classname = "MessageProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option optimize_for = LITE_RUNTIME;
+
+// 平台类型
+enum Platform {
+  UNKNOWN = 0; // 未知
+  WEB = 1;     // 网页
+  PC = 2;      // 电脑
+  ANDROID = 3; // 安卓
+  IOS = 4;     // 苹果
+  OTHER = 5;   // 其他
+}
+
+// 接口用途：网关统一入口报文头
+message MessagePacket {
+  int32 maxType             = 1;  // 必填，协议大类
+  int32 minType             = 2;  // 必填，协议小类
+  map<string,string> extend = 3;  // 非必填，通用透传数据上下文
+  Platform platform         = 4;  // 非必填，平台类型
+  bytes data                = 5;  // 必填，业务协议包
+}

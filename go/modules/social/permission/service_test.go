@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/jimiechen/mineplanet/go/modules/social/group"
@@ -408,9 +409,63 @@ func TestCanReadTopic_OwnerOnly_NormalMember_Deny(t *testing.T) {
 	require.False(t, svc.CanReadTopic(context.Background(), testGroupID, testTopicID, testMemberID))
 }
 
-func TestCanReadTopic_PaidMember_TemporaryDenied(t *testing.T) {
-	// 当前 MVP-P0 暂缓 PAID_MEMBER 权益判断，统一返回 false。
-	// 此测试锁定已知暂缓行为，避免未来误以为已支持付费阅读。
+// ────────────────────────────────────────────────
+// CanReadTopic PAID_MEMBER 测试（P1-B1 已实现权益判断）
+// ────────────────────────────────────────────────
+
+func TestCanReadTopic_PaidMember_ValidMembership_Allow(t *testing.T) {
+	// 付费成员，MembershipExpiresAt 未过期 → 放行
+	topicRepo := newMockTopicRepo()
+	topicRepo.topics[testTopicID] = &topic.Topic{
+		ID: testTopicID, GroupID: testGroupID, Visibility: topic.TopicVisibilityPaidMember,
+	}
+
+	groupRepo := newMockGroupRepo()
+	groupRepo.members[testGroupID+":"+testUserID] = &group.GroupMember{
+		GroupID: testGroupID, UserID: testUserID,
+		MembershipExpiresAt: time.Now().Add(24 * time.Hour).UnixMilli(),
+	}
+
+	svc := newTestService(newMockMemberRepo(), groupRepo, topicRepo)
+	require.True(t, svc.CanReadTopic(context.Background(), testGroupID, testTopicID, testUserID))
+}
+
+func TestCanReadTopic_PaidMember_FreeMember_Allow(t *testing.T) {
+	// 免费成员（MembershipExpiresAt=0）→ 放行
+	topicRepo := newMockTopicRepo()
+	topicRepo.topics[testTopicID] = &topic.Topic{
+		ID: testTopicID, GroupID: testGroupID, Visibility: topic.TopicVisibilityPaidMember,
+	}
+
+	groupRepo := newMockGroupRepo()
+	groupRepo.members[testGroupID+":"+testUserID] = &group.GroupMember{
+		GroupID: testGroupID, UserID: testUserID,
+		MembershipExpiresAt: 0,
+	}
+
+	svc := newTestService(newMockMemberRepo(), groupRepo, topicRepo)
+	require.True(t, svc.CanReadTopic(context.Background(), testGroupID, testTopicID, testUserID))
+}
+
+func TestCanReadTopic_PaidMember_Expired_Deny(t *testing.T) {
+	// 付费已过期 → 拒绝
+	topicRepo := newMockTopicRepo()
+	topicRepo.topics[testTopicID] = &topic.Topic{
+		ID: testTopicID, GroupID: testGroupID, Visibility: topic.TopicVisibilityPaidMember,
+	}
+
+	groupRepo := newMockGroupRepo()
+	groupRepo.members[testGroupID+":"+testUserID] = &group.GroupMember{
+		GroupID: testGroupID, UserID: testUserID,
+		MembershipExpiresAt: time.Now().Add(-1 * time.Hour).UnixMilli(),
+	}
+
+	svc := newTestService(newMockMemberRepo(), groupRepo, topicRepo)
+	require.False(t, svc.CanReadTopic(context.Background(), testGroupID, testTopicID, testUserID))
+}
+
+func TestCanReadTopic_PaidMember_NonMember_Deny(t *testing.T) {
+	// 非群组成员 → 拒绝
 	topicRepo := newMockTopicRepo()
 	topicRepo.topics[testTopicID] = &topic.Topic{
 		ID: testTopicID, GroupID: testGroupID, Visibility: topic.TopicVisibilityPaidMember,
@@ -440,10 +495,42 @@ func TestCanViewTopicSummary_TopicNotExists_Deny(t *testing.T) {
 }
 
 // ────────────────────────────────────────────────
-// CanAuditContent 暂缓测试（当前固定返回 false）
+// CanAuditContent 测试（P1-B2 已实现管理员角色判断）
 // ────────────────────────────────────────────────
 
-func TestCanAuditContent_AlwaysFalse(t *testing.T) {
-	svc := newTestService(newMockMemberRepo(), newMockGroupRepo(), newMockTopicRepo())
+func TestCanAuditContent_NormalUser_Deny(t *testing.T) {
+	memberRepo := newMockMemberRepo()
+	memberRepo.users[testUserID] = &member.User{ID: testUserID, MembershipLevel: "normal"}
+
+	svc := newTestService(memberRepo, newMockGroupRepo(), newMockTopicRepo())
 	require.False(t, svc.CanAuditContent(context.Background(), testUserID))
+}
+
+func TestCanAuditContent_Admin_Allow(t *testing.T) {
+	memberRepo := newMockMemberRepo()
+	memberRepo.users[testUserID] = &member.User{ID: testUserID, MembershipLevel: "admin"}
+
+	svc := newTestService(memberRepo, newMockGroupRepo(), newMockTopicRepo())
+	require.True(t, svc.CanAuditContent(context.Background(), testUserID))
+}
+
+func TestCanAuditContent_SuperAdmin_Allow(t *testing.T) {
+	memberRepo := newMockMemberRepo()
+	memberRepo.users[testUserID] = &member.User{ID: testUserID, MembershipLevel: "super_admin"}
+
+	svc := newTestService(memberRepo, newMockGroupRepo(), newMockTopicRepo())
+	require.True(t, svc.CanAuditContent(context.Background(), testUserID))
+}
+
+func TestCanAuditContent_PlatformAdmin_Allow(t *testing.T) {
+	memberRepo := newMockMemberRepo()
+	memberRepo.users[testUserID] = &member.User{ID: testUserID, MembershipLevel: "platform_admin"}
+
+	svc := newTestService(memberRepo, newMockGroupRepo(), newMockTopicRepo())
+	require.True(t, svc.CanAuditContent(context.Background(), testUserID))
+}
+
+func TestCanAuditContent_NonexistentUser_Deny(t *testing.T) {
+	svc := newTestService(newMockMemberRepo(), newMockGroupRepo(), newMockTopicRepo())
+	require.False(t, svc.CanAuditContent(context.Background(), "nonexistent_user"))
 }

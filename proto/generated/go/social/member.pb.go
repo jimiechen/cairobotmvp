@@ -1536,6 +1536,106 @@ func (UpdateUserInfoResponse_Type) EnumDescriptor() ([]byte, []int) {
 }
 
 // Type枚举递增
+type UpdateMemberStatusRequest_Type int32
+
+const (
+	UpdateMemberStatusRequest_none UpdateMemberStatusRequest_Type = 0
+	UpdateMemberStatusRequest_max  UpdateMemberStatusRequest_Type = 1000
+	UpdateMemberStatusRequest_min  UpdateMemberStatusRequest_Type = 1033
+)
+
+// Enum value maps for UpdateMemberStatusRequest_Type.
+var (
+	UpdateMemberStatusRequest_Type_name = map[int32]string{
+		0:    "none",
+		1000: "max",
+		1033: "min",
+	}
+	UpdateMemberStatusRequest_Type_value = map[string]int32{
+		"none": 0,
+		"max":  1000,
+		"min":  1033,
+	}
+)
+
+func (x UpdateMemberStatusRequest_Type) Enum() *UpdateMemberStatusRequest_Type {
+	p := new(UpdateMemberStatusRequest_Type)
+	*p = x
+	return p
+}
+
+func (x UpdateMemberStatusRequest_Type) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (UpdateMemberStatusRequest_Type) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_member_proto_enumTypes[30].Descriptor()
+}
+
+func (UpdateMemberStatusRequest_Type) Type() protoreflect.EnumType {
+	return &file_social_member_proto_enumTypes[30]
+}
+
+func (x UpdateMemberStatusRequest_Type) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use UpdateMemberStatusRequest_Type.Descriptor instead.
+func (UpdateMemberStatusRequest_Type) EnumDescriptor() ([]byte, []int) {
+	return file_social_member_proto_rawDescGZIP(), []int{26, 0}
+}
+
+// Type枚举递增
+type UpdateMemberStatusResponse_Type int32
+
+const (
+	UpdateMemberStatusResponse_none UpdateMemberStatusResponse_Type = 0
+	UpdateMemberStatusResponse_max  UpdateMemberStatusResponse_Type = 1000
+	UpdateMemberStatusResponse_min  UpdateMemberStatusResponse_Type = 1034
+)
+
+// Enum value maps for UpdateMemberStatusResponse_Type.
+var (
+	UpdateMemberStatusResponse_Type_name = map[int32]string{
+		0:    "none",
+		1000: "max",
+		1034: "min",
+	}
+	UpdateMemberStatusResponse_Type_value = map[string]int32{
+		"none": 0,
+		"max":  1000,
+		"min":  1034,
+	}
+)
+
+func (x UpdateMemberStatusResponse_Type) Enum() *UpdateMemberStatusResponse_Type {
+	p := new(UpdateMemberStatusResponse_Type)
+	*p = x
+	return p
+}
+
+func (x UpdateMemberStatusResponse_Type) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (UpdateMemberStatusResponse_Type) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_member_proto_enumTypes[31].Descriptor()
+}
+
+func (UpdateMemberStatusResponse_Type) Type() protoreflect.EnumType {
+	return &file_social_member_proto_enumTypes[31]
+}
+
+func (x UpdateMemberStatusResponse_Type) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use UpdateMemberStatusResponse_Type.Descriptor instead.
+func (UpdateMemberStatusResponse_Type) EnumDescriptor() ([]byte, []int) {
+	return file_social_member_proto_rawDescGZIP(), []int{27, 0}
+}
+
+// Type枚举递增
 type GetUserStatsRequest_Type int32
 
 const (
@@ -1569,11 +1669,11 @@ func (x GetUserStatsRequest_Type) String() string {
 }
 
 func (GetUserStatsRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[30].Descriptor()
+	return file_social_member_proto_enumTypes[32].Descriptor()
 }
 
 func (GetUserStatsRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[30]
+	return &file_social_member_proto_enumTypes[32]
 }
 
 func (x GetUserStatsRequest_Type) Number() protoreflect.EnumNumber {
@@ -1582,7 +1682,7 @@ func (x GetUserStatsRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetUserStatsRequest_Type.Descriptor instead.
 func (GetUserStatsRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{27, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{29, 0}
 }
 
 // Type枚举递增
@@ -1619,11 +1719,11 @@ func (x GetUserStatsResponse_Type) String() string {
 }
 
 func (GetUserStatsResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[31].Descriptor()
+	return file_social_member_proto_enumTypes[33].Descriptor()
 }
 
 func (GetUserStatsResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[31]
+	return &file_social_member_proto_enumTypes[33]
 }
 
 func (x GetUserStatsResponse_Type) Number() protoreflect.EnumNumber {
@@ -1632,7 +1732,7 @@ func (x GetUserStatsResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetUserStatsResponse_Type.Descriptor instead.
 func (GetUserStatsResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{28, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{30, 0}
 }
 
 type GetIMUserSigRequest_Type int32
@@ -1668,11 +1768,11 @@ func (x GetIMUserSigRequest_Type) String() string {
 }
 
 func (GetIMUserSigRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[32].Descriptor()
+	return file_social_member_proto_enumTypes[34].Descriptor()
 }
 
 func (GetIMUserSigRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[32]
+	return &file_social_member_proto_enumTypes[34]
 }
 
 func (x GetIMUserSigRequest_Type) Number() protoreflect.EnumNumber {
@@ -1681,7 +1781,7 @@ func (x GetIMUserSigRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetIMUserSigRequest_Type.Descriptor instead.
 func (GetIMUserSigRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{29, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{31, 0}
 }
 
 type GetIMUserSigResponse_Type int32
@@ -1717,11 +1817,11 @@ func (x GetIMUserSigResponse_Type) String() string {
 }
 
 func (GetIMUserSigResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[33].Descriptor()
+	return file_social_member_proto_enumTypes[35].Descriptor()
 }
 
 func (GetIMUserSigResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[33]
+	return &file_social_member_proto_enumTypes[35]
 }
 
 func (x GetIMUserSigResponse_Type) Number() protoreflect.EnumNumber {
@@ -1730,7 +1830,7 @@ func (x GetIMUserSigResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetIMUserSigResponse_Type.Descriptor instead.
 func (GetIMUserSigResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{30, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{32, 0}
 }
 
 type GetUserConfigRequest_Type int32
@@ -1766,11 +1866,11 @@ func (x GetUserConfigRequest_Type) String() string {
 }
 
 func (GetUserConfigRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[34].Descriptor()
+	return file_social_member_proto_enumTypes[36].Descriptor()
 }
 
 func (GetUserConfigRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[34]
+	return &file_social_member_proto_enumTypes[36]
 }
 
 func (x GetUserConfigRequest_Type) Number() protoreflect.EnumNumber {
@@ -1779,7 +1879,7 @@ func (x GetUserConfigRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetUserConfigRequest_Type.Descriptor instead.
 func (GetUserConfigRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{32, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{34, 0}
 }
 
 type GetUserConfigResponse_Type int32
@@ -1815,11 +1915,11 @@ func (x GetUserConfigResponse_Type) String() string {
 }
 
 func (GetUserConfigResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[35].Descriptor()
+	return file_social_member_proto_enumTypes[37].Descriptor()
 }
 
 func (GetUserConfigResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[35]
+	return &file_social_member_proto_enumTypes[37]
 }
 
 func (x GetUserConfigResponse_Type) Number() protoreflect.EnumNumber {
@@ -1828,7 +1928,7 @@ func (x GetUserConfigResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetUserConfigResponse_Type.Descriptor instead.
 func (GetUserConfigResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{33, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{35, 0}
 }
 
 type UpdateUserConfigRequest_Type int32
@@ -1864,11 +1964,11 @@ func (x UpdateUserConfigRequest_Type) String() string {
 }
 
 func (UpdateUserConfigRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[36].Descriptor()
+	return file_social_member_proto_enumTypes[38].Descriptor()
 }
 
 func (UpdateUserConfigRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[36]
+	return &file_social_member_proto_enumTypes[38]
 }
 
 func (x UpdateUserConfigRequest_Type) Number() protoreflect.EnumNumber {
@@ -1877,7 +1977,7 @@ func (x UpdateUserConfigRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UpdateUserConfigRequest_Type.Descriptor instead.
 func (UpdateUserConfigRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{34, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{36, 0}
 }
 
 type UpdateUserConfigResponse_Type int32
@@ -1913,11 +2013,11 @@ func (x UpdateUserConfigResponse_Type) String() string {
 }
 
 func (UpdateUserConfigResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[37].Descriptor()
+	return file_social_member_proto_enumTypes[39].Descriptor()
 }
 
 func (UpdateUserConfigResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[37]
+	return &file_social_member_proto_enumTypes[39]
 }
 
 func (x UpdateUserConfigResponse_Type) Number() protoreflect.EnumNumber {
@@ -1926,7 +2026,7 @@ func (x UpdateUserConfigResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UpdateUserConfigResponse_Type.Descriptor instead.
 func (UpdateUserConfigResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{35, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{37, 0}
 }
 
 type BatchUpdateUserConfigRequest_Type int32
@@ -1962,11 +2062,11 @@ func (x BatchUpdateUserConfigRequest_Type) String() string {
 }
 
 func (BatchUpdateUserConfigRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[38].Descriptor()
+	return file_social_member_proto_enumTypes[40].Descriptor()
 }
 
 func (BatchUpdateUserConfigRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[38]
+	return &file_social_member_proto_enumTypes[40]
 }
 
 func (x BatchUpdateUserConfigRequest_Type) Number() protoreflect.EnumNumber {
@@ -1975,7 +2075,7 @@ func (x BatchUpdateUserConfigRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BatchUpdateUserConfigRequest_Type.Descriptor instead.
 func (BatchUpdateUserConfigRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{36, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{38, 0}
 }
 
 type BatchUpdateUserConfigResponse_Type int32
@@ -2011,11 +2111,11 @@ func (x BatchUpdateUserConfigResponse_Type) String() string {
 }
 
 func (BatchUpdateUserConfigResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[39].Descriptor()
+	return file_social_member_proto_enumTypes[41].Descriptor()
 }
 
 func (BatchUpdateUserConfigResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[39]
+	return &file_social_member_proto_enumTypes[41]
 }
 
 func (x BatchUpdateUserConfigResponse_Type) Number() protoreflect.EnumNumber {
@@ -2024,7 +2124,7 @@ func (x BatchUpdateUserConfigResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BatchUpdateUserConfigResponse_Type.Descriptor instead.
 func (BatchUpdateUserConfigResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{37, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{39, 0}
 }
 
 type DeleteUserConfigRequest_Type int32
@@ -2060,11 +2160,11 @@ func (x DeleteUserConfigRequest_Type) String() string {
 }
 
 func (DeleteUserConfigRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[40].Descriptor()
+	return file_social_member_proto_enumTypes[42].Descriptor()
 }
 
 func (DeleteUserConfigRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[40]
+	return &file_social_member_proto_enumTypes[42]
 }
 
 func (x DeleteUserConfigRequest_Type) Number() protoreflect.EnumNumber {
@@ -2073,7 +2173,7 @@ func (x DeleteUserConfigRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeleteUserConfigRequest_Type.Descriptor instead.
 func (DeleteUserConfigRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{38, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{40, 0}
 }
 
 type DeleteUserConfigResponse_Type int32
@@ -2109,11 +2209,11 @@ func (x DeleteUserConfigResponse_Type) String() string {
 }
 
 func (DeleteUserConfigResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[41].Descriptor()
+	return file_social_member_proto_enumTypes[43].Descriptor()
 }
 
 func (DeleteUserConfigResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[41]
+	return &file_social_member_proto_enumTypes[43]
 }
 
 func (x DeleteUserConfigResponse_Type) Number() protoreflect.EnumNumber {
@@ -2122,7 +2222,7 @@ func (x DeleteUserConfigResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeleteUserConfigResponse_Type.Descriptor instead.
 func (DeleteUserConfigResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{39, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{41, 0}
 }
 
 type DismissPopupRequest_Type int32
@@ -2158,11 +2258,11 @@ func (x DismissPopupRequest_Type) String() string {
 }
 
 func (DismissPopupRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[42].Descriptor()
+	return file_social_member_proto_enumTypes[44].Descriptor()
 }
 
 func (DismissPopupRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[42]
+	return &file_social_member_proto_enumTypes[44]
 }
 
 func (x DismissPopupRequest_Type) Number() protoreflect.EnumNumber {
@@ -2171,7 +2271,7 @@ func (x DismissPopupRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DismissPopupRequest_Type.Descriptor instead.
 func (DismissPopupRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{40, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{42, 0}
 }
 
 type DismissPopupResponse_Type int32
@@ -2207,11 +2307,11 @@ func (x DismissPopupResponse_Type) String() string {
 }
 
 func (DismissPopupResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[43].Descriptor()
+	return file_social_member_proto_enumTypes[45].Descriptor()
 }
 
 func (DismissPopupResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[43]
+	return &file_social_member_proto_enumTypes[45]
 }
 
 func (x DismissPopupResponse_Type) Number() protoreflect.EnumNumber {
@@ -2220,7 +2320,7 @@ func (x DismissPopupResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DismissPopupResponse_Type.Descriptor instead.
 func (DismissPopupResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{41, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{43, 0}
 }
 
 type GetNotificationSettingsRequest_Type int32
@@ -2256,11 +2356,11 @@ func (x GetNotificationSettingsRequest_Type) String() string {
 }
 
 func (GetNotificationSettingsRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[44].Descriptor()
+	return file_social_member_proto_enumTypes[46].Descriptor()
 }
 
 func (GetNotificationSettingsRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[44]
+	return &file_social_member_proto_enumTypes[46]
 }
 
 func (x GetNotificationSettingsRequest_Type) Number() protoreflect.EnumNumber {
@@ -2269,7 +2369,7 @@ func (x GetNotificationSettingsRequest_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetNotificationSettingsRequest_Type.Descriptor instead.
 func (GetNotificationSettingsRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{44, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{46, 0}
 }
 
 type GetNotificationSettingsResponse_Type int32
@@ -2305,11 +2405,11 @@ func (x GetNotificationSettingsResponse_Type) String() string {
 }
 
 func (GetNotificationSettingsResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[45].Descriptor()
+	return file_social_member_proto_enumTypes[47].Descriptor()
 }
 
 func (GetNotificationSettingsResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[45]
+	return &file_social_member_proto_enumTypes[47]
 }
 
 func (x GetNotificationSettingsResponse_Type) Number() protoreflect.EnumNumber {
@@ -2318,7 +2418,7 @@ func (x GetNotificationSettingsResponse_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetNotificationSettingsResponse_Type.Descriptor instead.
 func (GetNotificationSettingsResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{45, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{47, 0}
 }
 
 type UpdateNotificationSettingsRequest_Type int32
@@ -2354,11 +2454,11 @@ func (x UpdateNotificationSettingsRequest_Type) String() string {
 }
 
 func (UpdateNotificationSettingsRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[46].Descriptor()
+	return file_social_member_proto_enumTypes[48].Descriptor()
 }
 
 func (UpdateNotificationSettingsRequest_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[46]
+	return &file_social_member_proto_enumTypes[48]
 }
 
 func (x UpdateNotificationSettingsRequest_Type) Number() protoreflect.EnumNumber {
@@ -2367,7 +2467,7 @@ func (x UpdateNotificationSettingsRequest_Type) Number() protoreflect.EnumNumber
 
 // Deprecated: Use UpdateNotificationSettingsRequest_Type.Descriptor instead.
 func (UpdateNotificationSettingsRequest_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{46, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{48, 0}
 }
 
 type UpdateNotificationSettingsResponse_Type int32
@@ -2403,11 +2503,11 @@ func (x UpdateNotificationSettingsResponse_Type) String() string {
 }
 
 func (UpdateNotificationSettingsResponse_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_social_member_proto_enumTypes[47].Descriptor()
+	return file_social_member_proto_enumTypes[49].Descriptor()
 }
 
 func (UpdateNotificationSettingsResponse_Type) Type() protoreflect.EnumType {
-	return &file_social_member_proto_enumTypes[47]
+	return &file_social_member_proto_enumTypes[49]
 }
 
 func (x UpdateNotificationSettingsResponse_Type) Number() protoreflect.EnumNumber {
@@ -2416,7 +2516,7 @@ func (x UpdateNotificationSettingsResponse_Type) Number() protoreflect.EnumNumbe
 
 // Deprecated: Use UpdateNotificationSettingsResponse_Type.Descriptor instead.
 func (UpdateNotificationSettingsResponse_Type) EnumDescriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{47, 0}
+	return file_social_member_proto_rawDescGZIP(), []int{49, 0}
 }
 
 // 用户黑名单信息（极简版）
@@ -3989,7 +4089,7 @@ type UpdateUserInfoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Result        *base.Result           `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
 	UserInfo      *base.UserInfo         `protobuf:"bytes,2,opt,name=user_info,json=userInfo,proto3" json:"user_info,omitempty"` // 更新后的用户信息
-	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 新增：透传 user_id
+	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 新增：透传用户ID
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4045,6 +4145,129 @@ func (x *UpdateUserInfoResponse) GetUserId() string {
 	return ""
 }
 
+// 更新用户状态请求 (min=1033)
+// 接口用途：管理员更新用户状态（封禁/解封/注销等）
+type UpdateMemberStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 必填，目标用户ID
+	Status        int32                  `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`              // 必填，目标状态（1=正常 2=已封禁 3=已注销）
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`               // 非必填，状态变更原因
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMemberStatusRequest) Reset() {
+	*x = UpdateMemberStatusRequest{}
+	mi := &file_social_member_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMemberStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMemberStatusRequest) ProtoMessage() {}
+
+func (x *UpdateMemberStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_member_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMemberStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMemberStatusRequest) Descriptor() ([]byte, []int) {
+	return file_social_member_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *UpdateMemberStatusRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateMemberStatusRequest) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *UpdateMemberStatusRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+// 更新用户状态响应
+type UpdateMemberStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Result        *base.Result           `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 透传用户ID
+	Status        int32                  `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`              // 更新后的状态
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMemberStatusResponse) Reset() {
+	*x = UpdateMemberStatusResponse{}
+	mi := &file_social_member_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMemberStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMemberStatusResponse) ProtoMessage() {}
+
+func (x *UpdateMemberStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_member_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMemberStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateMemberStatusResponse) Descriptor() ([]byte, []int) {
+	return file_social_member_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UpdateMemberStatusResponse) GetResult() *base.Result {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+func (x *UpdateMemberStatusResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateMemberStatusResponse) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
 // 用户统计信息
 type UserStats struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
@@ -4066,7 +4289,7 @@ type UserStats struct {
 
 func (x *UserStats) Reset() {
 	*x = UserStats{}
-	mi := &file_social_member_proto_msgTypes[26]
+	mi := &file_social_member_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4078,7 +4301,7 @@ func (x *UserStats) String() string {
 func (*UserStats) ProtoMessage() {}
 
 func (x *UserStats) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[26]
+	mi := &file_social_member_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4091,7 +4314,7 @@ func (x *UserStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserStats.ProtoReflect.Descriptor instead.
 func (*UserStats) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{26}
+	return file_social_member_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *UserStats) GetUserId() string {
@@ -4189,7 +4412,7 @@ type GetUserStatsRequest struct {
 
 func (x *GetUserStatsRequest) Reset() {
 	*x = GetUserStatsRequest{}
-	mi := &file_social_member_proto_msgTypes[27]
+	mi := &file_social_member_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4201,7 +4424,7 @@ func (x *GetUserStatsRequest) String() string {
 func (*GetUserStatsRequest) ProtoMessage() {}
 
 func (x *GetUserStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[27]
+	mi := &file_social_member_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4214,7 +4437,7 @@ func (x *GetUserStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserStatsRequest.ProtoReflect.Descriptor instead.
 func (*GetUserStatsRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{27}
+	return file_social_member_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetUserStatsRequest) GetIncludeDetails() bool {
@@ -4237,7 +4460,7 @@ type GetUserStatsResponse struct {
 
 func (x *GetUserStatsResponse) Reset() {
 	*x = GetUserStatsResponse{}
-	mi := &file_social_member_proto_msgTypes[28]
+	mi := &file_social_member_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4249,7 +4472,7 @@ func (x *GetUserStatsResponse) String() string {
 func (*GetUserStatsResponse) ProtoMessage() {}
 
 func (x *GetUserStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[28]
+	mi := &file_social_member_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4262,7 +4485,7 @@ func (x *GetUserStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserStatsResponse.ProtoReflect.Descriptor instead.
 func (*GetUserStatsResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{28}
+	return file_social_member_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetUserStatsResponse) GetResult() *base.Result {
@@ -4297,7 +4520,7 @@ type GetIMUserSigRequest struct {
 
 func (x *GetIMUserSigRequest) Reset() {
 	*x = GetIMUserSigRequest{}
-	mi := &file_social_member_proto_msgTypes[29]
+	mi := &file_social_member_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4309,7 +4532,7 @@ func (x *GetIMUserSigRequest) String() string {
 func (*GetIMUserSigRequest) ProtoMessage() {}
 
 func (x *GetIMUserSigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[29]
+	mi := &file_social_member_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4322,7 +4545,7 @@ func (x *GetIMUserSigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIMUserSigRequest.ProtoReflect.Descriptor instead.
 func (*GetIMUserSigRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{29}
+	return file_social_member_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *GetIMUserSigRequest) GetSdkAppid() string {
@@ -4347,7 +4570,7 @@ type GetIMUserSigResponse struct {
 
 func (x *GetIMUserSigResponse) Reset() {
 	*x = GetIMUserSigResponse{}
-	mi := &file_social_member_proto_msgTypes[30]
+	mi := &file_social_member_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4359,7 +4582,7 @@ func (x *GetIMUserSigResponse) String() string {
 func (*GetIMUserSigResponse) ProtoMessage() {}
 
 func (x *GetIMUserSigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[30]
+	mi := &file_social_member_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4372,7 +4595,7 @@ func (x *GetIMUserSigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIMUserSigResponse.ProtoReflect.Descriptor instead.
 func (*GetIMUserSigResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{30}
+	return file_social_member_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GetIMUserSigResponse) GetResult() *base.Result {
@@ -4421,7 +4644,7 @@ type UserConfigItem struct {
 
 func (x *UserConfigItem) Reset() {
 	*x = UserConfigItem{}
-	mi := &file_social_member_proto_msgTypes[31]
+	mi := &file_social_member_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4433,7 +4656,7 @@ func (x *UserConfigItem) String() string {
 func (*UserConfigItem) ProtoMessage() {}
 
 func (x *UserConfigItem) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[31]
+	mi := &file_social_member_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4446,7 +4669,7 @@ func (x *UserConfigItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserConfigItem.ProtoReflect.Descriptor instead.
 func (*UserConfigItem) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{31}
+	return file_social_member_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *UserConfigItem) GetKey() string {
@@ -4474,7 +4697,7 @@ type GetUserConfigRequest struct {
 
 func (x *GetUserConfigRequest) Reset() {
 	*x = GetUserConfigRequest{}
-	mi := &file_social_member_proto_msgTypes[32]
+	mi := &file_social_member_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4486,7 +4709,7 @@ func (x *GetUserConfigRequest) String() string {
 func (*GetUserConfigRequest) ProtoMessage() {}
 
 func (x *GetUserConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[32]
+	mi := &file_social_member_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4499,7 +4722,7 @@ func (x *GetUserConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserConfigRequest.ProtoReflect.Descriptor instead.
 func (*GetUserConfigRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{32}
+	return file_social_member_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetUserConfigRequest) GetKeys() []string {
@@ -4522,7 +4745,7 @@ type GetUserConfigResponse struct {
 
 func (x *GetUserConfigResponse) Reset() {
 	*x = GetUserConfigResponse{}
-	mi := &file_social_member_proto_msgTypes[33]
+	mi := &file_social_member_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4534,7 +4757,7 @@ func (x *GetUserConfigResponse) String() string {
 func (*GetUserConfigResponse) ProtoMessage() {}
 
 func (x *GetUserConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[33]
+	mi := &file_social_member_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4547,7 +4770,7 @@ func (x *GetUserConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserConfigResponse.ProtoReflect.Descriptor instead.
 func (*GetUserConfigResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{33}
+	return file_social_member_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetUserConfigResponse) GetResult() *base.Result {
@@ -4583,7 +4806,7 @@ type UpdateUserConfigRequest struct {
 
 func (x *UpdateUserConfigRequest) Reset() {
 	*x = UpdateUserConfigRequest{}
-	mi := &file_social_member_proto_msgTypes[34]
+	mi := &file_social_member_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4595,7 +4818,7 @@ func (x *UpdateUserConfigRequest) String() string {
 func (*UpdateUserConfigRequest) ProtoMessage() {}
 
 func (x *UpdateUserConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[34]
+	mi := &file_social_member_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4608,7 +4831,7 @@ func (x *UpdateUserConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserConfigRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserConfigRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{34}
+	return file_social_member_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *UpdateUserConfigRequest) GetKey() string {
@@ -4637,7 +4860,7 @@ type UpdateUserConfigResponse struct {
 
 func (x *UpdateUserConfigResponse) Reset() {
 	*x = UpdateUserConfigResponse{}
-	mi := &file_social_member_proto_msgTypes[35]
+	mi := &file_social_member_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4649,7 +4872,7 @@ func (x *UpdateUserConfigResponse) String() string {
 func (*UpdateUserConfigResponse) ProtoMessage() {}
 
 func (x *UpdateUserConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[35]
+	mi := &file_social_member_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4662,7 +4885,7 @@ func (x *UpdateUserConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserConfigResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserConfigResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{35}
+	return file_social_member_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *UpdateUserConfigResponse) GetResult() *base.Result {
@@ -4690,7 +4913,7 @@ type BatchUpdateUserConfigRequest struct {
 
 func (x *BatchUpdateUserConfigRequest) Reset() {
 	*x = BatchUpdateUserConfigRequest{}
-	mi := &file_social_member_proto_msgTypes[36]
+	mi := &file_social_member_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4702,7 +4925,7 @@ func (x *BatchUpdateUserConfigRequest) String() string {
 func (*BatchUpdateUserConfigRequest) ProtoMessage() {}
 
 func (x *BatchUpdateUserConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[36]
+	mi := &file_social_member_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4715,7 +4938,7 @@ func (x *BatchUpdateUserConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchUpdateUserConfigRequest.ProtoReflect.Descriptor instead.
 func (*BatchUpdateUserConfigRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{36}
+	return file_social_member_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *BatchUpdateUserConfigRequest) GetConfigs() []*UserConfigItem {
@@ -4739,7 +4962,7 @@ type BatchUpdateUserConfigResponse struct {
 
 func (x *BatchUpdateUserConfigResponse) Reset() {
 	*x = BatchUpdateUserConfigResponse{}
-	mi := &file_social_member_proto_msgTypes[37]
+	mi := &file_social_member_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4751,7 +4974,7 @@ func (x *BatchUpdateUserConfigResponse) String() string {
 func (*BatchUpdateUserConfigResponse) ProtoMessage() {}
 
 func (x *BatchUpdateUserConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[37]
+	mi := &file_social_member_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4764,7 +4987,7 @@ func (x *BatchUpdateUserConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchUpdateUserConfigResponse.ProtoReflect.Descriptor instead.
 func (*BatchUpdateUserConfigResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{37}
+	return file_social_member_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *BatchUpdateUserConfigResponse) GetResult() *base.Result {
@@ -4806,7 +5029,7 @@ type DeleteUserConfigRequest struct {
 
 func (x *DeleteUserConfigRequest) Reset() {
 	*x = DeleteUserConfigRequest{}
-	mi := &file_social_member_proto_msgTypes[38]
+	mi := &file_social_member_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4818,7 +5041,7 @@ func (x *DeleteUserConfigRequest) String() string {
 func (*DeleteUserConfigRequest) ProtoMessage() {}
 
 func (x *DeleteUserConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[38]
+	mi := &file_social_member_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4831,7 +5054,7 @@ func (x *DeleteUserConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserConfigRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserConfigRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{38}
+	return file_social_member_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *DeleteUserConfigRequest) GetKey() string {
@@ -4853,7 +5076,7 @@ type DeleteUserConfigResponse struct {
 
 func (x *DeleteUserConfigResponse) Reset() {
 	*x = DeleteUserConfigResponse{}
-	mi := &file_social_member_proto_msgTypes[39]
+	mi := &file_social_member_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4865,7 +5088,7 @@ func (x *DeleteUserConfigResponse) String() string {
 func (*DeleteUserConfigResponse) ProtoMessage() {}
 
 func (x *DeleteUserConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[39]
+	mi := &file_social_member_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4878,7 +5101,7 @@ func (x *DeleteUserConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserConfigResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserConfigResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{39}
+	return file_social_member_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *DeleteUserConfigResponse) GetResult() *base.Result {
@@ -4911,7 +5134,7 @@ type DismissPopupRequest struct {
 
 func (x *DismissPopupRequest) Reset() {
 	*x = DismissPopupRequest{}
-	mi := &file_social_member_proto_msgTypes[40]
+	mi := &file_social_member_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4923,7 +5146,7 @@ func (x *DismissPopupRequest) String() string {
 func (*DismissPopupRequest) ProtoMessage() {}
 
 func (x *DismissPopupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[40]
+	mi := &file_social_member_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4936,7 +5159,7 @@ func (x *DismissPopupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DismissPopupRequest.ProtoReflect.Descriptor instead.
 func (*DismissPopupRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{40}
+	return file_social_member_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *DismissPopupRequest) GetPopupKey() UserConfigKey {
@@ -4996,7 +5219,7 @@ type DismissPopupResponse struct {
 
 func (x *DismissPopupResponse) Reset() {
 	*x = DismissPopupResponse{}
-	mi := &file_social_member_proto_msgTypes[41]
+	mi := &file_social_member_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5008,7 +5231,7 @@ func (x *DismissPopupResponse) String() string {
 func (*DismissPopupResponse) ProtoMessage() {}
 
 func (x *DismissPopupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[41]
+	mi := &file_social_member_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5021,7 +5244,7 @@ func (x *DismissPopupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DismissPopupResponse.ProtoReflect.Descriptor instead.
 func (*DismissPopupResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{41}
+	return file_social_member_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *DismissPopupResponse) GetResult() *base.Result {
@@ -5073,7 +5296,7 @@ type NotificationSettingsPayload struct {
 
 func (x *NotificationSettingsPayload) Reset() {
 	*x = NotificationSettingsPayload{}
-	mi := &file_social_member_proto_msgTypes[42]
+	mi := &file_social_member_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5085,7 +5308,7 @@ func (x *NotificationSettingsPayload) String() string {
 func (*NotificationSettingsPayload) ProtoMessage() {}
 
 func (x *NotificationSettingsPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[42]
+	mi := &file_social_member_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5098,7 +5321,7 @@ func (x *NotificationSettingsPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationSettingsPayload.ProtoReflect.Descriptor instead.
 func (*NotificationSettingsPayload) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{42}
+	return file_social_member_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *NotificationSettingsPayload) GetDeliveryMode() NotificationDeliveryMode {
@@ -5147,7 +5370,7 @@ type NotificationCategoryToggle struct {
 
 func (x *NotificationCategoryToggle) Reset() {
 	*x = NotificationCategoryToggle{}
-	mi := &file_social_member_proto_msgTypes[43]
+	mi := &file_social_member_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5159,7 +5382,7 @@ func (x *NotificationCategoryToggle) String() string {
 func (*NotificationCategoryToggle) ProtoMessage() {}
 
 func (x *NotificationCategoryToggle) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[43]
+	mi := &file_social_member_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5172,7 +5395,7 @@ func (x *NotificationCategoryToggle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationCategoryToggle.ProtoReflect.Descriptor instead.
 func (*NotificationCategoryToggle) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{43}
+	return file_social_member_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *NotificationCategoryToggle) GetCategory() NotificationCategory {
@@ -5199,7 +5422,7 @@ type GetNotificationSettingsRequest struct {
 
 func (x *GetNotificationSettingsRequest) Reset() {
 	*x = GetNotificationSettingsRequest{}
-	mi := &file_social_member_proto_msgTypes[44]
+	mi := &file_social_member_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5211,7 +5434,7 @@ func (x *GetNotificationSettingsRequest) String() string {
 func (*GetNotificationSettingsRequest) ProtoMessage() {}
 
 func (x *GetNotificationSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[44]
+	mi := &file_social_member_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5224,7 +5447,7 @@ func (x *GetNotificationSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetNotificationSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{44}
+	return file_social_member_proto_rawDescGZIP(), []int{46}
 }
 
 // 接口用途：返回用户通知设置
@@ -5239,7 +5462,7 @@ type GetNotificationSettingsResponse struct {
 
 func (x *GetNotificationSettingsResponse) Reset() {
 	*x = GetNotificationSettingsResponse{}
-	mi := &file_social_member_proto_msgTypes[45]
+	mi := &file_social_member_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5251,7 +5474,7 @@ func (x *GetNotificationSettingsResponse) String() string {
 func (*GetNotificationSettingsResponse) ProtoMessage() {}
 
 func (x *GetNotificationSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[45]
+	mi := &file_social_member_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5264,7 +5487,7 @@ func (x *GetNotificationSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetNotificationSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{45}
+	return file_social_member_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *GetNotificationSettingsResponse) GetResult() *base.Result {
@@ -5293,7 +5516,7 @@ type UpdateNotificationSettingsRequest struct {
 
 func (x *UpdateNotificationSettingsRequest) Reset() {
 	*x = UpdateNotificationSettingsRequest{}
-	mi := &file_social_member_proto_msgTypes[46]
+	mi := &file_social_member_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5305,7 +5528,7 @@ func (x *UpdateNotificationSettingsRequest) String() string {
 func (*UpdateNotificationSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateNotificationSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[46]
+	mi := &file_social_member_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5318,7 +5541,7 @@ func (x *UpdateNotificationSettingsRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use UpdateNotificationSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateNotificationSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{46}
+	return file_social_member_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *UpdateNotificationSettingsRequest) GetDeliveryMode() NotificationDeliveryMode {
@@ -5347,7 +5570,7 @@ type UpdateNotificationSettingsResponse struct {
 
 func (x *UpdateNotificationSettingsResponse) Reset() {
 	*x = UpdateNotificationSettingsResponse{}
-	mi := &file_social_member_proto_msgTypes[47]
+	mi := &file_social_member_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5359,7 +5582,7 @@ func (x *UpdateNotificationSettingsResponse) String() string {
 func (*UpdateNotificationSettingsResponse) ProtoMessage() {}
 
 func (x *UpdateNotificationSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_member_proto_msgTypes[47]
+	mi := &file_social_member_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5372,7 +5595,7 @@ func (x *UpdateNotificationSettingsResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use UpdateNotificationSettingsResponse.ProtoReflect.Descriptor instead.
 func (*UpdateNotificationSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_social_member_proto_rawDescGZIP(), []int{47}
+	return file_social_member_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *UpdateNotificationSettingsResponse) GetResult() *base.Result {
@@ -5605,7 +5828,23 @@ const file_social_member_proto_rawDesc = "" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xe8\a\x12\b\n" +
-	"\x03min\x10\x88\b\"\xb3\x03\n" +
+	"\x03min\x10\x88\b\"\x8a\x01\n" +
+	"\x19UpdateMemberStatusRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\x05R\x06status\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"$\n" +
+	"\x04Type\x12\b\n" +
+	"\x04none\x10\x00\x12\b\n" +
+	"\x03max\x10\xe8\a\x12\b\n" +
+	"\x03min\x10\x89\b\"\xab\x01\n" +
+	"\x1aUpdateMemberStatusResponse\x126\n" +
+	"\x06result\x18\x01 \x01(\v2\x1e.com.mineplanet.pojo.pb.ResultR\x06result\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\x05R\x06status\"$\n" +
+	"\x04Type\x12\b\n" +
+	"\x04none\x10\x00\x12\b\n" +
+	"\x03max\x10\xe8\a\x12\b\n" +
+	"\x03min\x10\x8a\b\"\xb3\x03\n" +
 	"\tUserStats\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\ftopics_count\x18\x02 \x01(\x05R\vtopicsCount\x12%\n" +
@@ -5818,8 +6057,8 @@ func file_social_member_proto_rawDescGZIP() []byte {
 	return file_social_member_proto_rawDescData
 }
 
-var file_social_member_proto_enumTypes = make([]protoimpl.EnumInfo, 48)
-var file_social_member_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
+var file_social_member_proto_enumTypes = make([]protoimpl.EnumInfo, 50)
+var file_social_member_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
 var file_social_member_proto_goTypes = []any{
 	(GroupMemberRole)(0),                         // 0: com.mineplanet.pojo.user.GroupMemberRole
 	(UserConfigScope)(0),                         // 1: com.mineplanet.pojo.user.UserConfigScope
@@ -5851,128 +6090,133 @@ var file_social_member_proto_goTypes = []any{
 	(GetBlockCountResponse_Type)(0),              // 27: com.mineplanet.pojo.user.GetBlockCountResponse.Type
 	(UpdateUserInfoRequest_Type)(0),              // 28: com.mineplanet.pojo.user.UpdateUserInfoRequest.Type
 	(UpdateUserInfoResponse_Type)(0),             // 29: com.mineplanet.pojo.user.UpdateUserInfoResponse.Type
-	(GetUserStatsRequest_Type)(0),                // 30: com.mineplanet.pojo.user.GetUserStatsRequest.Type
-	(GetUserStatsResponse_Type)(0),               // 31: com.mineplanet.pojo.user.GetUserStatsResponse.Type
-	(GetIMUserSigRequest_Type)(0),                // 32: com.mineplanet.pojo.user.GetIMUserSigRequest.Type
-	(GetIMUserSigResponse_Type)(0),               // 33: com.mineplanet.pojo.user.GetIMUserSigResponse.Type
-	(GetUserConfigRequest_Type)(0),               // 34: com.mineplanet.pojo.user.GetUserConfigRequest.Type
-	(GetUserConfigResponse_Type)(0),              // 35: com.mineplanet.pojo.user.GetUserConfigResponse.Type
-	(UpdateUserConfigRequest_Type)(0),            // 36: com.mineplanet.pojo.user.UpdateUserConfigRequest.Type
-	(UpdateUserConfigResponse_Type)(0),           // 37: com.mineplanet.pojo.user.UpdateUserConfigResponse.Type
-	(BatchUpdateUserConfigRequest_Type)(0),       // 38: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest.Type
-	(BatchUpdateUserConfigResponse_Type)(0),      // 39: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.Type
-	(DeleteUserConfigRequest_Type)(0),            // 40: com.mineplanet.pojo.user.DeleteUserConfigRequest.Type
-	(DeleteUserConfigResponse_Type)(0),           // 41: com.mineplanet.pojo.user.DeleteUserConfigResponse.Type
-	(DismissPopupRequest_Type)(0),                // 42: com.mineplanet.pojo.user.DismissPopupRequest.Type
-	(DismissPopupResponse_Type)(0),               // 43: com.mineplanet.pojo.user.DismissPopupResponse.Type
-	(GetNotificationSettingsRequest_Type)(0),     // 44: com.mineplanet.pojo.user.GetNotificationSettingsRequest.Type
-	(GetNotificationSettingsResponse_Type)(0),    // 45: com.mineplanet.pojo.user.GetNotificationSettingsResponse.Type
-	(UpdateNotificationSettingsRequest_Type)(0),  // 46: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.Type
-	(UpdateNotificationSettingsResponse_Type)(0), // 47: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.Type
-	(*UserBlock)(nil),                            // 48: com.mineplanet.pojo.user.UserBlock
-	(*UserLoginRequest)(nil),                     // 49: com.mineplanet.pojo.user.UserLoginRequest
-	(*UserLoginResponse)(nil),                    // 50: com.mineplanet.pojo.user.UserLoginResponse
-	(*UserRegisterRequest)(nil),                  // 51: com.mineplanet.pojo.user.UserRegisterRequest
-	(*UserRegisterResponse)(nil),                 // 52: com.mineplanet.pojo.user.UserRegisterResponse
-	(*BatchGetUserInfoRequest)(nil),              // 53: com.mineplanet.pojo.user.BatchGetUserInfoRequest
-	(*GroupUserInfo)(nil),                        // 54: com.mineplanet.pojo.user.GroupUserInfo
-	(*BatchGetUserInfoResponse)(nil),             // 55: com.mineplanet.pojo.user.BatchGetUserInfoResponse
-	(*GetUserInfoRequest)(nil),                   // 56: com.mineplanet.pojo.user.GetUserInfoRequest
-	(*GetUserInfoResponse)(nil),                  // 57: com.mineplanet.pojo.user.GetUserInfoResponse
-	(*UserLogoutRequest)(nil),                    // 58: com.mineplanet.pojo.user.UserLogoutRequest
-	(*UserLogoutResponse)(nil),                   // 59: com.mineplanet.pojo.user.UserLogoutResponse
-	(*RefreshTokenRequest)(nil),                  // 60: com.mineplanet.pojo.user.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),                 // 61: com.mineplanet.pojo.user.RefreshTokenResponse
-	(*UpgradeMembershipRequest)(nil),             // 62: com.mineplanet.pojo.user.UpgradeMembershipRequest
-	(*UpgradeMembershipResponse)(nil),            // 63: com.mineplanet.pojo.user.UpgradeMembershipResponse
-	(*BlockUserRequest)(nil),                     // 64: com.mineplanet.pojo.user.BlockUserRequest
-	(*BlockUserResponse)(nil),                    // 65: com.mineplanet.pojo.user.BlockUserResponse
-	(*UnblockUserRequest)(nil),                   // 66: com.mineplanet.pojo.user.UnblockUserRequest
-	(*UnblockUserResponse)(nil),                  // 67: com.mineplanet.pojo.user.UnblockUserResponse
-	(*GetBlockListRequest)(nil),                  // 68: com.mineplanet.pojo.user.GetBlockListRequest
-	(*GetBlockListResponse)(nil),                 // 69: com.mineplanet.pojo.user.GetBlockListResponse
-	(*GetBlockCountRequest)(nil),                 // 70: com.mineplanet.pojo.user.GetBlockCountRequest
-	(*GetBlockCountResponse)(nil),                // 71: com.mineplanet.pojo.user.GetBlockCountResponse
-	(*UpdateUserInfoRequest)(nil),                // 72: com.mineplanet.pojo.user.UpdateUserInfoRequest
-	(*UpdateUserInfoResponse)(nil),               // 73: com.mineplanet.pojo.user.UpdateUserInfoResponse
-	(*UserStats)(nil),                            // 74: com.mineplanet.pojo.user.UserStats
-	(*GetUserStatsRequest)(nil),                  // 75: com.mineplanet.pojo.user.GetUserStatsRequest
-	(*GetUserStatsResponse)(nil),                 // 76: com.mineplanet.pojo.user.GetUserStatsResponse
-	(*GetIMUserSigRequest)(nil),                  // 77: com.mineplanet.pojo.user.GetIMUserSigRequest
-	(*GetIMUserSigResponse)(nil),                 // 78: com.mineplanet.pojo.user.GetIMUserSigResponse
-	(*UserConfigItem)(nil),                       // 79: com.mineplanet.pojo.user.UserConfigItem
-	(*GetUserConfigRequest)(nil),                 // 80: com.mineplanet.pojo.user.GetUserConfigRequest
-	(*GetUserConfigResponse)(nil),                // 81: com.mineplanet.pojo.user.GetUserConfigResponse
-	(*UpdateUserConfigRequest)(nil),              // 82: com.mineplanet.pojo.user.UpdateUserConfigRequest
-	(*UpdateUserConfigResponse)(nil),             // 83: com.mineplanet.pojo.user.UpdateUserConfigResponse
-	(*BatchUpdateUserConfigRequest)(nil),         // 84: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest
-	(*BatchUpdateUserConfigResponse)(nil),        // 85: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse
-	(*DeleteUserConfigRequest)(nil),              // 86: com.mineplanet.pojo.user.DeleteUserConfigRequest
-	(*DeleteUserConfigResponse)(nil),             // 87: com.mineplanet.pojo.user.DeleteUserConfigResponse
-	(*DismissPopupRequest)(nil),                  // 88: com.mineplanet.pojo.user.DismissPopupRequest
-	(*DismissPopupResponse)(nil),                 // 89: com.mineplanet.pojo.user.DismissPopupResponse
-	(*NotificationSettingsPayload)(nil),          // 90: com.mineplanet.pojo.user.NotificationSettingsPayload
-	(*NotificationCategoryToggle)(nil),           // 91: com.mineplanet.pojo.user.NotificationCategoryToggle
-	(*GetNotificationSettingsRequest)(nil),       // 92: com.mineplanet.pojo.user.GetNotificationSettingsRequest
-	(*GetNotificationSettingsResponse)(nil),      // 93: com.mineplanet.pojo.user.GetNotificationSettingsResponse
-	(*UpdateNotificationSettingsRequest)(nil),    // 94: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest
-	(*UpdateNotificationSettingsResponse)(nil),   // 95: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse
-	(*base.Result)(nil),                          // 96: com.mineplanet.pojo.pb.Result
-	(*base.UserInfo)(nil),                        // 97: com.mineplanet.pojo.common.UserInfo
-	(base.MembershipLevel)(0),                    // 98: com.mineplanet.pojo.common.MembershipLevel
+	(UpdateMemberStatusRequest_Type)(0),          // 30: com.mineplanet.pojo.user.UpdateMemberStatusRequest.Type
+	(UpdateMemberStatusResponse_Type)(0),         // 31: com.mineplanet.pojo.user.UpdateMemberStatusResponse.Type
+	(GetUserStatsRequest_Type)(0),                // 32: com.mineplanet.pojo.user.GetUserStatsRequest.Type
+	(GetUserStatsResponse_Type)(0),               // 33: com.mineplanet.pojo.user.GetUserStatsResponse.Type
+	(GetIMUserSigRequest_Type)(0),                // 34: com.mineplanet.pojo.user.GetIMUserSigRequest.Type
+	(GetIMUserSigResponse_Type)(0),               // 35: com.mineplanet.pojo.user.GetIMUserSigResponse.Type
+	(GetUserConfigRequest_Type)(0),               // 36: com.mineplanet.pojo.user.GetUserConfigRequest.Type
+	(GetUserConfigResponse_Type)(0),              // 37: com.mineplanet.pojo.user.GetUserConfigResponse.Type
+	(UpdateUserConfigRequest_Type)(0),            // 38: com.mineplanet.pojo.user.UpdateUserConfigRequest.Type
+	(UpdateUserConfigResponse_Type)(0),           // 39: com.mineplanet.pojo.user.UpdateUserConfigResponse.Type
+	(BatchUpdateUserConfigRequest_Type)(0),       // 40: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest.Type
+	(BatchUpdateUserConfigResponse_Type)(0),      // 41: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.Type
+	(DeleteUserConfigRequest_Type)(0),            // 42: com.mineplanet.pojo.user.DeleteUserConfigRequest.Type
+	(DeleteUserConfigResponse_Type)(0),           // 43: com.mineplanet.pojo.user.DeleteUserConfigResponse.Type
+	(DismissPopupRequest_Type)(0),                // 44: com.mineplanet.pojo.user.DismissPopupRequest.Type
+	(DismissPopupResponse_Type)(0),               // 45: com.mineplanet.pojo.user.DismissPopupResponse.Type
+	(GetNotificationSettingsRequest_Type)(0),     // 46: com.mineplanet.pojo.user.GetNotificationSettingsRequest.Type
+	(GetNotificationSettingsResponse_Type)(0),    // 47: com.mineplanet.pojo.user.GetNotificationSettingsResponse.Type
+	(UpdateNotificationSettingsRequest_Type)(0),  // 48: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.Type
+	(UpdateNotificationSettingsResponse_Type)(0), // 49: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.Type
+	(*UserBlock)(nil),                            // 50: com.mineplanet.pojo.user.UserBlock
+	(*UserLoginRequest)(nil),                     // 51: com.mineplanet.pojo.user.UserLoginRequest
+	(*UserLoginResponse)(nil),                    // 52: com.mineplanet.pojo.user.UserLoginResponse
+	(*UserRegisterRequest)(nil),                  // 53: com.mineplanet.pojo.user.UserRegisterRequest
+	(*UserRegisterResponse)(nil),                 // 54: com.mineplanet.pojo.user.UserRegisterResponse
+	(*BatchGetUserInfoRequest)(nil),              // 55: com.mineplanet.pojo.user.BatchGetUserInfoRequest
+	(*GroupUserInfo)(nil),                        // 56: com.mineplanet.pojo.user.GroupUserInfo
+	(*BatchGetUserInfoResponse)(nil),             // 57: com.mineplanet.pojo.user.BatchGetUserInfoResponse
+	(*GetUserInfoRequest)(nil),                   // 58: com.mineplanet.pojo.user.GetUserInfoRequest
+	(*GetUserInfoResponse)(nil),                  // 59: com.mineplanet.pojo.user.GetUserInfoResponse
+	(*UserLogoutRequest)(nil),                    // 60: com.mineplanet.pojo.user.UserLogoutRequest
+	(*UserLogoutResponse)(nil),                   // 61: com.mineplanet.pojo.user.UserLogoutResponse
+	(*RefreshTokenRequest)(nil),                  // 62: com.mineplanet.pojo.user.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),                 // 63: com.mineplanet.pojo.user.RefreshTokenResponse
+	(*UpgradeMembershipRequest)(nil),             // 64: com.mineplanet.pojo.user.UpgradeMembershipRequest
+	(*UpgradeMembershipResponse)(nil),            // 65: com.mineplanet.pojo.user.UpgradeMembershipResponse
+	(*BlockUserRequest)(nil),                     // 66: com.mineplanet.pojo.user.BlockUserRequest
+	(*BlockUserResponse)(nil),                    // 67: com.mineplanet.pojo.user.BlockUserResponse
+	(*UnblockUserRequest)(nil),                   // 68: com.mineplanet.pojo.user.UnblockUserRequest
+	(*UnblockUserResponse)(nil),                  // 69: com.mineplanet.pojo.user.UnblockUserResponse
+	(*GetBlockListRequest)(nil),                  // 70: com.mineplanet.pojo.user.GetBlockListRequest
+	(*GetBlockListResponse)(nil),                 // 71: com.mineplanet.pojo.user.GetBlockListResponse
+	(*GetBlockCountRequest)(nil),                 // 72: com.mineplanet.pojo.user.GetBlockCountRequest
+	(*GetBlockCountResponse)(nil),                // 73: com.mineplanet.pojo.user.GetBlockCountResponse
+	(*UpdateUserInfoRequest)(nil),                // 74: com.mineplanet.pojo.user.UpdateUserInfoRequest
+	(*UpdateUserInfoResponse)(nil),               // 75: com.mineplanet.pojo.user.UpdateUserInfoResponse
+	(*UpdateMemberStatusRequest)(nil),            // 76: com.mineplanet.pojo.user.UpdateMemberStatusRequest
+	(*UpdateMemberStatusResponse)(nil),           // 77: com.mineplanet.pojo.user.UpdateMemberStatusResponse
+	(*UserStats)(nil),                            // 78: com.mineplanet.pojo.user.UserStats
+	(*GetUserStatsRequest)(nil),                  // 79: com.mineplanet.pojo.user.GetUserStatsRequest
+	(*GetUserStatsResponse)(nil),                 // 80: com.mineplanet.pojo.user.GetUserStatsResponse
+	(*GetIMUserSigRequest)(nil),                  // 81: com.mineplanet.pojo.user.GetIMUserSigRequest
+	(*GetIMUserSigResponse)(nil),                 // 82: com.mineplanet.pojo.user.GetIMUserSigResponse
+	(*UserConfigItem)(nil),                       // 83: com.mineplanet.pojo.user.UserConfigItem
+	(*GetUserConfigRequest)(nil),                 // 84: com.mineplanet.pojo.user.GetUserConfigRequest
+	(*GetUserConfigResponse)(nil),                // 85: com.mineplanet.pojo.user.GetUserConfigResponse
+	(*UpdateUserConfigRequest)(nil),              // 86: com.mineplanet.pojo.user.UpdateUserConfigRequest
+	(*UpdateUserConfigResponse)(nil),             // 87: com.mineplanet.pojo.user.UpdateUserConfigResponse
+	(*BatchUpdateUserConfigRequest)(nil),         // 88: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest
+	(*BatchUpdateUserConfigResponse)(nil),        // 89: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse
+	(*DeleteUserConfigRequest)(nil),              // 90: com.mineplanet.pojo.user.DeleteUserConfigRequest
+	(*DeleteUserConfigResponse)(nil),             // 91: com.mineplanet.pojo.user.DeleteUserConfigResponse
+	(*DismissPopupRequest)(nil),                  // 92: com.mineplanet.pojo.user.DismissPopupRequest
+	(*DismissPopupResponse)(nil),                 // 93: com.mineplanet.pojo.user.DismissPopupResponse
+	(*NotificationSettingsPayload)(nil),          // 94: com.mineplanet.pojo.user.NotificationSettingsPayload
+	(*NotificationCategoryToggle)(nil),           // 95: com.mineplanet.pojo.user.NotificationCategoryToggle
+	(*GetNotificationSettingsRequest)(nil),       // 96: com.mineplanet.pojo.user.GetNotificationSettingsRequest
+	(*GetNotificationSettingsResponse)(nil),      // 97: com.mineplanet.pojo.user.GetNotificationSettingsResponse
+	(*UpdateNotificationSettingsRequest)(nil),    // 98: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest
+	(*UpdateNotificationSettingsResponse)(nil),   // 99: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse
+	(*base.Result)(nil),                          // 100: com.mineplanet.pojo.pb.Result
+	(*base.UserInfo)(nil),                        // 101: com.mineplanet.pojo.common.UserInfo
+	(base.MembershipLevel)(0),                    // 102: com.mineplanet.pojo.common.MembershipLevel
 }
 var file_social_member_proto_depIdxs = []int32{
-	96, // 0: com.mineplanet.pojo.user.UserLoginResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	97, // 1: com.mineplanet.pojo.user.UserLoginResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
-	96, // 2: com.mineplanet.pojo.user.UserRegisterResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	0,  // 3: com.mineplanet.pojo.user.GroupUserInfo.group_role:type_name -> com.mineplanet.pojo.user.GroupMemberRole
-	97, // 4: com.mineplanet.pojo.user.GroupUserInfo.profile:type_name -> com.mineplanet.pojo.common.UserInfo
-	96, // 5: com.mineplanet.pojo.user.BatchGetUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	97, // 6: com.mineplanet.pojo.user.BatchGetUserInfoResponse.user_info_list:type_name -> com.mineplanet.pojo.common.UserInfo
-	54, // 7: com.mineplanet.pojo.user.BatchGetUserInfoResponse.group_user_info_list:type_name -> com.mineplanet.pojo.user.GroupUserInfo
-	96, // 8: com.mineplanet.pojo.user.GetUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	97, // 9: com.mineplanet.pojo.user.GetUserInfoResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
-	96, // 10: com.mineplanet.pojo.user.UserLogoutResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	96, // 11: com.mineplanet.pojo.user.RefreshTokenResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	98, // 12: com.mineplanet.pojo.user.UpgradeMembershipRequest.target_level:type_name -> com.mineplanet.pojo.common.MembershipLevel
-	96, // 13: com.mineplanet.pojo.user.UpgradeMembershipResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	98, // 14: com.mineplanet.pojo.user.UpgradeMembershipResponse.membership_level:type_name -> com.mineplanet.pojo.common.MembershipLevel
-	96, // 15: com.mineplanet.pojo.user.BlockUserResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	48, // 16: com.mineplanet.pojo.user.BlockUserResponse.block_info:type_name -> com.mineplanet.pojo.user.UserBlock
-	96, // 17: com.mineplanet.pojo.user.UnblockUserResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	96, // 18: com.mineplanet.pojo.user.GetBlockListResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	48, // 19: com.mineplanet.pojo.user.GetBlockListResponse.blocks:type_name -> com.mineplanet.pojo.user.UserBlock
-	96, // 20: com.mineplanet.pojo.user.GetBlockCountResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	96, // 21: com.mineplanet.pojo.user.UpdateUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	97, // 22: com.mineplanet.pojo.user.UpdateUserInfoResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
-	96, // 23: com.mineplanet.pojo.user.GetUserStatsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	74, // 24: com.mineplanet.pojo.user.GetUserStatsResponse.user_stats:type_name -> com.mineplanet.pojo.user.UserStats
-	96, // 25: com.mineplanet.pojo.user.GetIMUserSigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	96, // 26: com.mineplanet.pojo.user.GetUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	79, // 27: com.mineplanet.pojo.user.GetUserConfigResponse.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
-	96, // 28: com.mineplanet.pojo.user.UpdateUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	79, // 29: com.mineplanet.pojo.user.UpdateUserConfigResponse.config:type_name -> com.mineplanet.pojo.user.UserConfigItem
-	79, // 30: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
-	96, // 31: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	79, // 32: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
-	96, // 33: com.mineplanet.pojo.user.DeleteUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	2,  // 34: com.mineplanet.pojo.user.DismissPopupRequest.popup_key:type_name -> com.mineplanet.pojo.user.UserConfigKey
-	1,  // 35: com.mineplanet.pojo.user.DismissPopupRequest.scope:type_name -> com.mineplanet.pojo.user.UserConfigScope
-	96, // 36: com.mineplanet.pojo.user.DismissPopupResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	2,  // 37: com.mineplanet.pojo.user.DismissPopupResponse.popup_key:type_name -> com.mineplanet.pojo.user.UserConfigKey
-	4,  // 38: com.mineplanet.pojo.user.NotificationSettingsPayload.delivery_mode:type_name -> com.mineplanet.pojo.user.NotificationDeliveryMode
-	5,  // 39: com.mineplanet.pojo.user.NotificationCategoryToggle.category:type_name -> com.mineplanet.pojo.user.NotificationCategory
-	96, // 40: com.mineplanet.pojo.user.GetNotificationSettingsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	90, // 41: com.mineplanet.pojo.user.GetNotificationSettingsResponse.settings:type_name -> com.mineplanet.pojo.user.NotificationSettingsPayload
-	4,  // 42: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.delivery_mode:type_name -> com.mineplanet.pojo.user.NotificationDeliveryMode
-	91, // 43: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.category_toggles:type_name -> com.mineplanet.pojo.user.NotificationCategoryToggle
-	96, // 44: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
-	90, // 45: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.settings:type_name -> com.mineplanet.pojo.user.NotificationSettingsPayload
-	46, // [46:46] is the sub-list for method output_type
-	46, // [46:46] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	100, // 0: com.mineplanet.pojo.user.UserLoginResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	101, // 1: com.mineplanet.pojo.user.UserLoginResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
+	100, // 2: com.mineplanet.pojo.user.UserRegisterResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	0,   // 3: com.mineplanet.pojo.user.GroupUserInfo.group_role:type_name -> com.mineplanet.pojo.user.GroupMemberRole
+	101, // 4: com.mineplanet.pojo.user.GroupUserInfo.profile:type_name -> com.mineplanet.pojo.common.UserInfo
+	100, // 5: com.mineplanet.pojo.user.BatchGetUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	101, // 6: com.mineplanet.pojo.user.BatchGetUserInfoResponse.user_info_list:type_name -> com.mineplanet.pojo.common.UserInfo
+	56,  // 7: com.mineplanet.pojo.user.BatchGetUserInfoResponse.group_user_info_list:type_name -> com.mineplanet.pojo.user.GroupUserInfo
+	100, // 8: com.mineplanet.pojo.user.GetUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	101, // 9: com.mineplanet.pojo.user.GetUserInfoResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
+	100, // 10: com.mineplanet.pojo.user.UserLogoutResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	100, // 11: com.mineplanet.pojo.user.RefreshTokenResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	102, // 12: com.mineplanet.pojo.user.UpgradeMembershipRequest.target_level:type_name -> com.mineplanet.pojo.common.MembershipLevel
+	100, // 13: com.mineplanet.pojo.user.UpgradeMembershipResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	102, // 14: com.mineplanet.pojo.user.UpgradeMembershipResponse.membership_level:type_name -> com.mineplanet.pojo.common.MembershipLevel
+	100, // 15: com.mineplanet.pojo.user.BlockUserResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	50,  // 16: com.mineplanet.pojo.user.BlockUserResponse.block_info:type_name -> com.mineplanet.pojo.user.UserBlock
+	100, // 17: com.mineplanet.pojo.user.UnblockUserResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	100, // 18: com.mineplanet.pojo.user.GetBlockListResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	50,  // 19: com.mineplanet.pojo.user.GetBlockListResponse.blocks:type_name -> com.mineplanet.pojo.user.UserBlock
+	100, // 20: com.mineplanet.pojo.user.GetBlockCountResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	100, // 21: com.mineplanet.pojo.user.UpdateUserInfoResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	101, // 22: com.mineplanet.pojo.user.UpdateUserInfoResponse.user_info:type_name -> com.mineplanet.pojo.common.UserInfo
+	100, // 23: com.mineplanet.pojo.user.UpdateMemberStatusResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	100, // 24: com.mineplanet.pojo.user.GetUserStatsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	78,  // 25: com.mineplanet.pojo.user.GetUserStatsResponse.user_stats:type_name -> com.mineplanet.pojo.user.UserStats
+	100, // 26: com.mineplanet.pojo.user.GetIMUserSigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	100, // 27: com.mineplanet.pojo.user.GetUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	83,  // 28: com.mineplanet.pojo.user.GetUserConfigResponse.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
+	100, // 29: com.mineplanet.pojo.user.UpdateUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	83,  // 30: com.mineplanet.pojo.user.UpdateUserConfigResponse.config:type_name -> com.mineplanet.pojo.user.UserConfigItem
+	83,  // 31: com.mineplanet.pojo.user.BatchUpdateUserConfigRequest.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
+	100, // 32: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	83,  // 33: com.mineplanet.pojo.user.BatchUpdateUserConfigResponse.configs:type_name -> com.mineplanet.pojo.user.UserConfigItem
+	100, // 34: com.mineplanet.pojo.user.DeleteUserConfigResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	2,   // 35: com.mineplanet.pojo.user.DismissPopupRequest.popup_key:type_name -> com.mineplanet.pojo.user.UserConfigKey
+	1,   // 36: com.mineplanet.pojo.user.DismissPopupRequest.scope:type_name -> com.mineplanet.pojo.user.UserConfigScope
+	100, // 37: com.mineplanet.pojo.user.DismissPopupResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	2,   // 38: com.mineplanet.pojo.user.DismissPopupResponse.popup_key:type_name -> com.mineplanet.pojo.user.UserConfigKey
+	4,   // 39: com.mineplanet.pojo.user.NotificationSettingsPayload.delivery_mode:type_name -> com.mineplanet.pojo.user.NotificationDeliveryMode
+	5,   // 40: com.mineplanet.pojo.user.NotificationCategoryToggle.category:type_name -> com.mineplanet.pojo.user.NotificationCategory
+	100, // 41: com.mineplanet.pojo.user.GetNotificationSettingsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	94,  // 42: com.mineplanet.pojo.user.GetNotificationSettingsResponse.settings:type_name -> com.mineplanet.pojo.user.NotificationSettingsPayload
+	4,   // 43: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.delivery_mode:type_name -> com.mineplanet.pojo.user.NotificationDeliveryMode
+	95,  // 44: com.mineplanet.pojo.user.UpdateNotificationSettingsRequest.category_toggles:type_name -> com.mineplanet.pojo.user.NotificationCategoryToggle
+	100, // 45: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.result:type_name -> com.mineplanet.pojo.pb.Result
+	94,  // 46: com.mineplanet.pojo.user.UpdateNotificationSettingsResponse.settings:type_name -> com.mineplanet.pojo.user.NotificationSettingsPayload
+	47,  // [47:47] is the sub-list for method output_type
+	47,  // [47:47] is the sub-list for method input_type
+	47,  // [47:47] is the sub-list for extension type_name
+	47,  // [47:47] is the sub-list for extension extendee
+	0,   // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_social_member_proto_init() }
@@ -5985,8 +6229,8 @@ func file_social_member_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_member_proto_rawDesc), len(file_social_member_proto_rawDesc)),
-			NumEnums:      48,
-			NumMessages:   48,
+			NumEnums:      50,
+			NumMessages:   50,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

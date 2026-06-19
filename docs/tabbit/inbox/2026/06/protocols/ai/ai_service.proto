@@ -1,0 +1,17 @@
+syntax = "proto3";
+package com.mineplanet.ai;
+
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/ai;ai";
+option optimize_for = LITE_RUNTIME;
+
+import "base/message.proto";
+
+// OasisService: 微观仿真服务接口
+service OasisService {
+  // 通用流式调用接口
+  // 网关将 MessagePacket 转发给服务，服务返回流式 MessagePacket
+  rpc StreamCall (com.mineplanet.pojo.MessagePacket) returns (stream com.mineplanet.pojo.MessagePacket);
+  
+  // 单次调用接口 (Request-Response)
+  rpc UnaryCall (com.mineplanet.pojo.MessagePacket) returns (com.mineplanet.pojo.MessagePacket);
+}

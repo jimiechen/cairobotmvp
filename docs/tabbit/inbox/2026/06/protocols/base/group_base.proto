@@ -1,0 +1,1234 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+import "base/result.proto";
+import "base/common.proto";
+import "base/user_base.proto";
+import "base/topic_base.proto";
+
+package com.mineplanet.pojo.group;
+option java_outer_classname = "GroupListServiceProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+
+// 成员排序字段枚举
+enum MemberSortBy {
+  MEMBER_SORT_BY_UNKNOWN = 0;       // 默认，按角色权重+加入时间
+  MEMBER_SORT_BY_JOINED_AT = 1;     // 按加入时间
+  MEMBER_SORT_BY_EXPIRES_AT = 2;    // 按到期时间
+}
+
+// 群组状态枚举
+enum GroupStatus {
+  GROUP_STATUS_UNKNOWN = 0;    // 未知状态
+  GROUP_STATUS_ACTIVE = 1;     // 活跃状态
+  GROUP_STATUS_INACTIVE = 2;   // 非活跃状态
+  GROUP_STATUS_SUSPENDED = 3;  // 暂停状态
+  GROUP_STATUS_DELETED = 4;    // 已删除状态
+}
+
+// 群组可见性枚举
+enum GroupVisibility {
+  GROUP_VISIBILITY_UNKNOWN = 0; // 未知
+  GROUP_VISIBILITY_PUBLIC = 1;  // 公开
+  GROUP_VISIBILITY_PRIVATE = 2; // 私有
+  GROUP_VISIBILITY_SECRET = 3;  // 秘密
+}
+
+// 加入方式枚举
+enum JoinMode {
+  JOIN_MODE_UNKNOWN = 0;       // 未知方式
+  JOIN_MODE_OPEN = 1;          // 开放加入
+  JOIN_MODE_APPROVAL = 2;      // 需要审批
+  JOIN_MODE_INVITE_ONLY = 3;   // 仅邀请
+  JOIN_MODE_PAID_OPEN = 4;     // 付费公开加入
+}
+
+// 付费周期单位（用于圈子付费配置）
+enum PayCycleUnit {
+  PAY_CYCLE_UNIT_UNKNOWN = 0;  // 未知
+  PAY_CYCLE_UNIT_MONTH = 1;    // 月
+  PAY_CYCLE_UNIT_QUARTER = 2;  // 季度
+  PAY_CYCLE_UNIT_HALF_YEAR = 3;// 半年
+  PAY_CYCLE_UNIT_YEAR = 4;     // 年
+}
+
+// 问题限制枚举
+enum QuestionLimit {
+  QUESTION_LIMIT_UNKNOWN = 0;           // 未知
+  QUESTION_LIMIT_UNLIMITED = 1;         // 无限制
+  QUESTION_LIMIT_30_PER_MONTH = 2;      // 每月30个问题
+  QUESTION_LIMIT_25_PER_MONTH = 3;      // 每月25个问题
+  QUESTION_LIMIT_20_PER_MONTH = 4;      // 每月20个问题
+  QUESTION_LIMIT_15_PER_MONTH = 5;      // 每月15个问题
+  QUESTION_LIMIT_10_PER_MONTH = 6;      // 每月10个问题
+  QUESTION_LIMIT_5_PER_MONTH = 7;       // 每月5个问题
+}
+
+// 发帖权限枚举
+enum WhoCanPost {
+  WHO_CAN_POST_UNKNOWN = 0;             // 未知
+  WHO_CAN_POST_EVERYONE = 1;            // 所有人
+  WHO_CAN_POST_CREATOR_ONLY = 2;        // 仅创建者
+  WHO_CAN_POST_ADMINS_AND_CONTRIBUTORS = 3; // 管理员和贡献者
+}
+
+// 圈子付费配置（创建/更新时作为扩展参数传入）
+message GroupPayConfig {
+  PayCycleUnit cycle_unit = 1; // 付费周期单位（天/周/月/年）
+  double amount = 2;           // 金额（数值类型，单位为币种最小计量）
+  string currency = 3;         // 币种（ISO 4217，如 CNY/USD/EUR）
+}
+
+// 圈子统计信息
+message GroupStats {
+  int32 members_count = 1;     // 成员数量
+  int32 topics_count = 2;      // 话题数量
+  int32 comments_count = 3;    // 评论数量
+  int32 likes_count = 5;       // 点赞数量
+  int64 last_activity_at = 7;  // 最后活跃时间
+
+  // v3.0 新增：groups 表状态字段
+  int64 group_updated_at = 8;       // 圈子强制更新时间
+  GroupStatus status = 9; // 圈子生命周期状态
+  GroupVisibility visibility = 10;        // 可见性
+
+  reserved 4, 6;
+}
+
+// 用户成员信息
+message UserMemberInfo {
+  string user_id = 1;          // 用户ID
+  com.mineplanet.pojo.user.GroupMemberRole role = 2;  // 角色
+  MemberStatus status = 3;     // 状态
+  int64 joined_at = 4;         // 加入时间
+  int64 last_activity_at = 5;  // 最后活跃时间
+  repeated string permissions = 6; // 权限列表
+
+  // 发帖权限（用于控制发帖页面显示哪些选项）
+  bool can_create_normal = 7;            // 是否允许发常规帖子
+  bool can_create_article = 8;           // 是否允许发文章
+  bool can_create_question = 9;          // 是否允许提问
+
+  // 提问配额信息（实时计算）
+  int32 question_quota_total = 10;       // 提问配额总数
+  int32 question_quota_used = 11;        // 本月已用提问次数
+  int32 question_quota_remaining = 12;   // 剩余提问次数
+  int64 question_quota_reset_at = 13;    // 配额重置时间戳
+
+  // 新增：会员到期信息（2026-05-16）
+  int64 membership_expires_at = 14;      // 会员到期时间戳（秒级）
+  bool membership_expiry_reminder = 15;  // 是否已触发到期提醒（true=已提醒）
+}
+
+// 圈子信息
+message GroupInfo {
+  string group_id = 1;               // 圈子ID
+  string name = 2;             // 圈子名称
+  string slug = 3;             // 圈子标识符
+  string description = 4;      // 圈子描述
+  string avatar = 5;           // 头像URL
+  string cover_image = 6;      // 封面图片URL
+  string category = 7;         // 圈子分类
+  repeated string tags = 8;    // 标签列表
+  string owner_id = 9;         // 创建者ID
+  GroupStatus status = 10;     // 状态
+  GroupVisibility visibility = 11; // 可见性
+  JoinMode join_mode = 12;     // 加入方式
+  bool is_official = 13;       // 是否官方
+  bool is_featured = 14;       // 是否精选
+  int32 max_members = 15;      // 最大成员数
+  // reserved: 移除不再使用的字段以避免误复用
+  reserved 16, 17, 18, 19, 20;
+  int64 created_at = 21;       // 创建时间
+  int64 updated_at = 22;       // 更新时间
+  reserved 23, 24, 25;           // v3.0 已迁移: stats(23)/user_member_info(24)/extra(25) 移至独立响应或按需查询
+}
+
+message OwnerProfile {
+  string owner_name = 1;       // 圈主展示名，用于列表/Recent Posts抬头
+  string owner_avatar = 2;     // 圈主头像（/.figma/image 路径）
+}
+
+message LatestTopicPreview {
+  string topic_id = 1;         // 最新帖子ID
+  string summary = 2;          // 最新帖子摘要（截断）
+  com.mineplanet.pojo.topic.MediaType media_label = 3;   // 媒体标签
+  string thumbnail_url = 4;    // 预览缩略图（/.figma/image 路径）
+  int32 duration_sec = 5;      // 媒体时长（秒），客户端渲染文本
+}
+
+
+
+
+// 统一的成员信息消息（合并 GroupMember 和 GroupMemberView）
+message MemberInfo {
+  string member_id = 1;                 // 成员记录ID
+  string group_id = 2;                  // 圈子ID
+  string user_id = 3;                   // 用户ID
+  com.mineplanet.pojo.user.GroupMemberRole role = 4;   // 角色
+  MemberStatus status = 5;              // 状态
+  string join_reason = 6;               // 加入原因
+  string invited_by = 7;                // 邀请人ID
+  int64 joined_at = 8;                  // 加入时间
+  int64 last_activity_at = 9;           // 最后活跃时间
+  string bio = 10;                      // 成员简介
+  int32 answered_questions_count = 11;  // 已回答问题数
+  int32 remaining_quota = 12;           // 可提问数
+  PayCycleUnit payment_cycle = 13;      // 付费周期
+  int64 membership_expires_at = 14;     // 会员到期时间
+  int64 muted_until = 15;               // 禁言到期时间
+  int64 ban_expires_at = 16;            // 封禁到期时间
+  string approved_by = 17;              // 审批人ID
+  string banned_by = 18;                // 封禁人ID
+  string ban_reason = 19;               // 封禁理由
+  string nickname = 20;                 // 用户昵称（来自 users 表）
+  string uid = 21;                      // 用户UID（来自 users 表）
+
+  // 新增：拉黑时间戳（秒），取执行 BanMember 操作时的 updated_at
+  int64 banned_at = 22;
+}
+
+// 圈子邀请信息
+message GroupInvitation {
+  string invitation_id = 1;               // 邀请ID
+  string group_id = 2;         // 圈子ID
+  string inviter_id = 3;       // 邀请人ID
+  string invitee_id = 4;       // 被邀请人ID
+  string email = 5;            // 邮箱
+  string phone = 6;            // 手机号
+  string code = 7;             // 邀请码
+  string message = 8;          // 邀请消息
+  InvitationStatus status = 9; // 状态
+  int64 expires_at = 10;       // 过期时间
+  int64 accepted_at = 11;      // 接受时间
+  int64 created_at = 12;       // 创建时间
+  com.mineplanet.pojo.common.UserInfo inviter_info = 13;  // 邀请人信息
+  GroupInfo group_info = 14;   // 圈子信息
+}
+
+
+
+
+// 接口用途：获取圈子统计
+message GetGroupStatsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2039;
+  }
+  string group_id = 1;         // 圈子ID
+}
+
+// 接口用途：返回圈子统计结果
+message GetGroupStatsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2040;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 错误与状态（code/message）
+  GroupStats stats = 2;                         // 统计信息
+  string group_id = 3;                      // 新增：透传 group_id
+}
+
+// 接口用途：批量获取圈子信息
+message BatchGetGroupsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2047;
+  }
+  repeated string group_ids = 1; // 圈子ID集合，长度建议 ≤ 100
+  bool include_stats = 2;        // 是否返回统计信息（默认 false）
+}
+
+// 接口用途：批量获取圈子信息响应
+message BatchGetGroupsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2048;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 错误与状态（code/message）
+  repeated GroupInfo groups = 2;            // 圈子信息列表
+  repeated GroupStats stats = 3;            // 统计信息列表（当 include_stats=true 时返回）
+  repeated string group_ids = 4;            // 新增：透传 group_ids
+}
+
+
+
+
+
+
+
+// 接口用途：检查圈子名称可用性
+message CheckGroupNameAvailabilityRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2051;
+  }
+  string name = 1;             // 非必填，圈子名称
+}
+
+// 接口用途：返回圈子名称可用性检查结果
+message CheckGroupNameAvailabilityResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2052;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  bool available = 2;        // 可用性
+  string reason = 3;         // 不可用原因
+  string normalized = 4;     // 规范化名称
+  string name = 5;           // 新增：透传 name
+}
+
+// 接口用途：刷新圈子实时状态（支持增量与批量圈子ID过滤）
+message RefreshGroupStatRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2041;
+  }
+  repeated string group_ids = 1; // 非必填，圈子ID列表（目标圈子集合）
+  int64 since_ts = 2;            // 非必填，增量起始时间戳
+}
+
+
+// 接口用途：创建圈子（含可选付费配置）
+message CreateGroupRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2005;
+  }
+  string name = 1;             // 必填，圈子名称
+  string slug = 2;             // 必填，圈子标识符
+  string description = 3;      // 必填，圈子描述
+  string category = 4;         // 必填，圈子分类
+  JoinMode join_mode = 5;      // 必填，加入方式
+  string cover_image = 6;      // 非必填，封面图片 URL
+  // 新增：圈子付费配置（多周期，至少一项）
+  repeated GroupPayConfig pay_configs = 7; // 非必填，圈子付费配置
+}
+
+// 接口用途：返回已创建圈子信息
+message CreateGroupResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2006;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  reserved 2; // 移除 group_id，统一从 group_info.id 获取
+  GroupInfo group_info = 3;    // 圈子信息
+  // 新增：回传创建时的付费配置，便于前端立即渲染
+  repeated GroupPayConfig pay_configs = 4; // 非必填，圈子付费配置
+  string group_id = 5;         // 新增：顶层暴露 group_id
+}
+
+
+// 接口用途：更新圈子基本信息
+message UpdateGroupRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2009;
+  }
+  string group_id = 1;         // 非必填，圈子ID
+  string cover_image = 2;      // 非必填，封面图片 URL
+  string name = 3;             // 非必填，圈子名称
+  string slug = 4;             // 非必填，圈子标识符
+  string description = 5;      // 非必填，圈子描述
+  repeated string update_mask = 99; // 非必填，更新字段列表（支持：name、slug、description、cover_image）
+}
+
+// 接口用途：返回更新后的圈子信息
+message UpdateGroupResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2010;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  GroupInfo group_info = 2;    // 更新后的圈子信息
+  string group_id = 3;         // 新增：顶层暴露 group_id
+}
+
+// 接口用途：解散圈子
+message DeleteGroupRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2011;
+  }
+  string group_id = 1;         // 非必填，圈子ID
+}
+
+// 接口用途：返回解散结果
+message DeleteGroupResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2012;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;         // 新增：顶层暴露 group_id
+}
+
+
+// 接口用途：申请加入圈子
+message JoinGroupRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2013;
+  }
+  string group_id = 1;         // 非必填，圈子ID
+  string join_reason = 3;      // 非必填，加入原因
+  string invitation_code = 4;  // 非必填，邀请码
+}
+
+// 接口用途：返回入圈结果
+message JoinGroupResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2014;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string member_id = 2;        // 成员ID
+  JoinStatus status = 3;       // 状态
+  string message = 4;          // 消息
+  string group_id = 5;         // 新增：顶层暴露 group_id
+}
+
+
+// 接口用途：退出圈子
+message LeaveGroupRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2015;
+  }
+  string group_id = 1;         // 非必填，圈子ID
+}
+
+// 接口用途：返回退出结果
+message LeaveGroupResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2016;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;         // 新增：顶层暴露 group_id
+}
+
+
+
+
+
+// 接口用途：分页查询成员 UserID 列表
+message GetGroupMemberUserIdsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2077;
+  }
+  string group_id = 1;                    // 必填，圈子ID
+  MemberSortBy sort_by = 2;               // 非必填，排序字段
+  com.mineplanet.pojo.common.SortOrder sort_order = 3;  // 非必填，排序方向
+  int32 page = 4;                         // 非必填，页码（默认1）
+  int32 page_size = 5;                    // 非必填，每页大小（默认20，最大100）
+}
+
+// 接口用途：返回成员 UserID 列表
+message GetGroupMemberUserIdsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2078;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated string user_ids = 2;           // 用户ID列表
+  int32 total = 3;                        // 总数
+  int32 page = 4;                         // 页码
+  int32 page_size = 5;                    // 每页大小
+  string group_id = 6;                    // 透传圈子ID
+}
+
+// 接口用途：批量查询 MemberInfo 详情
+message GetMemberInfosRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2079;
+  }
+  string group_id = 1;                    // 必填，圈子ID
+  repeated string user_ids = 2;           // 必填，用户ID数组（最多50个）
+}
+
+// 接口用途：返回 MemberInfo 列表
+message GetMemberInfosResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2080;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated MemberInfo members = 2;        // 成员详情列表（含 nickname、uid）
+  string group_id = 3;                    // 透传圈子ID
+}
+
+// 接口用途：搜索成员（按 Nickname / UID）
+message SearchGroupMembersRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2091;
+  }
+  string group_id = 1;                    // 必填，圈子ID
+  string keyword = 2;                     // 必填，搜索关键词（匹配 nickname 或 uid）
+}
+
+// 接口用途：返回搜索结果（不分页）
+message SearchGroupMembersResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2092;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  repeated MemberInfo members = 2;        // 搜索结果列表（不分页）
+  string group_id = 3;                    // 透传圈子ID
+  string keyword = 4;                     // 透传关键词
+}
+
+// 接口用途：批量获取指定用户在圈子的角色映射
+message GetMemberRolesRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2043;
+  }
+  string group_id = 1;         // 非必填，圈子ID
+  repeated string uids = 2;    // 非必填，用户UID列表
+}
+
+// 用户角色映射
+message MemberRoleMapping {
+  string uid = 1;                                    // 用户UID
+  com.mineplanet.pojo.user.GroupMemberRole role = 2; // 角色枚举
+}
+
+// 接口用途：返回用户角色映射结果
+message GetMemberRolesResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2044;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated MemberRoleMapping roles = 2; // 角色映射列表
+  string group_id = 3;                  // 新增：透传 group_id
+}
+
+// 接口用途：通过member_id数组批量获取圈子成员的角色映射（group_id已注销，兼容旧版客户端）
+message GetMemberRolesByMemberIdsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2045;
+  }
+  reserved 1;                               // 注销旧版 group_id 字段（传了忽略，不报错）
+  repeated string member_ids = 2;           // 必填，成员ID列表（group_members.id），自动反查所属圈子
+}
+
+// 成员角色映射（按member_id查询）
+message MemberRoleMappingByMemberId {
+  string member_id = 1;                              // 成员ID（group_members.id）
+  string uid = 2;                                    // 用户UID
+  com.mineplanet.pojo.user.GroupMemberRole role = 3; // 角色枚举
+  string group_id = 4;                               // 所属圈子ID
+}
+
+// 接口用途：返回批量member_id查询的角色映射结果
+message GetMemberRolesByMemberIdsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2046;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated MemberRoleMappingByMemberId roles = 2; // 角色映射列表（每个包含group_id）
+}
+
+
+// 接口用途：检查圈子短ID（slug）可用性
+message CheckGroupSlugAvailabilityRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2053;
+  }
+  string slug = 1;             // 非必填，圈子短ID
+}
+
+// 接口用途：返回圈子短ID（slug）可用性检查结果
+message CheckGroupSlugAvailabilityResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2054;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  bool available = 2;        // 可用性
+  string reason = 3;         // 不可用原因
+  string slug = 4;           // 新增：透传 slug
+}
+
+
+// 禁言时长枚举
+enum MuteDuration {
+  MUTE_DURATION_UNKNOWN = 0;
+  MUTE_DURATION_1_HOUR = 1;
+  MUTE_DURATION_4_HOURS = 2;
+  MUTE_DURATION_12_HOURS = 3;
+  MUTE_DURATION_1_DAY = 4;
+  MUTE_DURATION_7_DAYS = 5;
+}
+
+// 接口用途：禁言指定成员
+message MuteMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2019;
+  }
+  string group_id = 1;               // 非必填，圈子ID
+  string user_id = 2;                // 非必填，用户ID
+  reserved 3;                        // 原 muted_until 已废弃，使用 mute_duration
+  string mute_reason = 4;            // 非必填，禁言理由
+  MuteDuration mute_duration = 5;    // 必填，禁言时长枚举
+}
+
+// 接口用途：返回禁言操作结果
+message MuteMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2020;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：解除成员禁言
+message UnmuteMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2021;
+  }
+  string group_id = 1;               // 非必填，圈子ID
+  string user_id = 2;                // 非必填，用户ID
+  string operator_id = 3;            // 非必填，操作者ID
+}
+
+// 接口用途：返回解除禁言结果
+message UnmuteMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2022;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：拉黑指定成员
+message BanMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2023;
+  }
+  string group_id = 1;               // 非必填，圈子ID
+  string user_id = 2;                // 非必填，用户ID
+}
+
+// 接口用途：返回拉黑操作结果
+message BanMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2024;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：解除成员拉黑
+message UnbanMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2025;
+  }
+  string group_id = 1;               // 非必填，圈子ID
+  string user_id = 2;                // 非必填，用户ID
+}
+
+// 接口用途：返回解除拉黑结果
+message UnbanMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2026;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：分页查询圈子拉黑成员ID列表
+message GetBannedMembersRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2065;  // GetBannedMembers
+  }
+  string group_id = 1;               // 必填，圈子ID
+  int32 page = 2;                    // 非必填，页码（默认1）
+  int32 page_size = 3;               // 非必填，每页大小（默认20，最大100）
+}
+
+// 接口用途：返回拉黑成员ID列表
+message GetBannedMembersResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2066;  // GetBannedMembers 响应
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated string user_ids = 2;              // 拉黑用户ID列表
+  int32 total = 3;                           // 拉黑成员总数
+  int32 page = 4;                            // 当前页码
+  int32 page_size = 5;                       // 每页大小
+  string group_id = 6;                       // 透传圈子ID
+}
+
+// 接口用途：踢出成员
+message RemoveMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2027;
+  }
+  string group_id = 1;               // 非必填，圈子ID
+  string user_id = 2;                // 非必填，用户ID
+  string reason = 3;                 // 非必填，踢出理由
+}
+
+// 接口用途：返回踢出操作结果
+message RemoveMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2028;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：修改成员角色
+message UpdateMemberRoleRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2029;
+  }
+  string group_id = 1;                                    // 非必填，圈子ID
+  string user_id = 2;                                     // 非必填，用户ID
+  com.mineplanet.pojo.user.GroupMemberRole role = 3;      // 非必填，新角色
+}
+
+// 接口用途：返回修改成员角色结果
+message UpdateMemberRoleResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2030;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+
+
+
+
+
+// 接口用途：成员续费
+message RenewMemberRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2037;
+  }
+  string group_id = 1;                // 非必填，圈子ID
+  string user_id = 2;                 // 非必填，用户ID
+  int64 renew_period_end = 3;         // 非必填，新到期时间（ms）
+  string operator_id = 4;             // 非必填，操作者ID
+}
+
+// 接口用途：返回续费结果
+message RenewMemberResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2038;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  string group_id = 2;                      // 新增：透传 group_id
+  string user_id = 3;                       // 新增：透传 user_id
+}
+
+// 接口用途：更新成员信息（支持 bio 字段，未来可扩展）
+message UpdateMemberInfoRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2093;
+  }
+  string group_id = 1;                // 必填，圈子ID
+  string user_id = 2;                 // 必填，目标用户ID
+  string bio = 3;                     // 非必填，成员简介（最大500字符）
+  // 未来可扩展其他字段：
+  // string title = 4;                // 职位/头衔
+  // repeated string tags = 5;        // 成员标签
+  // string nickname_in_group = 6;    // 群内昵称
+}
+
+// 接口用途：返回更新成员信息结果
+message UpdateMemberInfoResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2094;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果
+  string group_id = 2;                       // 透传 group_id
+  string user_id = 3;                        // 透传 user_id
+  string bio = 4;                            // 更新后的简介
+  // 未来可扩展其他字段：
+  // string title = 5;
+  // repeated string tags = 6;
+}
+
+enum DiscountType {
+  DISCOUNT_TYPE_UNKNOWN = 0;
+  DISCOUNT_TYPE_JOIN = 1;
+  DISCOUNT_TYPE_RENEW = 2;
+}
+
+// 成员状态枚举
+enum MemberStatus {
+  MEMBER_STATUS_UNKNOWN = 0;   // 未知状态
+  MEMBER_STATUS_ACTIVE = 1;    // 活跃状态
+  MEMBER_STATUS_BANNED = 2;    // 封禁状态
+  MEMBER_STATUS_PENDING = 3;   // 待审核状态
+}
+
+// 邀请状态枚举
+enum InvitationStatus {
+  INVITATION_STATUS_UNKNOWN = 0;   // 未知状态
+  INVITATION_STATUS_PENDING = 1;   // 待处理
+  INVITATION_STATUS_ACCEPTED = 2;  // 已接受
+  INVITATION_STATUS_REJECTED = 3;  // 已拒绝
+  INVITATION_STATUS_EXPIRED = 4;   // 已过期
+}
+
+// 申请状态枚举
+enum ApplicationStatus {
+  APPLICATION_STATUS_UNKNOWN = 0;    // 未知状态
+  APPLICATION_STATUS_PENDING = 1;    // 待审核
+  APPLICATION_STATUS_APPROVED = 2;   // 已通过
+  APPLICATION_STATUS_REJECTED = 3;   // 已拒绝
+}
+
+// 加入状态枚举
+enum JoinStatus {
+  JOIN_STATUS_UNKNOWN = 0;    // 未知
+  JOIN_STATUS_JOINED = 1;     // 已加入
+  JOIN_STATUS_PENDING = 2;    // 待审核
+  JOIN_STATUS_REJECTED = 3;   // 已拒绝
+}
+
+// 折扣项（统一数据结构：读、写、算均使用此单元）
+message DiscountItem {
+  DiscountType discount_type = 1; // 必填，折扣类型
+  double discount_rate = 2;       // 必填，折扣比例，如 0.8 表示 8 折
+  int64 start_time = 3;           // 必填，生效开始时间，Unix 秒，UTC
+  int64 end_time = 4;             // 必填，生效结束时间，Unix 秒，UTC
+  bool enabled = 5;               // 必填，是否启用
+}
+
+// 接口用途：批量更新圈子的两种折扣配置（固定 JOIN + RENEW）
+message UpdateGroupDiscountsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2067;
+  }
+  string group_id = 1;               // 必填，圈子ID
+  repeated DiscountItem items = 2;   // 固定 2 条：JOIN + RENEW
+}
+
+// 接口用途：返回批量更新后的圈子折扣配置
+message UpdateGroupDiscountsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2068;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated DiscountItem items = 2;  // 更新后的两种折扣配置
+  string group_id = 3;              // 透传 group_id
+}
+
+// 接口用途：获取圈子的折扣配置列表（固定返回 JOIN + RENEW 两种）
+message GetGroupDiscountsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2071;
+  }
+  string group_id = 1;  // 必填，圈子ID
+}
+
+// 接口用途：返回圈子的折扣配置列表
+message GetGroupDiscountsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2072;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  repeated DiscountItem items = 2;  // 固定 2 条（JOIN + RENEW），未配置时可能仅返回骨架
+  string group_id = 3;              // 透传 group_id
+}
+
+// 接口用途：根据折扣计算应付金额
+message CalcPayableAmountRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2073;
+  }
+  string group_id = 1;               // 必填，圈子ID
+  DiscountType discount_type = 2;    // 必填，折扣类型（明确是入圈还是续费）
+  int64 original_amount = 3;         // 必填，原始金额
+  int64 now_time = 4;                // 非必填，当前时间（秒，UTC）
+}
+
+// 接口用途：返回计算后的应付金额与折扣信息
+message CalcPayableAmountResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2074;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 标准结果
+  int64 final_amount = 2;      // 计算后的应付金额
+  double discount_rate = 3;    // 实际使用的折扣比例
+  DiscountItem discount = 4;   // 使用的折扣配置
+  string group_id = 5;         // 透传 group_id
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 新增：内容导航项
+message ContentNavItem {
+  com.mineplanet.pojo.topic.TopicNavType nav_type = 1;  // 导航类型枚举
+  string nav_key = 2;                                   // 导航key
+  string nav_name = 3;                                  // 显示名称
+  bool is_visible = 4;                                  // 是否可见（有内容时显示）
+  bool has_unread = 5;                                  // 是否有未读红点（仅 For Me to Answer 使用）
+}
+
+// ==================== 新增：圈子活跃统计 (2026-06-06) ====================
+
+// 圈子活跃信息（仅游客状态返回，成员状态返回 nil）
+message GroupActivityStats {
+  int32 topic_count = 1;                // 主题数（不含删除）
+  int32 comment_count = 2;              // 评论数（不含删除）
+  int32 like_count = 3;                 // 点赞数（去重，不含删除）
+  int64 owner_last_updated_at = 4;      // 圈子最新主题时间戳（秒级 UTC，客户端根据时间戳自行计算显示格式和颜色）
+}
+
+// 接口用途：用户进入圈子
+message GroupUserEnterRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2087;
+  }
+  string group_id = 1;                    // 必填，圈子ID
+  string user_id = 2;                     // 新增：当前用户ID（用于查询 For Me to Answer）
+}
+
+// GroupRoleUsers 圈子管理团队成员信息
+message GroupRoleUsers {
+  string owner_user_id = 1;           // 圈主 user_id
+  repeated string admin_user_ids = 2;   // 管理员 user_id 列表
+  repeated string guest_user_ids = 3;   // 嘉宾 user_id 列表
+  int32 admin_count = 4;               // 管理员总数
+  int32 guest_count = 5;               // 嘉宾总数
+}
+
+// 接口用途：用户进入圈子响应（用户不允许进入时，直接返回错误）
+message GroupUserEnterResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2088;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  GroupInfo group_info = 2;               // 圈子信息
+  OwnerProfile owner_info = 3;
+  LatestTopicPreview latest_topic = 4;
+  DiscountItem discount = 5;              // 非必填，未加入时，当前有效的折扣配置
+  repeated GroupPayConfig pay_configs = 6; // 非必填，圈子付费配置
+  string group_id = 7;                    // 透传 group_id
+
+  // 新增字段 - 成员信息
+  repeated string member_avatars = 8;     // 成员头像数组（前N个成员头像URL）
+  int32 total_members = 9;                // 总成员数
+
+  // 新增字段 - 内容导航信息（按显示顺序排列，第一个为默认选中）
+  repeated ContentNavItem content_navs = 10;
+
+  // 新增字段 - 用户配置
+  repeated com.mineplanet.pojo.user.UserConfigItem user_configs = 11;
+
+  // 已移除：发帖权限和提问配额字段（2026-05-16）
+  // 这些字段已迁移到 UserMemberInfo 中，通过 user_member_info 获取
+  reserved 12, 13, 14, 15, 16, 17, 18;
+
+  // 当前用户成员信息（含权限、发帖权限、提问配额、会员到期信息）
+  UserMemberInfo user_member_info = 19;
+
+  // 新增字段（2026-06-06）：统一返回，不区分游客/成员状态
+  GroupRoleUsers role_users = 20;           // 圈子管理团队（圈主、管理员、嘉宾）
+  GroupActivityStats activity_stats = 21;    // 圈子活跃统计（主题数、评论数、点赞数、最后更新）
+
+}
+
+// 用户配额信息
+message UserGroupQuota {
+  int32 max_free_groups = 1;       // 免费圈上限
+  int32 max_paid_groups = 2;       // 付费圈上限
+  int32 created_free_groups = 3;   // 已创建免费圈数量
+  int32 created_paid_groups = 4;   // 已创建付费圈数量
+  int32 remaining_free_groups = 5; // 剩余可创建免费圈数量
+  int32 remaining_paid_groups = 6; // 剩余可创建付费圈数量
+  com.mineplanet.pojo.common.MembershipLevel membership_level = 7; // 当前会员级别
+  bool can_create_free = 8;        // 是否可以创建免费圈
+  bool can_create_paid = 9;        // 是否可以创建付费圈
+}
+
+// 接口用途：获取用户创建圈子的配额信息
+message GetUserGroupQuotaRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2089;
+  }
+}
+
+// 接口用途：返回用户配额信息
+message GetUserGroupQuotaResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2090;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  UserGroupQuota quota = 2;
+  string user_id = 3;
+}
+
+// ==================== 新增协议：权限协议简化升级 (2055/2056/2057/2058/2059/2060) ====================
+// 文档参考：/Users/mac/StudioProjects/2026/open-citycloud-workspace/.trae/documents/2026-05-28/权限协议简化升级聚合方案_v4.md#L111-113
+
+
+// 辅助类型：轻量会员状态
+message MembershipStatusLite {
+  bool is_paid_member = 1;
+  int32 days_remaining = 2;
+  string membership_type = 3;             // "monthly"|"yearly"|"lifetime"
+}
+
+// 注：使用全局统一的 GroupPayConfig 和 DiscountItem 类型
+
+// 辅助类型：圈子统计信息（精简版）
+message GroupStatsLite {
+  int32 members_count = 1;                // 成员数量
+  int32 guests_count = 2;                 // 嘉宾数量
+}
+
+// 辅助类型：圈子基础信息（精简版）
+message GroupInfoLite {
+  string name = 1;                        // 圈子名称
+  string description = 2;                 // 圈子描述
+  string avatar = 3;                      // 头像URL
+  string cover_image = 4;                 // 封面图片URL
+  string owner_id = 5;                    // 创建者ID
+  GroupStatus status = 6;                 // 圈子状态
+  GroupVisibility visibility = 7;         // 可见性
+  JoinMode join_mode = 8;                 // 加入方式
+  int64 created_at = 9;                   // 创建时间
+  string circle_type = 10;                // "free"|"paid"
+  string slug = 11;  //圈子标识
+
+}
+
+// 辅助类型：高级设置配置（平铺返回，客户端无需解析key）
+message AdvancedSettingsLite {
+  bool planet_updates = 1;                // Planet Updates开关：true=On, false=Off
+  bool disable_content_copying = 2;       // 禁用内容复制：true=启用, false=禁用
+  bool watermark_enabled = 3;             // 水印启用：true=启用, false=禁用
+  QuestionLimit question_limit = 4;       // 问题限制枚举
+  WhoCanPost who_can_post = 5;            // 发帖权限枚举
+}
+
+// 接口用途：轻量权限查询（成员首页、列表卡片、权限设置页）
+message GetGroupPermissionsLiteRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2059;  // GetGroupPermissionsLite 请求
+  }
+  string group_id = 1;                    // 圈子ID（必填）
+  // user_id 从 extend.token 解析获取，不在请求体中明文传递
+}
+
+// 接口用途：轻量权限查询响应
+message GetGroupPermissionsLiteResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2060;  // GetGroupPermissionsLite 响应
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+
+  string group_id = 2;
+
+  com.mineplanet.pojo.user.GroupMemberRole my_role = 3;           // 当前用户角色
+
+  repeated string ui_visibility = 4;      // UI 可见性列表
+
+  // reserved 5;  // 原 MembershipStatusLite membership 字段，已废弃
+
+  int64 last_updated_at = 6;             // 最后更新时间戳
+
+  // 付费配置（仅付费圈时返回，使用全局 GroupPayConfig 类型）
+  repeated GroupPayConfig pay_configs = 9;
+
+  // 促销优惠状态（多语言Key，客户端直接用语言包翻译显示）
+  // 可能值: svc_promotion_none / svc_promotion_active / svc_promotion_scheduled
+  string promotion_offers = 10;
+
+  // 高级设置配置（平铺返回具体字段，客户端无需解析key）
+  AdvancedSettingsLite advanced_settings = 11;  // 高级设置
+
+  // 管理团队成员信息（参考2086协议）
+  GroupRoleUsers role_users = 12;  // 圈主、管理员、嘉宾信息
+
+  // 新增：拉黑成员总数（仅 Admin/Owner 可见，其他角色返回 0）
+  int32 banned_count = 13;
+}
+
+// 接口用途：角色权限修改（直接替换权限列表）
+message UpdateRolePermissionsRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2055;  // UpdateRolePermissions 请求
+  }
+  string group_id = 1;                    // 圈子ID（必填）
+  // operator_id 从 extend.token 解析获取，不在请求体中明文传递
+  string target_role = 2;                 // 目标角色："admin"|"member"|"guest"
+  repeated string permissions = 3;        // 完整的权限列表（直接替换）
+}
+
+// 接口用途：角色权限修改响应
+message UpdateRolePermissionsResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2056;  // UpdateRolePermissions 响应
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string group_id = 2;
+  string target_role = 3;
+  repeated string permissions = 4;        // 修改后的权限列表
+  int64 updated_at = 5;
+}
+
+// 接口用途：高级设置快速修改（支持 advanced_settings 中的配置项 + pay_configs 付费配置）
+// 使用示例：
+//   1. 开关型: { "group_id": "xxx", "setting_key": "planet_updates", "setting_value": "1" }
+//   2. 问题限制: { "group_id": "xxx", "setting_key": "question_limit", "question_limit": 2 }  (使用枚举字段，数值2=每月30个)
+//   3. 发帖权限: { "group_id": "xxx", "setting_key": "who_can_post", "who_can_post": 1 }  (使用枚举字段，数值1=所有人)
+//   4. 付费配置: { "group_id": "xxx", "setting_key": "pay_configs", "pay_configs": [{"cycle_unit": 3, "amount": 9.99, "currency": "USD"}] }
+// 注意：开关型字段客户端传"0"或"1"到setting_value；枚举类型使用独立的枚举字段（question_limit/who_can_post）
+message QuickUpdateSettingRequest {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2057;  // QuickUpdateSetting 请求
+  }
+  string group_id = 1;                        // 圈子ID（必填）
+  // operator_id 从 extend.token 解析获取，不在请求体中明文传递
+  string setting_key = 2;                     // 设置项key："planet_updates"|"disable_content_copying"|"watermark_enabled"|"who_can_post"|"question_limit"|"pay_configs"
+  string setting_value = 3;                   // 设置值：开关型传"0"|"1"（用于bool类型设置项）
+  repeated GroupPayConfig pay_configs = 4;   // 付费配置列表（当 setting_key="pay_configs" 时使用，包含多个订阅计划）
+  QuestionLimit question_limit = 5;           // 问题限制枚举（当 setting_key="question_limit" 时使用，数值范围0-7）
+  WhoCanPost who_can_post = 6;               // 发帖权限枚举（当 setting_key="who_can_post" 时使用，数值范围0-3）
+}
+
+// 接口用途：高级设置快速修改响应
+message QuickUpdateSettingResponse {
+  enum Type {
+    none = 0;
+    max = 2000;
+    min = 2058;  // QuickUpdateSetting 响应
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string setting_key = 2;     // 设置项key（透传）
+  string new_value = 3;       // 修改后的值
+  bool was_changed = 4;       // 是否实际发生了变更
+}

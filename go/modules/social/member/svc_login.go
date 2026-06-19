@@ -12,15 +12,16 @@ import (
 )
 
 // SvcLogin 用户登录服务（minType=1023 UserLogin）
-// 负责用户身份验证：参数校验 → 查找用户 → 密码比对 → 生成令牌
+// 负责用户身份验证：参数校验 → 查找用户 → 密码比对 → 生成 JWT 令牌
 // 不负责注册（由 SvcRegister 负责）
 type SvcLogin struct {
-	repo Repository
+	repo       Repository
+	jwtManager *JWTManager
 }
 
 // NewSvcLogin 创建登录服务实例
-func NewSvcLogin(repo Repository) *SvcLogin {
-	return &SvcLogin{repo: repo}
+func NewSvcLogin(repo Repository, jwtManager *JWTManager) *SvcLogin {
+	return &SvcLogin{repo: repo, jwtManager: jwtManager}
 }
 
 // Handle 处理用户登录请求，遵循 DevGuide §7 五步模式
@@ -76,14 +77,24 @@ func (s *SvcLogin) Handle(ctx context.Context, req *pb.UserLoginRequest) (*pb.Us
 
 	// Step 4: 领域事件 — 登录成功事件（MVP-P0 可延迟）
 
-	// Step 5: 返回响应
+	// Step 5: 生成 JWT 令牌对
+	accessToken, accessExp, err := s.jwtManager.GenerateAccessToken(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("生成 access_token 失败: %w", err)
+	}
+	refreshToken, _, err := s.jwtManager.GenerateRefreshToken(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("生成 refresh_token 失败: %w", err)
+	}
+
 	return &pb.UserLoginResponse{
 		Result: &base.Result{
 			Code:    int32(base.ErrorCode_ERROR_CODE_SUCCESS),
 			Message: "登录成功",
 		},
-		UserId:      user.ID,
-		AccessToken: generateToken(user.ID, "access", now),
+		UserId:       user.ID,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 		UserInfo: &base.UserInfo{
 			UserId:   user.ID,
 			Username: user.Username,
@@ -91,7 +102,7 @@ func (s *SvcLogin) Handle(ctx context.Context, req *pb.UserLoginRequest) (*pb.Us
 			Nickname: user.Nickname,
 			Avatar:   user.Avatar,
 		},
-		ExpiresAt: now + 86400000, // 24小时过期（MVP-P0 固定值）
+		ExpiresAt: accessExp,
 	}, nil
 }
 
@@ -114,10 +125,4 @@ func (s *SvcLogin) validateRequest(req *pb.UserLoginRequest) (*pb.UserLoginRespo
 		}, nil
 	}
 	return nil, nil
-}
-
-// generateToken 生成访问令牌（MVP-P0 占位，生产环境使用 JWT/OAuth2）
-func generateToken(userID, tokenType string, now int64) string {
-	// TODO(security, MVP1): 替换为 JWT 令牌生成
-	return fmt.Sprintf("%s-%s-%d", tokenType, userID, now)
 }

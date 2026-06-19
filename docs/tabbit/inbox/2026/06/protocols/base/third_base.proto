@@ -1,0 +1,817 @@
+syntax = "proto3";
+option objc_class_prefix = "PROTO";
+package com.mineplanet.pojo.third;
+
+option java_package = "com.mineplanet.pojo.third";
+option java_outer_classname = "ThirdProto";
+option go_package = "github.com/jimiechen/mineplanet/protocols/generated/go/proto/base";
+option optimize_for = LITE_RUNTIME;
+
+import "base/result.proto";
+import "base/group_base.proto";
+
+// 直传凭证
+message DirectUploadCredentials {
+  string access_key_id = 1;     // AK
+  string access_key_secret = 2; // SK
+  string security_token = 3;    // STS Token（可选）
+  string endpoint = 4;          // OSS Endpoint
+  string bucket = 5;            // Bucket
+  int64 expiration = 6;         // 过期时间戳（秒）
+}
+
+// 接口用途：获取直传配置（OSS STS 与上传前缀）
+message GetDirectUploadConfigRequest {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4011;
+  }
+  // 上传类型（用户头像/圈子封面/主题多媒体/其他）
+  enum UploadType {
+    upload_type_unknown = 0;
+    user_avatar = 1;
+    group_cover = 2;
+    topic_media = 3;
+    other = 4;
+  }
+  UploadType upload_type = 1;  // 非必填，上传类型
+}
+
+// OSS 回调变量配置
+message OssCallbackVars {
+  string user_id = 1;    // 用户ID，如 "12345"
+  string biz_type = 2;   // 业务类型，如 "user-avatar"
+}
+
+// OSS 回调配置
+message OssCallbackConfig {
+  string url = 1;                  // 回调地址，如 https://your-server.com/api/oss/callback
+  string body = 2;                 // 回调请求体模板
+  string content_type = 3;         // Content-Type，如 application/x-www-form-urlencoded
+  OssCallbackVars callback_vars = 4;  // 回调变量配置
+}
+
+// 接口用途：返回直传配置（凭证与推荐前缀）
+message GetDirectUploadConfigResponse {
+  //Type枚举递增
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4012;
+  }
+  com.mineplanet.pojo.pb.Result result = 1; // 通用结果
+  DirectUploadCredentials credentials = 2;  // 直传凭证
+  string upload_prefix = 3;                  // 推荐上传前缀：类型/年/月/日/UID/
+  OssCallbackConfig oss_callback = 4;        // OSS 回调配置
+}
+
+// 通用健康与服务信息（YAML/路由使用）
+
+
+// 上传/文件处理系列（按路由 MinType 映射）
+
+
+// 用途说明：YAML 存在但路由未实现（保留占位）
+// GetSplashRequest/GetSplashResponse 已在下方完整定义
+message GetAdImagesRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4711;
+  }
+}
+message GetAdImagesResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4712;
+  }
+}
+
+message SplashImage {
+  string image_id = 1;
+  string url = 2;
+  string format = 3;
+  int32 width = 4;
+  int32 height = 5;
+  string platform = 6;
+  string theme = 7;
+  string locale = 8;
+  string md5 = 9;
+  int64 updated_ts = 10;
+}
+
+enum SplashJumpType {
+  splash_jump_unknown = 0;
+  empty = 1;
+  app_route = 2;
+  web_url = 3;
+}
+
+message SplashConfig {
+  bool enabled = 1;
+  string splash_id = 2;
+  string title = 3;
+  string description = 4;
+  repeated SplashImage images = 5;
+  SplashJumpType jump_type = 6;
+  string jump_target = 7;
+  map<string, string> jump_params = 8;
+  int64 begin_ts = 9;
+  int64 end_ts = 10;
+  int32 show_seconds = 11;
+  string background_color = 12;
+  int32 priority = 13;
+  string version_min = 14;
+  string version_max = 15;
+}
+
+// 接口用途：获取开屏配置
+message GetSplashRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4701;
+  }
+  string platform = 1;
+  string app_version = 2;
+  string locale = 3;
+  int32 screen_width = 4;
+  int32 screen_height = 5;
+  float pixel_ratio = 6;
+  bool dark_mode = 7;
+}
+
+// 接口用途：返回开屏配置与缓存 TTL
+message GetSplashResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4702;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  SplashConfig config = 2;
+  int64 cache_ttl = 3;
+}
+
+// ==================== OAuth (Google) ====================
+message GetAuthorizationUrlRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4201;
+  }
+  string provider = 1;
+  string redirect_uri = 2;
+  string state = 3;
+}
+
+message GetAuthorizationUrlResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4202;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string authorization_url = 2;
+}
+
+message ExchangeCodeRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4203;
+  }
+  string provider = 1;
+  string code = 2;
+  string redirect_uri = 3;
+}
+
+message ExchangeCodeResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4204;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string access_token = 2;
+  int32 expires_in = 3;
+  string user_id = 4;
+  string email = 5;
+  string nickname = 6;
+}
+
+message RefreshAccessTokenRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4205;
+  }
+  string provider = 1;
+  string refresh_token = 2;
+}
+
+message RefreshAccessTokenResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4206;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string access_token = 2;
+  int32 expires_in = 3;
+}
+
+message ValidateAccessTokenRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4207;
+  }
+  string provider = 1;
+  string access_token = 2;
+}
+
+message ValidateAccessTokenResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4208;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  bool valid = 2;
+  string subject = 3;
+}
+
+message RevokeAccessTokenRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4209;
+  }
+  string provider = 1;
+  string access_token = 2;
+}
+
+message RevokeAccessTokenResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4210;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+}
+
+message OAuthGetUserInfoRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4211;
+  }
+  string provider = 1;
+  string access_token = 2;
+}
+
+message ThirdUserProfile {
+  string open_id = 1;
+  string email = 2;
+  string name = 3;
+  string avatar_url = 4;
+}
+
+message OAuthGetUserInfoResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4212;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  ThirdUserProfile profile = 2;
+}
+
+// 分享创建请求（4801）
+// 接口用途：创建分享
+message CreateShareRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4085;
+  }
+  string source_type = 1;      // 必填，来源类型 group|topic|invitation
+  string content_id = 2;       // 必填，内容ID
+  string platform = 3;         // 非必填，平台 wechat_session|wechat_timeline|weibo|qq|douyin|copy_link|other
+  string text = 4;             // 非必填，分享文案
+  repeated string media_urls = 5; // 非必填，媒体地址列表
+  map<string,string> extra = 6;   // 非必填，扩展信息
+}
+
+// 分享创建响应（4802）
+// 接口用途：返回分享信息
+message CreateShareResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4086;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string share_id = 2;
+  string share_url = 3;
+  string qr_code_url = 4;
+  int64 expired_at = 5; // 过期时间戳
+}
+
+// 分享统计请求（4803）
+// 接口用途：获取分享统计
+message GetShareStatsRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4087;
+  }
+  string source_type = 1;      // 必填，来源类型
+  string content_id = 2;       // 必填，内容ID
+  int64 since_ts = 3;          // 非必填，起始时间
+}
+
+// 分享统计响应（4804）
+// 接口用途：返回分享统计
+message GetShareStatsResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4088;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64 total = 2;
+  map<string,int64> platform_counts = 3;
+}
+
+// 扫码记录请求（4081）
+// 接口用途：记录分享扫码事件
+message TrackShareScanRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4081;
+  }
+  string share_id = 1;           // 必填，分享ID
+  map<string,string> extra = 2;  // 非必填，额外信息
+}
+
+// 扫码记录响应（4082）
+// 接口用途：返回扫码记录结果
+message TrackShareScanResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4082;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64 scan_ts = 2;
+}
+
+// 接口用途：获取分享码信息
+message GetShareCodeMessageRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4807;
+  }
+  string share_id = 1; // 分享码/ID
+}
+
+message GetShareCodeMessageResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4808;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string message = 2;      // 消息内容
+  string source_type = 3;  // 类型 group|topic|invitation
+  string content_id = 4;   // 目标ID
+  map<string,string> extra = 5; // 扩展信息
+  string creator_user_id = 6;   // 创建者ID
+  string platform = 7;     // 平台
+  int64 created_ts = 8;    // 创建时间
+  string share_url = 9;    // 分享链接
+  string invite_role = 10; // 邀请角色 (guest|member)
+  int64 expired_at = 11;   // 过期时间戳
+}
+
+
+// 钱包 - 获取总览请求（4901）
+// 接口用途：获取钱包总览
+message WalletGetOverviewRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4901;
+  }
+  string merchant_id = 1;       // 必填，商户ID
+}
+
+// 钱包 - 获取总览响应（4902）
+// 接口用途：返回钱包总览
+message WalletGetOverviewResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4902;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  int64 available_amount = 2;
+  int64 pending_amount = 3;
+  int64 today_income = 4;
+  string currency = 5;
+}
+
+// 钱包交易项
+message WalletTransaction {
+  string transaction_id = 1;
+  string entry_type = 2; // credit|debit|fee|refund|tax|adjustment
+  int64 amount = 3;
+  string currency = 4;
+  int64 balance_after = 5;
+  int64 occurred_at = 6;
+  string ref_type = 7; // order|payment|settlement|withdrawal|adjustment
+  string ref_id = 8;
+  map<string,string> metadata = 9;
+}
+
+// 钱包 - 分页查询流水请求（4903）
+// 接口用途：分页查询钱包流水
+message WalletListTransactionsRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4903;
+  }
+  string merchant_id = 1;       // 必填，商户ID
+  int32 page = 2;               // 非必填，页码
+  int32 page_size = 3;          // 非必填，每页大小
+  int64 begin_ts = 4;           // 非必填，开始时间
+  int64 end_ts = 5;             // 非必填，结束时间
+}
+
+// 钱包 - 分页查询流水响应（4904）
+// 接口用途：返回钱包流水分页结果
+message WalletListTransactionsResponse {
+    enum Type {
+        none = 0;
+        max = 4000;
+        min = 4904;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated WalletTransaction transactions = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+}
+
+// 钱包 - 入圈订单列表请求（4905）
+// 接口用途：分页查询入圈订单
+message WalletListCircleOrdersRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4905;
+  }
+  string merchant_id = 1;       // 必填，商户ID
+  int32 page = 2;               // 非必填，页码
+  int32 page_size = 3;          // 非必填，每页大小
+  string status = 4;            // 非必填，订单状态 pending|paid|cancelled|refunded|expired
+}
+
+// 入圈订单项
+message CircleOrder {
+  string order_id = 1;
+  string user_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+  string status = 5;
+  int64 created_at = 6;
+  string product_id = 7;
+}
+
+// 钱包 - 入圈订单列表响应（4906）
+// 接口用途：返回入圈订单分页结果
+message WalletListCircleOrdersResponse {
+    enum Type {
+        none = 0;
+        max = 4000;
+        min = 4906;
+    }
+    com.mineplanet.pojo.pb.Result result = 1;
+    repeated CircleOrder orders = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+}
+
+// 钱包 - 踢人出圈请求（4907）
+// 接口用途：钱包踢人出圈
+message WalletKickMemberRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4907;
+  }
+  string circle_id = 1;         // 必填，圈子ID
+  string target_user_id = 2;    // 必填，目标用户ID
+  string reason = 3;            // 非必填，踢出原因
+}
+
+// 钱包 - 踢人出圈响应（4908）
+// 接口用途：返回踢人结果
+message WalletKickMemberResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4908;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+}
+
+// 钱包 - 创建提现请求（4909）
+// 接口用途：创建提现申请
+message WalletCreateWithdrawalRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4909;
+  }
+  string merchant_id = 1;       // 必填，商户ID
+  int64 amount = 2;             // 必填，提现金额
+  string currency = 3;          // 必填，币种
+  string bank_account = 4;      // 非必填，银行账户 JSON
+  string stripe_account_id = 5; // 非必填，Stripe 账户ID
+  map<string,string> metadata = 6; // 非必填，元数据
+}
+
+// 钱包 - 创建提现响应（4910）
+// 接口用途：返回提现申请结果
+message WalletCreateWithdrawalResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4910;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string withdrawal_id = 2;
+  string status = 3; // pending|reviewing|processing|succeeded|failed|cancelled
+}
+
+// ==================== Passkey (WebAuthn) ====================
+message BeginPasskeyRegistrationRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4213;
+  }
+  string user_id = 1;
+  string origin = 2; // Optional: origin of the request
+}
+
+message BeginPasskeyRegistrationResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4214;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string options_json = 2; // WebAuthn options in JSON format
+  string session_id = 3;
+}
+
+message FinishPasskeyRegistrationRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4215;
+  }
+  string user_id = 1;
+  string session_id = 2;
+  string response_json = 3; // WebAuthn credential creation response in JSON format
+  string origin = 4; // Optional: origin of the request
+}
+
+message FinishPasskeyRegistrationResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4216;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string credential_id = 2;
+}
+
+message BeginPasskeyLoginRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4217;
+  }
+  string user_id = 1; // Optional for discoverable credentials (Resident Keys)
+  string origin = 2; // Optional: origin of the request
+}
+
+message BeginPasskeyLoginResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4218;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string options_json = 2;
+  string session_id = 3;
+}
+
+message FinishPasskeyLoginRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4219;
+  }
+  string session_id = 1;
+  string response_json = 2;
+  string origin = 3; // Optional: origin of the request
+}
+
+message FinishPasskeyLoginResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4220;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string access_token = 2;
+  int32 expires_in = 3;
+  string user_id = 4;
+}
+
+// ==================== 2FA (TOTP) ====================
+message EnableTOTPRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4221;
+  }
+  string user_id = 1;
+}
+
+message EnableTOTPResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4222;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string secret = 2;
+  string otpauth_url = 3;
+  bytes qr_code = 4; // PNG data
+}
+
+message VerifyTOTPRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4223;
+  }
+  string user_id = 1;
+  string code = 2;
+}
+
+message VerifyTOTPResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4224;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  bool verified = 2;
+  repeated string recovery_codes = 3; // Returned only on first successful verification
+}
+
+message ValidateTOTPRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4225;
+  }
+  string user_id = 1;
+  string code = 2;
+  string temp_token = 3; // Token from first factor login
+}
+
+message ValidateTOTPResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4226;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+  string access_token = 2;
+  int32 expires_in = 3;
+}
+
+message DisableTOTPRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4227;
+  }
+  string user_id = 1;
+  string code = 2; // Optional: verify code before disabling
+}
+
+message DisableTOTPResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4228;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+}
+
+message UnbindPasskeyRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4229;
+  }
+  string user_id = 1;
+  string credential_id = 2; // Optional: if empty, maybe delete all
+}
+
+message UnbindPasskeyResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4230;
+  }
+  com.mineplanet.pojo.pb.Result result = 1;
+}
+
+// ==================== 圈子订单查询 (4231/4232) ====================
+// 订单相关类型定义（从 group_base 迁移至此模块）
+
+// 订单类型枚举（用于区分首次订阅和续费）
+enum OrderType {
+  ORDER_TYPE_UNKNOWN = 0;           // 未知类型
+  ORDER_TYPE_NEW_SUBSCRIPTION = 1;  // 新订阅（首次入圈）
+  ORDER_TYPE_RENEWAL = 2;           // 续费（延长会员期）
+}
+
+// 订单状态枚举（与数据库 orders 表 status 字段保持一致）
+enum OrderStatus {
+  ORDER_STATUS_UNKNOWN = 0;     // 未知状态
+  ORDER_STATUS_PENDING = 1;     // 待支付
+  ORDER_STATUS_PAID = 2;        // 已支付
+  ORDER_STATUS_CANCELLED = 3;   // 已取消
+  ORDER_STATUS_REFUNDED = 4;    // 已退款
+  ORDER_STATUS_EXPIRED = 5;     // 已过期
+}
+
+// 订单简要信息（用于订阅历史列表展示）
+message OrderBriefInfo {
+  string order_id = 1;               // 订单ID（orders.id）
+  string order_number = 2;           // 订单号（orders.order_number）
+  OrderType order_type = 3;          // 订单类型（新订阅/续费）
+  int64 amount = 4;                  // 金额（单位：分，如 19900 表示 $199.00）
+  string currency = 5;               // 币种代码（ISO 4217，如 "USD"、"CNY"）
+  com.mineplanet.pojo.group.PayCycleUnit pay_cycle = 6;  // 付费周期（月/季/半年/年，保留在group_base）
+  string payment_display = 7;        // 支付展示文本（多语言Key: svc_order_payment_display）
+  int64 created_at = 9;              // 创建时间戳（秒级 UTC）
+  int64 paid_at = 10;                // 支付完成时间戳（秒级 UTC，已支付订单必定有值）
+}
+
+// 接口用途：查询用户在指定圈子的已支付订单简要信息列表（仅返回 paid 状态）
+message GetGroupOrdersRequest {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4231;  // 协议编号
+  }
+  string group_id = 1;               // 必填，圈子ID
+  string user_id = 2;                // 必填，用户ID（不传则使用当前登录用户）
+  OrderType order_type = 3;          // 非必填，筛选订单类型
+  int32 page = 4;                    // 非必填，页码（默认 1）
+  int32 page_size = 5;               // 非必填，每页大小（默认 20，最大 100）
+}
+
+// 接口用途：返回用户在指定圈子的已支付订单简要信息列表
+message GetGroupOrdersResponse {
+  enum Type {
+    none = 0;
+    max = 4000;
+    min = 4232;  // 协议编号
+  }
+  com.mineplanet.pojo.pb.Result result = 1;  // 标准结果
+  repeated OrderBriefInfo orders = 2;        // 订单简要信息列表（仅已支付）
+  int32 total = 3;                             // 总记录数
+  int32 page = 4;                              // 当前页码
+  int32 page_size = 5;                         // 每页大小
+  string group_id = 6;                         // 透传 group_id
+  string user_id = 7;                          // 透传 user_id
+}

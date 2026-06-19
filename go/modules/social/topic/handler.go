@@ -18,12 +18,13 @@ type Handler struct {
 	listTopicSvc      *SvcListTopic
 	deleteTopicSvc     *SvcDeleteTopic
 	replyTopicSvc      *SvcReplyTopic
-	likeTopicSvc     *SvcLikeTopic
-	unlikeTopicSvc   *SvcUnlikeTopic
-	favoriteTopicSvc *SvcFavoriteTopic
-	getTopicDetailSvc *SvcGetTopicDetail
+	likeTopicSvc       *SvcLikeTopic
+	favoriteTopicSvc   *SvcFavoriteTopic
+	getTopicDetailSvc  *SvcGetTopicDetail
 	updateTopicSvc     *SvcUpdateTopic
+	createReportSvc    *SvcCreateReport
 	readTopicSvc       *SvcReadTopic
+	getReplyListSvc    *SvcGetReplyList
 }
 
 // NewHandler 创建 Handler 实例，注入所有 svc 依赖
@@ -35,11 +36,12 @@ func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 		deleteTopicSvc:   NewSvcDeleteTopic(repo),
 		replyTopicSvc:    NewSvcReplyTopic(repo, publisher),
 		likeTopicSvc:     NewSvcLikeTopic(repo, publisher),
-		unlikeTopicSvc:   NewSvcUnlikeTopic(repo),
 		favoriteTopicSvc: NewSvcFavoriteTopic(repo, publisher),
 		getTopicDetailSvc: NewSvcGetTopicDetail(repo),
 		updateTopicSvc:   NewSvcUpdateTopic(repo),
+		createReportSvc:  NewSvcCreateReport(repo),
 		readTopicSvc:     NewSvcReadTopic(repo),
+		getReplyListSvc:  NewSvcGetReplyList(repo),
 	}
 }
 
@@ -95,7 +97,7 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 		}
 		return proto.Marshal(rsp)
 
-	// 点赞主题（minType=3061, is_like=true）
+	// 点赞/取消点赞主题（minType=3061, 通过 is_like 区分）
 	case "3061":
 		var req pb.LikeTopicRequest
 		if err := proto.Unmarshal(reqBytes, &req); err != nil {
@@ -107,36 +109,11 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 		}
 		return proto.Marshal(rsp)
 
-	// 取消点赞主题（minType=3062, 复用 LikeTopicRequest.is_like=false）
-	case "3062":
-		var req pb.LikeTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal LikeTopicRequest(Unlike) failed: %w", err)
-		}
-		rsp, err := h.unlikeTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 收藏主题（minType=3063, is_favorite=true）
+	// 收藏/取消收藏主题（minType=3063, 通过 is_favorite 区分）
 	case "3063":
 		var req pb.FavoriteTopicRequest
 		if err := proto.Unmarshal(reqBytes, &req); err != nil {
 			return nil, fmt.Errorf("unmarshal FavoriteTopicRequest failed: %w", err)
-		}
-		rsp, err := h.favoriteTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 取消收藏主题（minType=3064, 复用 FavoriteTopicRequest.is_favorite=false）
-	// TODO: Phase 2 需要独立的 SvcUnfavorite，当前使用 favorite svc 的反向逻辑
-	case "3064":
-		var req pb.FavoriteTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal FavoriteTopicRequest(Unfavorite) failed: %w", err)
 		}
 		rsp, err := h.favoriteTopicSvc.Handle(ctx, &req)
 		if err != nil {
@@ -156,15 +133,13 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 		}
 		return proto.Marshal(rsp)
 
-	// 提交举报（minType=3095，对齐 topic_base.proto CreateReport 定义）
-	// TODO(impl): 当前复用 updateTopicSvc 作为 stub，Phase 2 需实现独立的 CreateReport 逻辑
+	// 提交举报（minType=3095）
 	case "3095":
 		var req pb.CreateReportRequest
 		if err := proto.Unmarshal(reqBytes, &req); err != nil {
 			return nil, fmt.Errorf("unmarshal CreateReportRequest failed: %w", err)
 		}
-		// stub: 暂用 updateTopicSvc 处理，返回基础响应
-		rsp, err := h.updateTopicSvc.Handle(ctx, &pb.CreateTopicRequest{TopicId: req.TargetId})
+		rsp, err := h.createReportSvc.Handle(ctx, &req)
 		if err != nil {
 			return nil, err
 		}
@@ -177,6 +152,18 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 			return nil, fmt.Errorf("unmarshal CheckTopicActionsRequest(Read) failed: %w", err)
 		}
 		rsp, err := h.readTopicSvc.Handle(ctx, &req)
+		if err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
+
+	// 获取评论列表（minType=3065）
+	case "3065":
+		var req pb.GetReplyListRequest
+		if err := proto.Unmarshal(reqBytes, &req); err != nil {
+			return nil, fmt.Errorf("unmarshal GetReplyListRequest failed: %w", err)
+		}
+		rsp, err := h.getReplyListSvc.Handle(ctx, &req)
 		if err != nil {
 			return nil, err
 		}

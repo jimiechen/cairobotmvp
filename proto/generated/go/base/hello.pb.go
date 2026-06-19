@@ -121,10 +121,13 @@ func (HelloWorldResponse_Type) EnumDescriptor() ([]byte, []int) {
 
 // HelloWorld 请求，用于验证端到端链路连通性
 // 作为 MVP 阶段的第一个业务协议，确认 Gateway → TarsGo 全链路可达
+// 升级版：支持多语言 + 配置驱动校验
 type HelloWorldRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name 表示可选的问候名称，为空时返回默认问候语
-	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// lang_code 表示语言代码，如 zh-CN、en，为空时默认 zh-CN
+	LangCode      string `protobuf:"bytes,2,opt,name=lang_code,json=langCode,proto3" json:"lang_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,16 +169,30 @@ func (x *HelloWorldRequest) GetName() string {
 	return ""
 }
 
+func (x *HelloWorldRequest) GetLangCode() string {
+	if x != nil {
+		return x.LangCode
+	}
+	return ""
+}
+
 // HelloWorld 响应，携带服务端生成的问候消息
 // 用于验证 Protobuf 序列化/反序列化和 Tars bytes 透传正确性
+// 升级版：演示 configsdk + i18nsdk 接入
 type HelloWorldResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// result 统一返回结果码
 	Result *Result `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
-	// message 表示服务端生成的问候消息文本
+	// message 表示服务端生成的问候消息文本（保留兼容）
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// timestamp 表示服务端响应时间戳（Unix 秒）
-	Timestamp     int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Timestamp int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// greeting 表示通过 i18nsdk 渲染的多语言问候语（新增）
+	Greeting string `protobuf:"bytes,4,opt,name=greeting,proto3" json:"greeting,omitempty"`
+	// server_name 表示通过 configsdk 读取的服务名称（新增）
+	ServerName string `protobuf:"bytes,5,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
+	// max_name_length 表示通过 configsdk 读取的名称长度限制（新增）
+	MaxNameLength int32 `protobuf:"varint,6,opt,name=max_name_length,json=maxNameLength,proto3" json:"max_name_length,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -231,21 +248,47 @@ func (x *HelloWorldResponse) GetTimestamp() int64 {
 	return 0
 }
 
+func (x *HelloWorldResponse) GetGreeting() string {
+	if x != nil {
+		return x.Greeting
+	}
+	return ""
+}
+
+func (x *HelloWorldResponse) GetServerName() string {
+	if x != nil {
+		return x.ServerName
+	}
+	return ""
+}
+
+func (x *HelloWorldResponse) GetMaxNameLength() int32 {
+	if x != nil {
+		return x.MaxNameLength
+	}
+	return 0
+}
+
 var File_base_hello_proto protoreflect.FileDescriptor
 
 const file_base_hello_proto_rawDesc = "" +
 	"\n" +
-	"\x10base/hello.proto\x12\x19com.mineplanet.pojo.hello\x1a\x11base/result.proto\"M\n" +
+	"\x10base/hello.proto\x12\x19com.mineplanet.pojo.hello\x1a\x11base/result.proto\"j\n" +
 	"\x11HelloWorldRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"$\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
+	"\tlang_code\x18\x02 \x01(\tR\blangCode\"$\n" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xb4\x10\x12\b\n" +
-	"\x03min\x10\xb5\x10\"\xaa\x01\n" +
+	"\x03min\x10\xb5\x10\"\x8f\x02\n" +
 	"\x12HelloWorldResponse\x126\n" +
 	"\x06result\x18\x01 \x01(\v2\x1e.com.mineplanet.pojo.pb.ResultR\x06result\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"$\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x1a\n" +
+	"\bgreeting\x18\x04 \x01(\tR\bgreeting\x12\x1f\n" +
+	"\vserver_name\x18\x05 \x01(\tR\n" +
+	"serverName\x12&\n" +
+	"\x0fmax_name_length\x18\x06 \x01(\x05R\rmaxNameLength\"$\n" +
 	"\x04Type\x12\b\n" +
 	"\x04none\x10\x00\x12\b\n" +
 	"\x03max\x10\xb4\x10\x12\b\n" +

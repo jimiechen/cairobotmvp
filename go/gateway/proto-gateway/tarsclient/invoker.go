@@ -9,6 +9,10 @@ import (
 	"github.com/jimiechen/mineplanet/go/common-lib/module"
 	"github.com/jimiechen/mineplanet/go/modules/hello"
 	"github.com/jimiechen/mineplanet/go/modules/health"
+	socialmodule "github.com/jimiechen/mineplanet/go/modules/social"
+	"github.com/jimiechen/mineplanet/go/modules/social/group"
+	"github.com/jimiechen/mineplanet/go/modules/social/member"
+	"github.com/jimiechen/mineplanet/go/modules/social/topic"
 	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
 	configdomain "github.com/jimiechen/mineplanet/go/services/config/domain"
 	i18ndomain "github.com/jimiechen/mineplanet/go/services/i18n/domain"
@@ -344,10 +348,65 @@ func RegisterConfigI18nHandlers(invoker *LocalInvoker, configSvc configservice.C
 	}))
 }
 
-// RegisterAllLocalHandlers 注册所有本地 handler（System + Config + I18n）
+// RegisterAllLocalHandlers 注册所有本地 handler（System + Config + I18n + Social）
 // 使用 noop stub 作为 Config/I18n 服务实现，无需外部依赖
+// Social 模块使用 Memory Repository，无需 MySQL 连接
 // Gateway 单体部署模式（local）启动时调用此函数即可完成全部注册
 func RegisterAllLocalHandlers(invoker *LocalInvoker) {
 	RegisterModuleHandlers(invoker)
 	RegisterConfigI18nHandlers(invoker, &noopConfigService{}, &noopI18nService{})
+	RegisterSocialHandlers(invoker)
+}
+
+// RegisterSocialHandlers 注册 Social 域（Member + Group + Topic）的本地 TarsGo servant handler
+// 使用 Memory Repository 实现 MVP-P0 本地联调，不依赖 MySQL/GORM
+//
+// 注册的 TargetKey：
+// - CaiRobot.SocialServer.SocialObj.HandleMember  → Member Servant（1000 段协议）
+// - CaiRobot.SocialServer.SocialObj.HandleGroup   → Group Servant（2000 段协议）
+// - CaiRobot.SocialServer.SocialObj.HandleTopic    → Topic Servant（3000 段协议）
+func RegisterSocialHandlers(invoker *LocalInvoker) {
+	// 创建 Memory Repository 实例（MVP-P0 阶段使用内存存储，Phase 1.5 切换到 MySQL）
+	memberRepo := member.NewMemoryRepository()
+	groupRepo := group.NewMemoryRepository()
+	topicRepo := topic.NewMemoryRepository()
+
+	// 创建 Social 聚合模块（默认 NoopPublisher）
+	socialMod := socialmodule.NewModule(memberRepo, groupRepo, topicRepo)
+
+	// 注册 Member 域 handler（1000 段：1021-1046）
+	invoker.Register(TargetKey{
+		App:     "CaiRobot",
+		Server:  "SocialServer",
+		Servant: "SocialObj",
+		Method:  "HandleMember",
+	}, &servantHandler{servant: socialMod.MemberServant})
+
+	// 注册 Group 域 handler（2000 段：2005-2078）
+	invoker.Register(TargetKey{
+		App:     "CaiRobot",
+		Server:  "SocialServer",
+		Servant: "SocialObj",
+		Method:  "HandleGroup",
+	}, &servantHandler{servant: socialMod.GroupServant})
+
+	// 注册 Topic 域 handler（3000 段：3001-3066）
+	invoker.Register(TargetKey{
+		App:     "CaiRobot",
+		Server:  "SocialServer",
+		Servant: "SocialObj",
+		Method:  "HandleTopic",
+	}, &servantHandler{servant: socialMod.TopicServant})
+}
+
+// servantHandler 将 Social Servant 适配为 LocalHandler 接口
+// Servant.Handle 签名与 LocalHandler.Invoke 完全匹配，直接委托调用
+type servantHandler struct {
+	servant interface {
+		Handle(ctx context.Context, req []byte, extend map[string]string) (int, []byte, error)
+	}
+}
+
+func (h *servantHandler) Invoke(ctx context.Context, request []byte, extend map[string]string) (int, []byte, error) {
+	return h.servant.Handle(ctx, request, extend)
 }
