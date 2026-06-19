@@ -39,10 +39,17 @@ func main() {
 
 	var invoker tarsclient.TarsInvoker
 	var authMw *middleware.AuthMiddleware
+
+	// JWT Secret 统一从环境变量读取，invoker 和 auth 中间件必须使用相同 secret
+	jwtSecret := []byte(getEnv("JWT_SECRET", "cairobot-mvp-p0-dev-secret-key-32bytes-min!!"))
+
 	if mode == "local" {
 		invoker = tarsclient.NewLocalInvoker()
 		tarsclient.RegisterAllLocalHandlers(invoker.(*tarsclient.LocalInvoker))
-		tars.TLOG.Info("invoker mode=local (monolith TarsGo adapter) | handlers=System+Config+I18n (noop)")
+		// local 模式也启用 JWT 鉴权中间件（Stateful E2E 需要携带 token 的接口必须通过校验）
+		authSvc := auth.NewAuthService(jwtSecret, "cairobot", 24*time.Hour)
+		authMw = middleware.NewAuthMiddleware(authSvc)
+		tars.TLOG.Info("invoker mode=local (monolith TarsGo adapter) | handlers=System+Config+Social | auth=JWT enabled")
 	} else if mode == "mysql" {
 		mysqlCfg := loadMySQLConfigFromEnv()
 		env := os.Getenv("APP_ENV")
@@ -54,8 +61,7 @@ func main() {
 			tars.TLOG.Error("BuildRealServices failed: " + err.Error())
 			os.Exit(1)
 		}
-		// S1: 初始化 JWT Auth 中间件
-		jwtSecret := []byte(getEnv("JWT_SECRET", "cairobot-s1-default-secret-change-in-production"))
+		// S1: 初始化 JWT Auth 中间件（与 local 模式共享同一 secret）
 		authSvc := auth.NewAuthService(jwtSecret, "cairobot", 24*time.Hour)
 		authMw = middleware.NewAuthMiddleware(authSvc)
 

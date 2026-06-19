@@ -24,7 +24,7 @@ func NewSvcUpdateUserInfo(repo Repository) *SvcUpdateUserInfo {
 // Handle 处理更新用户信息请求，遵循 DevGuide §7 五步模式
 func (s *SvcUpdateUserInfo) Handle(ctx context.Context, req *pb.UpdateUserInfoRequest) (*pb.UpdateUserInfoResponse, error) {
 	// Step 1: 参数校验 — 从上下文提取 userId
-	userID := ctx.Value(ctxKeyUserID)
+	userID := ctx.Value(CtxKeyUserID)
 	if userID == nil || userID.(string) == "" {
 		return &pb.UpdateUserInfoResponse{
 			Result: &base.Result{

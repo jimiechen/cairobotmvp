@@ -8,12 +8,6 @@ import (
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
 )
 
-// ctxKeyUserID 上下文键类型，用于从认证中间件获取当前用户 ID
-type ctxKeyUserIDType struct{}
-
-// ctxKeyUserID 当前用户 ID 的上下文键（由认证中间件注入）
-var ctxKeyUserID = ctxKeyUserIDType{}
-
 // SvcGetUserInfo 查询用户信息服务（minType=1029 GetUserInfo）
 // 负责根据认证上下文中的 userId 查询并返回完整用户信息
 // 不负责用户认证（由认证中间件负责），不负责权限判断
@@ -28,8 +22,8 @@ func NewSvcGetUserInfo(repo Repository) *SvcGetUserInfo {
 
 // Handle 处理查询用户信息请求，遵循 DevGuide §7 五步模式
 func (s *SvcGetUserInfo) Handle(ctx context.Context, req *pb.GetUserInfoRequest) (*pb.GetUserInfoResponse, error) {
-	// Step 1: 参数校验 — 从上下文提取 userId
-	userID := ctx.Value(ctxKeyUserID)
+	// Step 1: 参数校验 — 从上下文提取 userId（使用统一的 CtxKeyUserID 常量）
+	userID := ctx.Value(CtxKeyUserID)
 	if userID == nil || userID.(string) == "" {
 		return &pb.GetUserInfoResponse{
 			Result: &base.Result{

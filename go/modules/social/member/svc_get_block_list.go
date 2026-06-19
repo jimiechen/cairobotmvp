@@ -23,7 +23,7 @@ func NewSvcGetBlockList(repo Repository) *SvcGetBlockList {
 // Handle 处理查询拉黑列表请求，遵循 DevGuide §7 五步模式
 func (s *SvcGetBlockList) Handle(ctx context.Context, req *pb.GetBlockListRequest) (*pb.GetBlockListResponse, error) {
 	// Step 1: 参数校验 — 从上下文提取 userId + 分页参数默认值
-	userID := ctx.Value(ctxKeyUserID)
+	userID := ctx.Value(CtxKeyUserID)
 	if userID == nil || userID.(string) == "" {
 		return &pb.GetBlockListResponse{
 			Result: &base.Result{

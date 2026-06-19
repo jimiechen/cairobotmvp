@@ -6,31 +6,23 @@ import (
 	"time"
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
+	"github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
-// context key 类型，避免冲突
+// context key 类型，避免冲突（仅 group 内部使用的 key）
 type contextKey string
 
-const (
-	// ctxKeyUserID 上下文中存储当前用户 ID 的 key
-	ctxKeyUserID contextKey = "user_id"
-	// ctxKeyOwnerID 上下文中存储群主用户 ID 的 key（创建圈子时使用）
-	ctxKeyOwnerID contextKey = "owner_id"
-)
+// ctxKeyOwnerID 上下文中存储群主用户 ID 的 key（创建圈子时使用）
+const ctxKeyOwnerID contextKey = "owner_id"
 
-// WithUserID 向上下文注入当前用户 ID
-func WithUserID(ctx context.Context, userID string) context.Context {
-	return context.WithValue(ctx, ctxKeyUserID, userID)
-}
-
-// WithOwnerID 向上下文注入群主用户 ID
+// WithOwnerID 向上下文注入群主用户 ID（创建圈子时使用）
 func WithOwnerID(ctx context.Context, ownerID string) context.Context {
 	return context.WithValue(ctx, ctxKeyOwnerID, ownerID)
 }
 
-// getUserIDFromContext 从上下文获取当前用户 ID
+// getUserIDFromContext 从上下文获取当前用户 ID（使用 member 包统一常量）
 func getUserIDFromContext(ctx context.Context) string {
-	if uid, ok := ctx.Value(ctxKeyUserID).(string); ok {
+	if uid, ok := ctx.Value(member.CtxKeyUserID).(string); ok {
 		return uid
 	}
 	return ""

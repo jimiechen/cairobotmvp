@@ -76,8 +76,8 @@ func (gs *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if len(packet.Data) == 0 {
 		tars.TLOG.Debug("empty data field in packet routeKey=" + fmt.Sprintf("%d:%d", packet.MaxType, packet.MinType))
-		writeError(w, http.StatusBadRequest, commonlib.CodeBadRequest, "data is empty")
-		return
+		// 某些协议（如 GetUserInfo）的请求体无字段，允许空 Data 继续路由
+		// 业务层校验由 Servant/Handler 负责
 	}
 
 	routeKey := fmt.Sprintf("%d:%d", packet.MaxType, packet.MinType)
