@@ -20,6 +20,13 @@ func NewServant(repo Repository, publisher event.Publisher) *Servant {
 	}
 }
 
+// InjectJWTManager 向 Handler 注入 JWT 管理器（延迟注入）
+// 用于解决 Module 创建时 JWT 依赖尚未就绪的循环依赖问题
+// 会重建内部 Handler 实例（保留原 repo 和 publisher）
+func (s *Servant) InjectJWTManager(m *JWTManager) {
+	s.handler.InjectJWTManager(m)
+}
+
 // Handle 实现 TarsGo Servant 接口
 // 从 extend["minType"] 提取协议号，转发给 Handler.Dispatch
 // 将 extend["user_id"] 桥接到 context.Context（AuthMiddleware 注入 → svc 使用）

@@ -21,7 +21,8 @@ type ModuleOption func(*moduleConfig)
 
 // moduleConfig 模块内部配置，支持可选依赖注入
 type moduleConfig struct {
-	publisher event.Publisher
+	publisher  event.Publisher
+	jwtManager *member.JWTManager
 }
 
 // WithPublisher 注入事件发布器
@@ -29,6 +30,14 @@ type moduleConfig struct {
 func WithPublisher(p event.Publisher) ModuleOption {
 	return func(c *moduleConfig) {
 		c.publisher = p
+	}
+}
+
+// WithJWTManager 注入 JWT 管理器（Member 域登录/刷新令牌需要）
+// 不注入时 UserLogin/UserRefresh 会因 nil jwtManager 而 panic
+func WithJWTManager(m *member.JWTManager) ModuleOption {
+	return func(c *moduleConfig) {
+		c.jwtManager = m
 	}
 }
 
@@ -47,9 +56,14 @@ func NewModule(
 		opt(cfg)
 	}
 
-	return &Module{
+	socialMod := &Module{
 		MemberServant: member.NewServant(memberRepo, cfg.publisher),
 		GroupServant:  group.NewServant(groupRepo, cfg.publisher),
 		TopicServant:   topic.NewServant(topicRepo, cfg.publisher),
 	}
+	// 延迟注入 JWTManager（解决循环依赖：Module 创建时 JWT 配置可能尚未就绪）
+	if cfg.jwtManager != nil {
+		socialMod.MemberServant.InjectJWTManager(cfg.jwtManager)
+	}
+	return socialMod
 }

@@ -1,6 +1,7 @@
 .PHONY: help bootstrap proto proto-go proto-ts proto-check lint test unit integration coverage build package \
         docs rules testcase-check comment-check ci clean \
         gateway-build gateway-start gateway-stop gateway-restart gateway-test gateway-smoke gateway-verify \
+        routes-sync \
         go-all common-lib-test modules-test tars-test gateway-e2e \
         admin-dev admin-start admin-stop admin-backend admin-frontend admin-status admin-restart \
 admin-migrate \
@@ -341,6 +342,28 @@ gateway-smoke: ## 冒烟测试：编译 + 启动 + 验证 /api/hello + 停止
 
 gateway-verify: ## 完整验证：编译 + 测试 + TarsGo 依赖检查
 	@$(MAKE) -C go gateway-verify
+
+routes-sync: ## 同步 routes.yaml（根目录 → proto-gateway 运行时目录）
+	@echo "==> 同步 routes.yaml ..."
+	@SRC="configs/gateway/routes.yaml"; \
+	 DST="go/gateway/proto-gateway/configs/gateway/routes.yaml"; \
+	if [ ! -f "$$SRC" ]; then \
+		echo "❌ 源文件不存在: $$SRC"; exit 1; \
+	fi; \
+	if [ ! -f "$$DST" ]; then \
+		echo "⚠️  目标文件不存在，创建: $$DST"; \
+		cp "$$SRC" "$$DST"; \
+	else \
+		SRC_HASH=$$(shasum -a 256 "$$SRC" | awk '{print $$1}'); \
+		DST_HASH=$$(shasum -a 256 "$$DST" | awk '{print $$1}'); \
+		if [ "$$SRC_HASH" = "$$DST_HASH" ]; then \
+			echo "✅ routes.yaml 已同步 (SHA256=$${SRC_HASH:0:16}...)"; \
+		else \
+			echo "⚠️  routes.yaml 不同步，正在覆盖..."; \
+			cp "$$SRC" "$$DST"; \
+			echo "✅ 已同步 (源 SHA256=$${SRC_HASH:0:16}...)"; \
+		fi; \
+	fi
 
 # ============================================================
 # Go Monorepo 模块化测试命令（透传到 go/Makefile）

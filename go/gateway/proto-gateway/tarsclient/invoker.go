@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/jimiechen/mineplanet/go/common-lib"
 	"github.com/jimiechen/mineplanet/go/common-lib/module"
-	"github.com/jimiechen/mineplanet/go/modules/hello"
 	"github.com/jimiechen/mineplanet/go/modules/health"
+	"github.com/jimiechen/mineplanet/go/modules/hello"
 	socialmodule "github.com/jimiechen/mineplanet/go/modules/social"
 	"github.com/jimiechen/mineplanet/go/modules/social/group"
 	"github.com/jimiechen/mineplanet/go/modules/social/member"
 	"github.com/jimiechen/mineplanet/go/modules/social/topic"
-	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
 	configdomain "github.com/jimiechen/mineplanet/go/services/config/domain"
+	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
 	i18ndomain "github.com/jimiechen/mineplanet/go/services/i18n/domain"
 	i18nservice "github.com/jimiechen/mineplanet/go/services/i18n/service"
 )
@@ -76,6 +77,11 @@ func NewLocalInvoker() *LocalInvoker {
 	}
 }
 
+// HandlersForTest 返回已注册的 handler key 列表（仅用于测试诊断）
+func (li *LocalInvoker) HandlersForTest() map[string]LocalHandler {
+	return li.handlers
+}
+
 // buildMinimalDeps 构建最小依赖集，用于 Gateway 单体部署模式的模块初始化
 // 仅提供 no-op 的 Config 和 Logger 实现，I18n/DB/Cache 为 nil
 func buildMinimalDeps() module.Deps {
@@ -89,8 +95,8 @@ func buildMinimalDeps() module.Deps {
 type noopConfigReader struct{}
 
 func (n *noopConfigReader) GetString(_ context.Context, _, _ string) (string, error) { return "", nil }
-func (n *noopConfigReader) GetInt(_ context.Context, _, _ string) (int64, error)   { return 0, nil }
-func (n *noopConfigReader) GetBool(_ context.Context, _, _ string) (bool, error)   { return false, nil }
+func (n *noopConfigReader) GetInt(_ context.Context, _, _ string) (int64, error)     { return 0, nil }
+func (n *noopConfigReader) GetBool(_ context.Context, _, _ string) (bool, error)     { return false, nil }
 func (n *noopConfigReader) Watch(_ context.Context, _ string, _ func(string, interface{}, interface{})) error {
 	return nil
 }
@@ -99,12 +105,12 @@ func (n *noopConfigReader) Ping(_ context.Context) error { return nil }
 // noopLogger 空实现的 Logger，输出到 stdout（仅用于本地开发联调）
 type noopLogger struct{}
 
-func (l *noopLogger) Info(_ context.Context, v ...interface{})   { /* no-op for local dev */ }
-func (l *noopLogger) Infof(_ context.Context, _ string, _ ...interface{}) {}
-func (l *noopLogger) Error(_ context.Context, v ...interface{})  { /* no-op for local dev */ }
+func (l *noopLogger) Info(_ context.Context, v ...interface{})             { /* no-op for local dev */ }
+func (l *noopLogger) Infof(_ context.Context, _ string, _ ...interface{})  {}
+func (l *noopLogger) Error(_ context.Context, v ...interface{})            { /* no-op for local dev */ }
 func (l *noopLogger) Errorf(_ context.Context, _ string, _ ...interface{}) {}
-func (l *noopLogger) Warn(_ context.Context, v ...interface{})   { /* no-op for local dev */ }
-func (l *noopLogger) Debug(_ context.Context, v ...interface{})  { /* no-op for local dev */ }
+func (l *noopLogger) Warn(_ context.Context, v ...interface{})             { /* no-op for local dev */ }
+func (l *noopLogger) Debug(_ context.Context, v ...interface{})            { /* no-op for local dev */ }
 
 // noopConfigService 空实现的 ConfigService，用于无外部依赖的本地开发模式
 // 返回空配置响应，不连接 SQLite / 外部配置中心
@@ -112,7 +118,7 @@ type noopConfigService struct{}
 
 func (s *noopConfigService) GetAppConfigs(req *configservice.AppConfigRequest) (*configservice.AppConfigResponse, error) {
 	return &configservice.AppConfigResponse{
-		StaticModules:   make(map[string]map[string]*configdomain.TypedValue),
+		StaticModules:  make(map[string]map[string]*configdomain.TypedValue),
 		DynamicModules: []*configservice.DynamicModuleView{},
 	}, nil
 }
@@ -371,8 +377,19 @@ func RegisterSocialHandlers(invoker *LocalInvoker) {
 	groupRepo := group.NewMemoryRepository()
 	topicRepo := topic.NewMemoryRepository()
 
-	// 创建 Social 聚合模块（默认 NoopPublisher）
-	socialMod := socialmodule.NewModule(memberRepo, groupRepo, topicRepo)
+	// 创建 JWT 管理器（UserLogin/UserLogout/RefreshToken 必需）
+	jwtMgr, err := member.NewJWTManager(
+		member.DefaultJWTConfig().SetSecretKey("cairobot-mvp-p0-dev-secret-key-32bytes-min!!"),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("social: 创建 JWTManager 失败: %v", err))
+	}
+
+	// 创建 Social 聚合模块（注入 JWTManager 解决 UserLogin nil pointer panic）
+	socialMod := socialmodule.NewModule(
+		memberRepo, groupRepo, topicRepo,
+		socialmodule.WithJWTManager(jwtMgr),
+	)
 
 	// 注册 Member 域 handler（1000 段：1021-1046）
 	invoker.Register(TargetKey{

@@ -13,6 +13,8 @@ import (
 // Handler 协议分发器，按 minType 路由到对应的 svc
 // switch case 以外禁止业务逻辑
 type Handler struct {
+	// 用户 Repository（延迟注入 JWTManager 时需要重建 svc）
+	repo Repository
 	// 领域事件发布器（可为 nil，nil 时不发布事件）
 	publisher event.Publisher
 	// JWT 令牌管理器
@@ -57,6 +59,7 @@ func WithTokenStore(ts TokenStore) HandlerOption {
 // NewHandler 创建 Handler 实例，注入所有 svc 依赖
 func NewHandler(repo Repository, publisher event.Publisher, opts ...HandlerOption) *Handler {
 	h := &Handler{
+		repo:              repo,
 		publisher:         publisher,
 		registerSvc:      NewSvcRegister(repo, publisher),
 		loginSvc:         NewSvcLogin(repo, nil), // 延迟：通过 opts 注入 jwtManager
@@ -80,6 +83,16 @@ func NewHandler(repo Repository, publisher event.Publisher, opts ...HandlerOptio
 		h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, repo)
 	}
 	return h
+}
+
+// InjectJWTManager 延迟注入 JWT 管理器并重建依赖它的 svc
+// 用于解决 Module 创建时 JWT 依赖尚未就绪的循环依赖问题
+func (h *Handler) InjectJWTManager(m *JWTManager) {
+	h.jwtManager = m
+	// 重建依赖 JWTManager 的三个 svc（login/logout/refresh）
+	h.loginSvc = NewSvcLogin(h.repo, h.jwtManager)
+	h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
+	h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, h.repo)
 }
 
 // Dispatch 根据 minType 分发到对应的 svc 处理
