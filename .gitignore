@@ -58,4 +58,11 @@ docs/drafts/
 .admin-pids/
 .admin-logs/
 go/admin/go-admin-db.db
-go/gateway/proto-gateway/cmd/server/__debug_bin1360420036
+go/gateway/proto-gateway/cmd/server/__debug_bin*
+
+## 敏感配置文件（含明文密码/DSN，不入库）
+.env
+.env.*
+!.env.example
+**/settings.local.yml
+**/.env.local

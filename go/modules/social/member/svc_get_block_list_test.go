@@ -30,7 +30,7 @@ func TestSvcGetBlockList_正常分页查询(t *testing.T) {
 	}
 
 	svc := NewSvcGetBlockList(mockRepo)
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "user-001")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "user-001")
 
 	req := &pb.GetBlockListRequest{
 		Page:     1,
@@ -68,7 +68,7 @@ func TestSvcGetBlockList_空列表(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
 	svc := NewSvcGetBlockList(mockRepo)
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "user-001")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "user-001")
 
 	req := &pb.GetBlockListRequest{
 		Page:     1,

@@ -54,9 +54,11 @@ func (s *SvcRegister) Handle(ctx context.Context, req *pb.UserRegisterRequest) (
 	}
 	user := &User{
 		ID:              generateUserID(),
+		UID:             fmt.Sprintf("1%015d", now%10000000000000000), // 自动生成唯一 UID（9位数字格式，避免 idx_uid 空值冲突）
 		Username:        req.Username,
 		Password:        hashedPwd,
 		Email:           req.Email,
+		Phone:           fmt.Sprintf("auto%ds", now%100000000), // 自动生成唯一默认 phone（避免 uk_phone 空值冲突）
 		Nickname:        req.Nickname,
 		Status:          UserStatusActive, // active
 		MembershipLevel: "normal",

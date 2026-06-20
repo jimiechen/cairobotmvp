@@ -22,7 +22,7 @@ func TestSvcUpdateUserInfo_正常更新昵称(t *testing.T) {
 	mockRepo.users[originalUser.ID] = originalUser
 
 	svc := NewSvcUpdateUserInfo(mockRepo)
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "user-001")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "user-001")
 
 	req := &pb.UpdateUserInfoRequest{
 		Nickname: "新昵称",
@@ -68,7 +68,7 @@ func TestSvcUpdateUserInfo_全可选字段为空(t *testing.T) {
 	mockRepo.users[originalUser.ID] = originalUser
 
 	svc := NewSvcUpdateUserInfo(mockRepo)
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "user-001")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "user-001")
 
 	req := &pb.UpdateUserInfoRequest{}
 
@@ -90,7 +90,7 @@ func TestSvcUpdateUserInfo_用户不存在(t *testing.T) {
 	// Arrange
 	mockRepo := newMockRepository()
 	svc := NewSvcUpdateUserInfo(mockRepo)
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "nonexistent")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "nonexistent")
 
 	req := &pb.UpdateUserInfoRequest{
 		Nickname: "新昵称",

@@ -12,6 +12,10 @@ build-linux:
 build-sqlite:
 	go build -tags sqlite3 -ldflags="-w -s" -a -installsuffix -o go-admin .
 
+# make run-local（本地开发：使用 settings.local.yml 连接 MySQL）
+run-local:
+	go run main.go server -c config/settings.local.yml
+
 # make run
 run:
     # delete go-admin-api container

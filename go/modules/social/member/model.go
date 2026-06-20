@@ -57,6 +57,8 @@ type MemberBlock struct {
 	BlockedID string `gorm:"size:64;index:idx_blocked" json:"blocked_id"`
 	// Reason 拉黑原因（可选）
 	Reason string `gorm:"size:500" json:"reason"`
+	// UpdatedAt 更新时间戳（毫秒）
+	UpdatedAt int64 `json:"updated_at"`
 	// CreatedAt 拉黑操作时间戳（毫秒）
 	CreatedAt int64 `json:"created_at"`
 }

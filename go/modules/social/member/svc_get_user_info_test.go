@@ -27,7 +27,7 @@ func TestSvcGetUserInfo_正常查询(t *testing.T) {
 	svc := NewSvcGetUserInfo(mockRepo)
 
 	// 将 userId 放入上下文（MVP-P0 简化：模拟认证中间件注入）
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "user-001")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "user-001")
 	req := &pb.GetUserInfoRequest{}
 
 	// Act
@@ -64,7 +64,7 @@ func TestSvcGetUserInfo_用户不存在(t *testing.T) {
 	mockRepo := newMockRepository()
 	svc := NewSvcGetUserInfo(mockRepo)
 
-	ctx := context.WithValue(context.Background(), ctxKeyUserID, "nonexistent")
+	ctx := context.WithValue(context.Background(), CtxKeyUserID, "nonexistent")
 	req := &pb.GetUserInfoRequest{}
 
 	// Act

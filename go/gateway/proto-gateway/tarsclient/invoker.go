@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/jimiechen/mineplanet/go/common-lib"
 	"github.com/jimiechen/mineplanet/go/common-lib/module"
@@ -18,6 +20,10 @@ import (
 	configservice "github.com/jimiechen/mineplanet/go/services/config/service"
 	i18ndomain "github.com/jimiechen/mineplanet/go/services/i18n/domain"
 	i18nservice "github.com/jimiechen/mineplanet/go/services/i18n/service"
+
+	"github.com/redis/go-redis/v9"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // Target 定义 Tars 调用目标
@@ -365,21 +371,46 @@ func RegisterAllLocalHandlers(invoker *LocalInvoker) {
 }
 
 // RegisterSocialHandlers 注册 Social 域（Member + Group + Topic）的本地 TarsGo servant handler
-// 使用 Memory Repository 实现 MVP-P0 本地联调，不依赖 MySQL/GORM
+// 优先使用 GORM+Redis 直连真实数据库（通过 MYSQL_HOST 环境变量触发）
+// 未设置 MYSQL_HOST 时 fallback 到 Memory Repository（保持单元测试兼容性）
+//
+// 环境变量：
+//   - MYSQL_HOST / MYSQL_PORT / MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE：MySQL 连接
+//   - REDIS_HOST / REDIS_PORT / REDIS_DB：Redis 连接（可选，未设置则用 MemoryTokenStore）
 //
 // 注册的 TargetKey：
-// - CaiRobot.SocialServer.SocialObj.HandleMember  → Member Servant（1000 段协议）
-// - CaiRobot.SocialServer.SocialObj.HandleGroup   → Group Servant（2000 段协议）
-// - CaiRobot.SocialServer.SocialObj.HandleTopic    → Topic Servant（3000 段协议）
+//   - CaiRobot.SocialServer.SocialObj.HandleMember  → Member Servant（1000 段协议）
+//   - CaiRobot.SocialServer.SocialObj.HandleGroup   → Group Servant（2000 段协议）
+//   - CaiRobot.SocialServer.SocialObj.HandleTopic    → Topic Servant（3000 段协议）
 func RegisterSocialHandlers(invoker *LocalInvoker) {
-	// 创建 Memory Repository 实例（MVP-P0 阶段使用内存存储，Phase 1.5 切换到 MySQL）
-	memberRepo := member.NewMemoryRepository()
-	groupRepo := group.NewMemoryRepository()
-	topicRepo := topic.NewMemoryRepository()
+	// 根据环境变量选择 Repository 实现
+	var memberRepo member.Repository
+	var groupRepo group.Repository
+	var topicRepo topic.Repository
+
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	if mysqlHost != "" {
+		// 直连 MySQL 模式
+		db := connectMySQL()
+		memberRepo = member.NewGormRepository(db)
+		groupRepo = group.NewGormRepository(db)
+		topicRepo = topic.NewGormRepository(db)
+		fmt.Printf("social: 使用 GORM+MySQL 直连模式 (host=%s)\n", mysqlHost)
+	} else {
+		// Memory fallback（无 MYSQL_HOST 时的兼容模式）
+		memberRepo = member.NewMemoryRepository()
+		groupRepo = group.NewMemoryRepository()
+		topicRepo = topic.NewMemoryRepository()
+		fmt.Println("social: 使用 Memory Repository 模式（未设置 MYSQL_HOST）")
+	}
 
 	// 创建 JWT 管理器（UserLogin/UserLogout/RefreshToken 必需）
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "cairobot-mvp-p0-dev-secret-key-32bytes-min!!"
+	}
 	jwtMgr, err := member.NewJWTManager(
-		member.DefaultJWTConfig().SetSecretKey("cairobot-mvp-p0-dev-secret-key-32bytes-min!!"),
+		member.DefaultJWTConfig().SetSecretKey(jwtSecret),
 	)
 	if err != nil {
 		panic(fmt.Sprintf("social: 创建 JWTManager 失败: %v", err))
@@ -390,6 +421,16 @@ func RegisterSocialHandlers(invoker *LocalInvoker) {
 		memberRepo, groupRepo, topicRepo,
 		socialmodule.WithJWTManager(jwtMgr),
 	)
+
+	// 注入 TokenStore（仅 MySQL 模式下连接 Redis）
+	if mysqlHost != "" {
+		redisClient := connectRedis()
+		if redisClient != nil {
+			tokenStore := member.NewRedisTokenStore(redisClient, "social:test:tl:")
+			socialMod.MemberServant.InjectTokenStore(tokenStore)
+			fmt.Println("social: RedisTokenStore 已注入 MemberServant")
+		}
+	}
 
 	// 注册 Member 域 handler（1000 段：1021-1046）
 	invoker.Register(TargetKey{
@@ -414,6 +455,62 @@ func RegisterSocialHandlers(invoker *LocalInvoker) {
 		Servant: "SocialObj",
 		Method:  "HandleTopic",
 	}, &servantHandler{servant: socialMod.TopicServant})
+}
+
+// connectMySQL 从环境变量构建 MySQL DSN 并返回 GORM DB 实例
+// 环境变量：MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE
+func connectMySQL() *gorm.DB {
+	host := getEnv("MYSQL_HOST", "127.0.0.1")
+	port := getEnv("MYSQL_PORT", "3306")
+	user := getEnv("MYSQL_USER", "root")
+	pass := getEnv("MYSQL_PASSWORD", "")
+	dbname := getEnv("MYSQL_DATABASE", "go_biz")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, pass, host, port, dbname)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(fmt.Sprintf("social: MySQL 连接失败 (%s): %v", dsn, err))
+	}
+	return db
+}
+
+// connectRedis 从环境变量创建 Redis Client
+// 环境变量：REDIS_HOST, REDIS_PORT, REDIS_DB
+// 连接失败时返回 nil（不阻断启动，Logout/Refresh 将降级为内存行为）
+func connectRedis() *redis.Client {
+	host := getEnv("REDIS_HOST", "")
+	if host == "" {
+		return nil
+	}
+	port := getEnv("REDIS_PORT", "6379")
+	dbNum := 0
+	if dbStr := os.Getenv("REDIS_DB"); dbStr != "" {
+		fmt.Sscanf(dbStr, "%d", &dbNum)
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf("%s:%s", host, port),
+		DB:   dbNum,
+	})
+
+	// 快速连通性检测（不阻断启动）
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := client.Ping(ctx).Err(); err != nil {
+		fmt.Printf("social: 警告 - Redis 连通性检测失败: %v（Token 黑名单功能降级）\n", err)
+		return nil
+	}
+	return client
+}
+
+// getEnv 读取环境变量，不存在时返回默认值
+func getEnv(key, defaultVal string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return defaultVal
 }
 
 // servantHandler 将 Social Servant 适配为 LocalHandler 接口

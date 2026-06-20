@@ -1,42 +1,78 @@
-// repository_gorm_test.go — GormRepository 冒烟测试
-// 覆盖核心 CRUD 路径：用户创建/查询、拉黑操作、统计初始化
-// 使用 SQLite in-memory 数据库，每个测试独立环境
+// repository_gorm_test.go — GormRepository 集成测试
+// 直连真实 MySQL 数据库（go_biz），验证 User/Block/Stats 全部 CRUD 路径
+// 运行条件：需设置 MYSQL_HOST 环境变量（source .env.local 后执行）
 
 package member
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-// setupTestDB 创建 SQLite 内存数据库并自动迁移表结构
-// 每个测试调用此函数获得独立的数据库实例，避免测试间干扰
+const testIDPrefix = "gt_mbr_" // 集成测试 ID 前缀，避免与生产数据冲突
+
+// setupTestDB 连接真实 MySQL 数据库
+// 环境变量：MYSQL_HOST/MYSQL_PORT/MYSQL_USER/MYSQL_PASSWORD/MYSQL_DATABASE
 func setupTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+
+	host := os.Getenv("MYSQL_HOST")
+	if host == "" {
+		t.Skip("跳过集成测试：未设置 MYSQL_HOST（需 source .env.local）")
+	}
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=5000ms",
+		getEnv("MYSQL_USER", "root"),
+		getEnv("MYSQL_PASSWORD", ""),
+		host,
+		getEnv("MYSQL_PORT", "3306"),
+		getEnv("MYSQL_DATABASE", "go_biz"),
+	)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
-	err = db.AutoMigrate(&User{}, &MemberBlock{}, &MemberStats{})
-	require.NoError(t, err)
+
+	sqlDB, _ := db.DB()
+	require.NoError(t, sqlDB.PingContext(context.Background()))
 	return db
+}
+
+// cleanupTestData 按 ID 前缀删除测试数据（测试结束后调用）
+// 注意：必须先删 stats（FK→users），再删 blocks，最后删 users
+// stats 表用 user_id 匹配（因为 PK=user_id 可能与 id 前缀不同）
+func cleanupUserData(t *testing.T, db *gorm.DB) {
+	t.Helper()
+	db.Exec("DELETE FROM member_stats WHERE user_id LIKE ?", testIDPrefix+"%")
+	db.Exec("DELETE FROM member_blocks WHERE id LIKE ?", testIDPrefix+"%")
+	db.Exec("DELETE FROM users WHERE id LIKE ?", testIDPrefix+"%")
+}
+
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
 
 // ========== User CRUD 测试 ==========
 
 func TestCreateAndGetUser(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	now := time.Now().UnixMilli()
 	user := &User{
-		ID:              "u001",
+		ID:              testIDPrefix + "u001",
 		UID:             "100000001",
 		Username:        "testuser",
 		Password:        "hashed_pwd",
@@ -49,15 +85,13 @@ func TestCreateAndGetUser(t *testing.T) {
 		UpdatedAt:       now,
 	}
 
-	// 创建
 	err := repo.CreateUser(ctx, user)
 	require.NoError(t, err)
 
-	// 按 ID 查回
-	got, err := repo.GetUserByID(ctx, "u001")
+	got, err := repo.GetUserByID(ctx, testIDPrefix+"u001")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "u001", got.ID)
+	assert.Equal(t, testIDPrefix+"u001", got.ID)
 	assert.Equal(t, "100000001", got.UID)
 	assert.Equal(t, "testuser", got.Username)
 	assert.Equal(t, "test@example.com", got.Email)
@@ -68,37 +102,36 @@ func TestCreateAndGetUser(t *testing.T) {
 
 func TestGetUserNotFound(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	// 查不存在的 ID → nil, nil
-	user, err := repo.GetUserByID(ctx, "nonexistent")
+	user, err := repo.GetUserByID(ctx, testIDPrefix+"_nonexistent_99999")
 	require.NoError(t, err)
 	assert.Nil(t, user)
 
-	// 查不存在的 UID
 	user, err = repo.GetUserByUID(ctx, "999999999")
 	require.NoError(t, err)
 	assert.Nil(t, user)
 
-	// 查不存在的 username
-	user, err = repo.GetUserByUsername(ctx, "nouser")
+	user, err = repo.GetUserByUsername(ctx, testIDPrefix+"_nouser_xyz")
 	require.NoError(t, err)
 	assert.Nil(t, user)
 }
 
 func TestGetUserByEmailAndPhone(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	now := time.Now().UnixMilli()
 	user := &User{
-		ID:        "u002",
+		ID:        testIDPrefix + "u002",
 		UID:       "100000002",
 		Username:  "emailuser",
 		Password:  "pwd",
-		Email:     "findme@test.com",
+		Email:     testIDPrefix + "findme@test.com",
 		Phone:     "13900139000",
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -106,27 +139,26 @@ func TestGetUserByEmailAndPhone(t *testing.T) {
 	err := repo.CreateUser(ctx, user)
 	require.NoError(t, err)
 
-	// 按邮箱查
-	got, err := repo.GetUserByEmail(ctx, "findme@test.com")
+	got, err := repo.GetUserByEmail(ctx, testIDPrefix+"findme@test.com")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "u002", got.ID)
+	assert.Equal(t, testIDPrefix+"u002", got.ID)
 
-	// 按手机号查
 	got, err = repo.GetUserByPhone(ctx, "13900139000")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "u002", got.ID)
+	assert.Equal(t, testIDPrefix+"u002", got.ID)
 }
 
 func TestUpdateUser(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	now := time.Now().UnixMilli()
 	user := &User{
-		ID:        "u003",
+		ID:        testIDPrefix + "u003",
 		UID:       "100000003",
 		Username:  "updateuser",
 		Password:  "oldpwd",
@@ -137,15 +169,13 @@ func TestUpdateUser(t *testing.T) {
 	err := repo.CreateUser(ctx, user)
 	require.NoError(t, err)
 
-	// 更新昵称和头像
 	user.Nickname = "NewNick"
 	user.Avatar = "https://example.com/avatar.png"
 	user.UpdatedAt = time.Now().UnixMilli()
 	err = repo.UpdateUser(ctx, user)
 	require.NoError(t, err)
 
-	// 验证更新结果
-	got, err := repo.GetUserByID(ctx, "u003")
+	got, err := repo.GetUserByID(ctx, testIDPrefix+"u003")
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "NewNick", got.Nickname)
@@ -154,17 +184,18 @@ func TestUpdateUser(t *testing.T) {
 
 func TestBatchGetUsersByID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	now := time.Now().UnixMilli()
 	for i := 0; i < 3; i++ {
 		u := &User{
-			ID:        fmt.Sprintf("batch_%d", i),
+			ID:        fmt.Sprintf("%sbatch_%d", testIDPrefix, i),
 			UID:       fmt.Sprintf("10001000%d", i),
-			Username:  fmt.Sprintf("batchuser%d", i),
+			Username:  fmt.Sprintf("%sbatchuser%d", testIDPrefix, i),
 			Password:  "pwd",
-			Email:     fmt.Sprintf("batch%d@test.com", i),
+			Email:     fmt.Sprintf("%sbatch%d@test.com", testIDPrefix, i),
 			Phone:     fmt.Sprintf("1390001%04d", i),
 			CreatedAt: now,
 			UpdatedAt: now,
@@ -172,39 +203,37 @@ func TestBatchGetUsersByID(t *testing.T) {
 		require.NoError(t, repo.CreateUser(ctx, u))
 	}
 
-	users, err := repo.BatchGetUsersByID(ctx, []string{"batch_0", "batch_2", "nonexistent"})
+	users, err := repo.BatchGetUsersByID(ctx, []string{testIDPrefix + "batch_0", testIDPrefix + "batch_2", "_nonexistent_"})
 	require.NoError(t, err)
-	assert.Len(t, users, 2) // nonexistent 不存在，只返回找到的
+	assert.Len(t, users, 2)
 }
 
 // ========== MemberBlock 测试 ==========
 
 func TestCreateAndListBlocks(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	blockerID := "blocker_01"
+	blockerID := testIDPrefix + "blocker_01"
 
-	// 创建 3 条拉黑记录
 	for i := 0; i < 3; i++ {
 		b := &MemberBlock{
-			ID:        fmt.Sprintf("blk_%d", i),
-			BlockerID: blockerID,
-			BlockedID: fmt.Sprintf("blocked_%d", i),
+			ID:         fmt.Sprintf("%sblk_%d", testIDPrefix, i),
+			BlockerID:  blockerID,
+			BlockedID:  fmt.Sprintf("%sblocked_%d", testIDPrefix, i),
 			Reason:    fmt.Sprintf("reason_%d", i),
 			CreatedAt: int64(1700000000000 + int64(i)*1000),
 		}
 		require.NoError(t, repo.CreateBlock(ctx, b))
 	}
 
-	// 分页查询第 1 页（每页 2 条）
 	blocks, total, err := repo.ListBlocks(ctx, blockerID, 1, 2)
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), total)
 	assert.Len(t, blocks, 2)
 
-	// 第 2 页应剩余 1 条
 	blocks2, _, err := repo.ListBlocks(ctx, blockerID, 2, 2)
 	require.NoError(t, err)
 	assert.Len(t, blocks2, 1)
@@ -212,84 +241,79 @@ func TestCreateAndListBlocks(t *testing.T) {
 
 func TestIsBlocked(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	// 未拉黑时返回 false
-	blocked, err := repo.IsBlocked(ctx, "a", "b")
+	blocked, err := repo.IsBlocked(ctx, testIDPrefix+"_a", testIDPrefix+"_b")
 	require.NoError(t, err)
 	assert.False(t, blocked)
 
-	// 创建拉黑关系
 	b := &MemberBlock{
-		ID:         "blk_test",
-		BlockerID:  "a",
-		BlockedID:  "b",
+		ID:         testIDPrefix + "blk_test",
+		BlockerID:  testIDPrefix + "_a",
+		BlockedID:  testIDPrefix + "_b",
 		Reason:     "spam",
 		CreatedAt:  time.Now().UnixMilli(),
 	}
 	require.NoError(t, repo.CreateBlock(ctx, b))
 
-	// 再次检查应为 true
-	blocked, err = repo.IsBlocked(ctx, "a", "b")
+	blocked, err = repo.IsBlocked(ctx, testIDPrefix+"_a", testIDPrefix+"_b")
 	require.NoError(t, err)
 	assert.True(t, blocked)
 
-	// 反向检查应为 false（拉黑是单向的）
-	blocked, err = repo.IsBlocked(ctx, "b", "a")
+	blocked, err = repo.IsBlocked(ctx, testIDPrefix+"_b", testIDPrefix+"_a")
 	require.NoError(t, err)
 	assert.False(t, blocked)
 }
 
 func TestDeleteBlock(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	b := &MemberBlock{
-		ID:         "blk_del",
-		BlockerID:  "x",
-		BlockedID:  "y",
+		ID:         testIDPrefix + "blk_del",
+		BlockerID:  testIDPrefix + "_x",
+		BlockedID:  testIDPrefix + "_y",
 		CreatedAt:  time.Now().UnixMilli(),
 	}
 	require.NoError(t, repo.CreateBlock(ctx, b))
 
-	// 确认存在
-	blocked, err := repo.IsBlocked(ctx, "x", "y")
+	blocked, err := repo.IsBlocked(ctx, testIDPrefix+"_x", testIDPrefix+"_y")
 	require.NoError(t, err)
 	assert.True(t, blocked)
 
-	// 删除
-	err = repo.DeleteBlock(ctx, "x", "y")
+	err = repo.DeleteBlock(ctx, testIDPrefix+"_x", testIDPrefix+"_y")
 	require.NoError(t, err)
 
-	// 确认已删除
-	blocked, err = repo.IsBlocked(ctx, "x", "y")
+	blocked, err = repo.IsBlocked(ctx, testIDPrefix+"_x", testIDPrefix+"_y")
 	require.NoError(t, err)
 	assert.False(t, blocked)
 }
 
 func TestGetBlockCount(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	count, err := repo.GetBlockCount(ctx, "counter_user")
+	count, err := repo.GetBlockCount(ctx, testIDPrefix+"_counter_user")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
-	// 创建 2 条拉黑记录
 	for i := 0; i < 2; i++ {
 		b := &MemberBlock{
-			ID:         fmt.Sprintf("cnt_blk_%d", i),
-			BlockerID:  "counter_user",
-			BlockedID:  fmt.Sprintf("target_%d", i),
+			ID:         fmt.Sprintf("%scnt_blk_%d", testIDPrefix, i),
+			BlockerID:  testIDPrefix + "_counter_user",
+			BlockedID:  fmt.Sprintf("%starget_%d", testIDPrefix, i),
 			CreatedAt:  time.Now().UnixMilli(),
 		}
 		require.NoError(t, repo.CreateBlock(ctx, b))
 	}
 
-	count, err = repo.GetBlockCount(ctx, "counter_user")
+	count, err = repo.GetBlockCount(ctx, testIDPrefix+"_counter_user")
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -298,12 +322,20 @@ func TestGetBlockCount(t *testing.T) {
 
 func TestGetOrCreateStats(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	userID := "stats_user_01"
+	userID := testIDPrefix + "stats_user_01"
 
-	// 首次获取 — 应创建默认统计记录
+	// 前置：创建用户记录（member_stats 有 FK 约束引用 users.id）
+	now := time.Now().UnixMilli()
+	repo.CreateUser(ctx, &User{
+		ID: userID, UID: "900000001", Username: "stats_user_01",
+		Password: "hashed", Email: "stats_01@test.local", Status: UserStatusActive,
+		CreatedAt: now, UpdatedAt: now,
+	})
+
 	stats, err := repo.GetOrCreateStats(ctx, userID)
 	require.NoError(t, err)
 	require.NotNil(t, stats)
@@ -312,7 +344,6 @@ func TestGetOrCreateStats(t *testing.T) {
 	assert.Equal(t, 0, stats.RepliesCount)
 	assert.Equal(t, 0, stats.LikesReceived)
 
-	// 再次获取 — 应返回同一记录（幂等）
 	stats2, err := repo.GetOrCreateStats(ctx, userID)
 	require.NoError(t, err)
 	require.NotNil(t, stats2)
@@ -321,16 +352,23 @@ func TestGetOrCreateStats(t *testing.T) {
 
 func TestUpdateStats(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupUserData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	userID := "stats_user_02"
+	userID := testIDPrefix + "stats_user_02"
 
-	// 先创建默认统计
+	// 前置：创建用户记录（member_stats 有 FK 约束引用 users.id）
+	now := time.Now().UnixMilli()
+	repo.CreateUser(ctx, &User{
+		ID: userID, UID: "900000002", Username: "stats_user_02",
+		Password: "hashed", Email: "stats_02@test.local", Phone: "9000002002",
+		Status: UserStatusActive, CreatedAt: now, UpdatedAt: now,
+	})
+
 	stats, err := repo.GetOrCreateStats(ctx, userID)
 	require.NoError(t, err)
 
-	// 更新计数器
 	stats.TopicsCount = 5
 	stats.RepliesCount = 10
 	stats.LikesReceived = 20
@@ -339,7 +377,6 @@ func TestUpdateStats(t *testing.T) {
 	err = repo.UpdateStats(ctx, stats)
 	require.NoError(t, err)
 
-	// 重新获取验证
 	updated, err := repo.GetOrCreateStats(ctx, userID)
 	require.NoError(t, err)
 	assert.Equal(t, 5, updated.TopicsCount)

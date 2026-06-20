@@ -201,7 +201,7 @@ gateway-start: ## 启动 proto-gateway（local 模式，TarsGo HTTP on :8080）
 	@if [ -f $(GATEWAY_PID_FILE) ] && kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
 		echo "[gateway] ⚠️  Gateway 已在运行 (pid=$$(cat $(GATEWAY_PID_FILE)))"; \
 	else \
-		cd $(GATEWAY_DIR) && setsid env GATEWAY_INVOKER_MODE=local $(GATEWAY_BIN) >../../build/gateway.log 2>&1 & echo $$! >$(GATEWAY_PID_FILE); \
+		cd $(GATEWAY_DIR) && setsid env $$(grep -v '^#' configs/gateway/.env.local | xargs) $(GATEWAY_BIN) >../../build/gateway.log 2>&1 & echo $$! >$(GATEWAY_PID_FILE); \
 		sleep 2; \
 		if kill -0 $$(cat $(GATEWAY_PID_FILE)) 2>/dev/null; then \
 			echo "[gateway] ✅ 已启动 (pid=$$(cat $(GATEWAY_PID_FILE))) 监听 :8080"; \

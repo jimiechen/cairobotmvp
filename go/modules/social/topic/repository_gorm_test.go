@@ -1,6 +1,7 @@
 // repository_gorm_test.go — GormRepository 冒烟测试
 // 覆盖核心 CRUD 路径：帖子创建/查询/列表、评论操作、点赞/收藏/阅读记录
-// 使用 SQLite in-memory 数据库，每个测试独立环境
+// 使用真实 MySQL 数据库，每个测试通过 ID 前缀隔离数据
+// 环境变量未配置时自动 Skip
 //
 // 相关文档：
 // - PRD 社交域 MVP-P0 Step 8：Topic 域 Repository 接口 GORM 实现
@@ -10,27 +11,57 @@ package topic
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-// setupTestDB 创建 SQLite 内存数据库并自动迁移全部 6 张表
-// 每个测试调用此函数获得独立的数据库实例，避免测试间干扰
+const testIDPrefix = "gt_tpc_"
+
+// getEnv 读取环境变量，未设置时返回 fallback 值
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+// setupTestDB 连接真实 MySQL 数据库（从环境变量读取连接参数）
+// 未配置 MYSQL_HOST 时自动 t.Skip
 func setupTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-	err = db.AutoMigrate(
-		&Topic{}, &TopicReply{}, &TopicLike{}, &TopicFavorite{},
-		&TopicRead{}, &ReplyLike{},
+	host := getEnv("MYSQL_HOST", "")
+	if host == "" {
+		t.Skip("跳过：未设置 MYSQL_HOST 环境变量")
+	}
+	port := getEnv("MYSQL_PORT", "3306")
+	user := getEnv("MYSQL_USER", "root")
+	pass := getEnv("MYSQL_PASSWORD", "")
+	dbname := getEnv("MYSQL_DATABASE", "cairobot_test")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, pass, host, port, dbname,
 	)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 	return db
+}
+
+// cleanupTopicData 清理当前测试创建的帖子相关数据（按 ID 前缀匹配）
+func cleanupTopicData(t *testing.T, db *gorm.DB) {
+	t.Helper()
+	prefix := testIDPrefix + "%"
+	db.Exec("DELETE FROM reply_likes WHERE id LIKE ?", prefix)
+	db.Exec("DELETE FROM topic_favorites WHERE id LIKE ?", prefix)
+	db.Exec("DELETE FROM topic_likes WHERE id LIKE ?", prefix)
+	db.Exec("DELETE FROM topic_reads WHERE id LIKE ?", prefix)
+	db.Exec("DELETE FROM topic_replies WHERE id LIKE ?", prefix)
+	db.Exec("DELETE FROM topics WHERE id LIKE ?", prefix)
 }
 
 // 辅助函数：构建一个默认的 Topic 测试数据
@@ -55,23 +86,24 @@ func makeTestTopic(id, groupID, authorID string) *Topic {
 
 func TestCreateAndGetTopic(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topic := makeTestTopic("t001", "g001", "u001")
+	topic := makeTestTopic(testIDPrefix+"t001", testIDPrefix+"g001", "u001")
 
 	// 创建
 	err := repo.CreateTopic(ctx, topic)
 	require.NoError(t, err)
 
 	// 按 ID 查回，验证关键字段
-	got, err := repo.GetTopicByID(ctx, "t001")
+	got, err := repo.GetTopicByID(ctx, testIDPrefix+"t001")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "t001", got.ID)
-	assert.Equal(t, "g001", got.GroupID)
+	assert.Equal(t, testIDPrefix+"t001", got.ID)
+	assert.Equal(t, testIDPrefix+"g001", got.GroupID)
 	assert.Equal(t, "u001", got.AuthorID)
-	assert.Equal(t, "测试帖子_t001", got.Title)
+	assert.Equal(t, "测试帖子_"+testIDPrefix+"t001", got.Title)
 	assert.Equal(t, "这是测试内容", got.Content)
 	assert.Equal(t, TopicStatusActive, got.Status)
 	assert.Equal(t, TopicVisibilityPublic, got.Visibility)
@@ -79,6 +111,7 @@ func TestCreateAndGetTopic(t *testing.T) {
 
 func TestGetTopicNotFound(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -89,10 +122,11 @@ func TestGetTopicNotFound(t *testing.T) {
 
 func TestUpdateTopic(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topic := makeTestTopic("t002", "g001", "u001")
+	topic := makeTestTopic(testIDPrefix+"t002", testIDPrefix+"g001", "u001")
 	require.NoError(t, repo.CreateTopic(ctx, topic))
 
 	// 更新标题和状态
@@ -103,7 +137,7 @@ func TestUpdateTopic(t *testing.T) {
 	require.NoError(t, err)
 
 	// 验证更新结果
-	got, err := repo.GetTopicByID(ctx, "t002")
+	got, err := repo.GetTopicByID(ctx, testIDPrefix+"t002")
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "更新后的标题", got.Title)
@@ -112,62 +146,65 @@ func TestUpdateTopic(t *testing.T) {
 
 func TestDeleteTopic(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topic := makeTestTopic("t003", "g001", "u001")
+	topic := makeTestTopic(testIDPrefix+"t003", testIDPrefix+"g001", "u001")
 	require.NoError(t, repo.CreateTopic(ctx, topic))
 
 	// 删除
-	err := repo.DeleteTopic(ctx, "t003")
+	err := repo.DeleteTopic(ctx, testIDPrefix+"t003")
 	require.NoError(t, err)
 
 	// 验证已删除
-	got, err := repo.GetTopicByID(ctx, "t003")
+	got, err := repo.GetTopicByID(ctx, testIDPrefix+"t003")
 	require.NoError(t, err)
 	assert.Nil(t, got)
 }
 
 func TestListTopicsWithPagination(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	// 创建 5 条帖子（同一群组）
 	for i := 0; i < 5; i++ {
-		topic := makeTestTopic(fmt.Sprintf("t_list_%d", i), "g_list", "u_list")
+		topic := makeTestTopic(fmt.Sprintf(testIDPrefix+"t_list_%d", i), testIDPrefix+"g_list", "u_list")
 		require.NoError(t, repo.CreateTopic(ctx, topic))
 	}
 
 	// 第 1 页：每页 2 条
-	topics, total, err := repo.ListTopics(ctx, 1, 2, map[string]interface{}{"group_id": "g_list"}, "")
+	topics, total, err := repo.ListTopics(ctx, 1, 2, map[string]interface{}{"group_id": testIDPrefix + "g_list"}, "")
 	require.NoError(t, err)
 	assert.Equal(t, int64(5), total)
 	assert.Len(t, topics, 2)
 
 	// 第 2 页：应剩余条数
-	topics2, total2, err := repo.ListTopics(ctx, 2, 2, map[string]interface{}{"group_id": "g_list"}, "")
+	topics2, total2, err := repo.ListTopics(ctx, 2, 2, map[string]interface{}{"group_id": testIDPrefix + "g_list"}, "")
 	require.NoError(t, err)
 	assert.Equal(t, int64(5), total2)
 	assert.Len(t, topics2, 2)
 
 	// 第 3 页：最后 1 条
-	topics3, _, err := repo.ListTopics(ctx, 3, 2, map[string]interface{}{"group_id": "g_list"}, "")
+	topics3, _, err := repo.ListTopics(ctx, 3, 2, map[string]interface{}{"group_id": testIDPrefix + "g_list"}, "")
 	require.NoError(t, err)
 	assert.Len(t, topics3, 1)
 }
 
 func TestListTopicsByGroupID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	// 群组 A 有 3 条，群组 B 有 1 条
 	for i := 0; i < 3; i++ {
-		topic := makeTestTopic(fmt.Sprintf("tgA_%d", i), "group_A", "u001")
+		topic := makeTestTopic(fmt.Sprintf(testIDPrefix+"tgA_%d", i), "group_A", "u001")
 		require.NoError(t, repo.CreateTopic(ctx, topic))
 	}
-	topicB := makeTestTopic("tgB_0", "group_B", "u001")
+	topicB := makeTestTopic(testIDPrefix+"tgB_0", "group_B", "u001")
 	require.NoError(t, repo.CreateTopic(ctx, topicB))
 
 	topics, total, err := repo.ListTopicsByGroupID(ctx, "group_A", 1, 10)
@@ -178,6 +215,7 @@ func TestListTopicsByGroupID(t *testing.T) {
 
 func TestCountTopicsByGroupID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -187,11 +225,11 @@ func TestCountTopicsByGroupID(t *testing.T) {
 
 	// 创建活跃帖子
 	for i := 0; i < 3; i++ {
-		topic := makeTestTopic(fmt.Sprintf("tcnt_%d", i), "cnt_group", "u001")
+		topic := makeTestTopic(fmt.Sprintf(testIDPrefix+"tcnt_%d", i), testIDPrefix+"cnt_group", "u001")
 		require.NoError(t, repo.CreateTopic(ctx, topic))
 	}
 
-	count, err = repo.CountTopicsByGroupID(ctx, "cnt_group")
+	count, err = repo.CountTopicsByGroupID(ctx, testIDPrefix+"cnt_group")
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), count)
 }
@@ -200,12 +238,13 @@ func TestCountTopicsByGroupID(t *testing.T) {
 
 func TestCreateAndGetReply(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	reply := &TopicReply{
-		ID:        "r001",
-		TopicID:   "t_topic",
+		ID:        testIDPrefix + "r001",
+		TopicID:   testIDPrefix + "t_topic",
 		Content:   "这是一条评论",
 		AuthorID:  "u001",
 		AuthorName: "评论者",
@@ -216,16 +255,17 @@ func TestCreateAndGetReply(t *testing.T) {
 	err := repo.CreateReply(ctx, reply)
 	require.NoError(t, err)
 
-	got, err := repo.GetReplyByID(ctx, "r001")
+	got, err := repo.GetReplyByID(ctx, testIDPrefix+"r001")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "r001", got.ID)
-	assert.Equal(t, "t_topic", got.TopicID)
+	assert.Equal(t, testIDPrefix+"r001", got.ID)
+	assert.Equal(t, testIDPrefix+"t_topic", got.TopicID)
 	assert.Equal(t, "这是一条评论", got.Content)
 }
 
 func TestGetReplyNotFound(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -236,14 +276,15 @@ func TestGetReplyNotFound(t *testing.T) {
 
 func TestCreateAndListReplies(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	// 创建 4 条顶层评论
 	for i := 0; i < 4; i++ {
 		reply := &TopicReply{
-			ID:        fmt.Sprintf("r_list_%d", i),
-			TopicID:   "t_for_replies",
+			ID:        fmt.Sprintf(testIDPrefix + "r_list_%d", i),
+			TopicID:   testIDPrefix + "t_for_replies",
 			Content:   fmt.Sprintf("评论内容_%d", i),
 			AuthorID:  "u001",
 			AuthorName: "用户",
@@ -255,7 +296,7 @@ func TestCreateAndListReplies(t *testing.T) {
 	}
 
 	// 分页查询顶层评论
-	replies, total, err := repo.ListReplies(ctx, "t_for_replies", 1, 2, nil)
+	replies, total, err := repo.ListReplies(ctx, testIDPrefix+"t_for_replies", 1, 2, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(4), total)
 	assert.Len(t, replies, 2)
@@ -263,12 +304,13 @@ func TestCreateAndListReplies(t *testing.T) {
 
 func TestDeleteReply(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
 	reply := &TopicReply{
-		ID:        "r_del",
-		TopicID:   "t_del",
+		ID:        testIDPrefix + "r_del",
+		TopicID:   testIDPrefix + "t_del",
 		Content:   "待删除评论",
 		AuthorID:  "u001",
 		Status:    ReplyStatusActive,
@@ -277,27 +319,28 @@ func TestDeleteReply(t *testing.T) {
 	}
 	require.NoError(t, repo.CreateReply(ctx, reply))
 
-	err := repo.DeleteReply(ctx, "r_del")
+	err := repo.DeleteReply(ctx, testIDPrefix+"r_del")
 	require.NoError(t, err)
 
-	got, err := repo.GetReplyByID(ctx, "r_del")
+	got, err := repo.GetReplyByID(ctx, testIDPrefix+"r_del")
 	require.NoError(t, err)
 	assert.Nil(t, got)
 }
 
 func TestCountRepliesByTopicID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	count, err := repo.CountRepliesByTopicID(ctx, "t_empty")
+	count, err := repo.CountRepliesByTopicID(ctx, testIDPrefix+"t_empty")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
 	for i := 0; i < 3; i++ {
 		reply := &TopicReply{
-			ID:        fmt.Sprintf("rcnt_%d", i),
-			TopicID:   "t_cnt_reply",
+			ID:        fmt.Sprintf(testIDPrefix + "rcnt_%d", i),
+			TopicID:   testIDPrefix + "t_cnt_reply",
 			Content:   "有效评论",
 			AuthorID:  "u001",
 			Status:    ReplyStatusActive,
@@ -307,7 +350,7 @@ func TestCountRepliesByTopicID(t *testing.T) {
 		require.NoError(t, repo.CreateReply(ctx, reply))
 	}
 
-	count, err = repo.CountRepliesByTopicID(ctx, "t_cnt_reply")
+	count, err = repo.CountRepliesByTopicID(ctx, testIDPrefix+"t_cnt_reply")
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), count)
 }
@@ -316,10 +359,11 @@ func TestCountRepliesByTopicID(t *testing.T) {
 
 func TestLikeAndUnlike(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topicID := "t_like"
+	topicID := testIDPrefix + "t_like"
 	userID := "u_liker"
 
 	// 初始未点赞
@@ -329,9 +373,9 @@ func TestLikeAndUnlike(t *testing.T) {
 
 	// 点赞
 	like := &TopicLike{
-		ID:        "l001",
-		TopicID:   topicID,
-		UserID:    userID,
+		ID:      testIDPrefix + "l001",
+		TopicID: topicID,
+		UserID:  userID,
 		CreatedAt: time.Now().UnixMilli(),
 	}
 	err = repo.CreateLike(ctx, like)
@@ -364,16 +408,17 @@ func TestLikeAndUnlike(t *testing.T) {
 
 func TestCreateLikeIdempotent(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topicID := "t_idem"
+	topicID := testIDPrefix + "t_idem"
 	userID := "u_idem"
 
 	like := &TopicLike{
-		ID:        "l_idem",
-		TopicID:   topicID,
-		UserID:    userID,
+		ID:      testIDPrefix + "l_idem",
+		TopicID: topicID,
+		UserID:  userID,
 		CreatedAt: time.Now().UnixMilli(),
 	}
 	// 第一次点赞成功
@@ -394,10 +439,11 @@ func TestCreateLikeIdempotent(t *testing.T) {
 
 func TestFavoriteToggle(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topicID := "t_fav"
+	topicID := testIDPrefix + "t_fav"
 	userID := "u_faver"
 
 	// 初始未收藏
@@ -407,9 +453,9 @@ func TestFavoriteToggle(t *testing.T) {
 
 	// 收藏
 	favorite := &TopicFavorite{
-		ID:        "f001",
-		TopicID:   topicID,
-		UserID:    userID,
+		ID:      testIDPrefix + "f001",
+		TopicID: topicID,
+		UserID:  userID,
 		CreatedAt: time.Now().UnixMilli(),
 	}
 	err = repo.CreateFavorite(ctx, favorite)
@@ -432,6 +478,7 @@ func TestFavoriteToggle(t *testing.T) {
 
 func TestListFavoritesByUserID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -440,9 +487,9 @@ func TestListFavoritesByUserID(t *testing.T) {
 	// 用户收藏了 3 个帖子
 	for i := 0; i < 3; i++ {
 		fav := &TopicFavorite{
-			ID:        fmt.Sprintf("f_list_%d", i),
-			TopicID:   fmt.Sprintf("t_fav_%d", i),
-			UserID:    userID,
+			ID:       fmt.Sprintf(testIDPrefix+"f_list_%d", i),
+			TopicID:  fmt.Sprintf(testIDPrefix+"t_fav_%d", i),
+			UserID:   userID,
 			CreatedAt: time.Now().UnixMilli() + int64(i*1000),
 		}
 		require.NoError(t, repo.CreateFavorite(ctx, fav))
@@ -456,24 +503,25 @@ func TestListFavoritesByUserID(t *testing.T) {
 
 func TestCountFavoritesByTopicID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	count, err := repo.CountFavoritesByTopicID(ctx, "t_nofav")
+	count, err := repo.CountFavoritesByTopicID(ctx, testIDPrefix+"t_nofav")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
 	for i := 0; i < 2; i++ {
 		fav := &TopicFavorite{
-			ID:        fmt.Sprintf("fcnt_%d", i),
-			TopicID:   "t_favcnt",
-			UserID:    fmt.Sprintf("u_favcnt_%d", i),
+			ID:       fmt.Sprintf(testIDPrefix+"fcnt_%d", i),
+			TopicID:  testIDPrefix + "t_favcnt",
+			UserID:   fmt.Sprintf("u_favcnt_%d", i),
 			CreatedAt: time.Now().UnixMilli(),
 		}
 		require.NoError(t, repo.CreateFavorite(ctx, fav))
 	}
 
-	count, err = repo.CountFavoritesByTopicID(ctx, "t_favcnt")
+	count, err = repo.CountFavoritesByTopicID(ctx, testIDPrefix+"t_favcnt")
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -482,10 +530,11 @@ func TestCountFavoritesByTopicID(t *testing.T) {
 
 func TestReplyLike(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	replyID := "r_like"
+	replyID := testIDPrefix + "r_like"
 	userID := "u_rliker"
 
 	// 初始未点赞
@@ -495,7 +544,7 @@ func TestReplyLike(t *testing.T) {
 
 	// 点赞评论
 	rl := &ReplyLike{
-		ID:        "rl001",
+		ID:        testIDPrefix + "rl001",
 		ReplyID:   replyID,
 		UserID:    userID,
 		CreatedAt: time.Now().UnixMilli(),
@@ -532,15 +581,16 @@ func TestReplyLike(t *testing.T) {
 
 func TestUpsertReadRecord(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	topicID := "t_read"
+	topicID := testIDPrefix + "t_read"
 	userID := "u_reader"
 
 	// 首次阅读 — 应创建记录
 	read := &TopicRead{
-		ID:           "rd001",
+		ID:           testIDPrefix + "rd001",
 		TopicID:      topicID,
 		UserID:       userID,
 		ReadAt:       time.Now().UnixMilli(),
@@ -571,6 +621,7 @@ func TestUpsertReadRecord(t *testing.T) {
 
 func TestGetReadRecordNotFound(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -581,6 +632,7 @@ func TestGetReadRecordNotFound(t *testing.T) {
 
 func TestListReadsByUserID(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
@@ -588,8 +640,8 @@ func TestListReadsByUserID(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		read := &TopicRead{
-			ID:           fmt.Sprintf("rd_list_%d", i),
-			TopicID:      fmt.Sprintf("t_read_%d", i),
+			ID:           fmt.Sprintf(testIDPrefix+"rd_list_%d", i),
+			TopicID:      fmt.Sprintf(testIDPrefix+"t_read_%d", i),
 			UserID:       userID,
 			ReadAt:       time.Now().UnixMilli() + int64(i*1000),
 			ReadDuration: 10 * (i + 1),
@@ -605,26 +657,27 @@ func TestListReadsByUserID(t *testing.T) {
 
 func TestCountDistinctReaders(t *testing.T) {
 	db := setupTestDB(t)
+	defer cleanupTopicData(t, db)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 
-	count, err := repo.CountDistinctReaders(ctx, "t_no_readers")
+	count, err := repo.CountDistinctReaders(ctx, testIDPrefix+"t_no_readers")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
 	// 3 个用户阅读同一帖子
 	for i := 0; i < 3; i++ {
 		read := &TopicRead{
-			ID:           fmt.Sprintf("rd_dr_%d", i),
-			TopicID:      "t_has_readers",
+			ID:           fmt.Sprintf(testIDPrefix+"rd_dr_%d", i),
+			TopicID:      testIDPrefix + "t_has_readers",
 			UserID:       fmt.Sprintf("u_reader_%d", i),
 			ReadAt:       time.Now().UnixMilli(),
-			ReadDuration:  10,
+			ReadDuration: 10,
 		}
 		require.NoError(t, repo.UpsertReadRecord(ctx, read))
 	}
 
-	count, err = repo.CountDistinctReaders(ctx, "t_has_readers")
+	count, err = repo.CountDistinctReaders(ctx, testIDPrefix+"t_has_readers")
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), count)
 }

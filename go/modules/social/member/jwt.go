@@ -93,6 +93,7 @@ func (m *JWTManager) GenerateAccessToken(userID string) (string, int64, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":    userID,
 		"token_type": "access",
+		"jti":        fmt.Sprintf("acc-%d", now.UnixNano()), // 唯一 ID，确保每次签发不同令牌
 		"iat":        now.Unix(),
 		"exp":        exp.Unix(),
 		"iss":        m.config.Issuer,
@@ -115,6 +116,7 @@ func (m *JWTManager) GenerateRefreshToken(userID string) (string, int64, error) 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":    userID,
 		"token_type": "refresh",
+		"jti":        fmt.Sprintf("ref-%d", now.UnixNano()), // 唯一 ID，确保每次签发不同令牌
 		"iat":        now.Unix(),
 		"exp":        exp.Unix(),
 		"iss":        m.config.Issuer,

@@ -95,6 +95,17 @@ func (h *Handler) InjectJWTManager(m *JWTManager) {
 	h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, h.repo)
 }
 
+// InjectTokenStore 延迟注入令牌黑名单存储并重建依赖它的 svc
+// 用于解决 Module 创建时 Redis 依赖尚未就绪的循环依赖问题
+func (h *Handler) InjectTokenStore(ts TokenStore) {
+	h.tokenStore = ts
+	// 重建依赖 TokenStore 的两个 svc（logout/refresh）
+	if h.jwtManager != nil {
+		h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
+		h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, h.repo)
+	}
+}
+
 // Dispatch 根据 minType 分发到对应的 svc 处理
 // 每个 case 统一：Unmarshal → svc.Handle → Marshal
 func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
