@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	"github.com/jimiechen/mineplanet/go/modules/social/event"
+	"github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
@@ -216,4 +217,16 @@ func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte)
 	default:
 		return nil, fmt.Errorf("unsupported minType: %s", minType)
 	}
+}
+
+// InjectJWTManager 延迟注入 JWT 管理器（预留接口，Group 域当前不直接使用 JWT）
+func (h *Handler) InjectJWTManager(m *member.JWTManager) {
+	// Group 域 Handler 当前不需要直接持有 jwtMgr
+	// 保留接口以保持三域 Servant 注入模式一致
+}
+
+// InjectTokenStore 延迟注入令牌黑名单存储（预留接口）
+func (h *Handler) InjectTokenStore(ts member.TokenStore) {
+	// Group 域 Handler 当前不需要直接持有 tokenStore
+	// 黑名单检查在 Servant.Handle 层通过 social.CheckTokenBlacklist 完成
 }

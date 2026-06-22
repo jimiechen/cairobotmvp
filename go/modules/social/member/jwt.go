@@ -158,3 +158,22 @@ func (m *JWTManager) ParseToken(tokenStr string) (userID string, tokenType strin
 
 	return userID, tokenType, nil
 }
+
+// ParseJTI 从令牌字符串中提取 jti (tokenID) claim
+// 用于黑名单检查时快速定位 token，无需完整鉴权流程
+// 返回空字符串表示提取失败（可能不是有效 JWT 或不含 jti）
+func (m *JWTManager) ParseJTI(tokenStr string) string {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		// 仅解析不验证签名，用于提取 jti
+		return []byte(m.config.SecretKey), nil
+	})
+	if err != nil {
+		return ""
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return ""
+	}
+	jti, _ := claims["jti"].(string)
+	return jti
+}

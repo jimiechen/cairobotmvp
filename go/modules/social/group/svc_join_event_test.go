@@ -7,6 +7,7 @@ import (
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
 	"github.com/jimiechen/mineplanet/go/modules/social/event"
+	"github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // TestSvcJoin_加入群组成功_应发布GroupJoined事件 验证加入群组成功后发布 GroupJoined 领域事件
@@ -21,7 +22,7 @@ func TestSvcJoin_加入群组成功_应发布GroupJoined事件(t *testing.T) {
 	mockRepo.groups[testGroup.ID] = testGroup
 	mockRepo.groups[testGroup.Slug] = testGroup
 
-	ctx := WithUserID(context.Background(), "user-event-join-001")
+	ctx := context.WithValue(context.Background(), member.CtxKeyUserID, "user-event-join-001")
 	req := &pb.JoinGroupRequest{
 		GroupId:    "group-event-001",
 		JoinReason: "想加入学习",
@@ -65,7 +66,7 @@ func TestSvcJoin_nil_publisher_不发布事件(t *testing.T) {
 	mockRepo.groups[testGroup.ID] = testGroup
 	mockRepo.groups[testGroup.Slug] = testGroup
 
-	ctx := WithUserID(context.Background(), "user-nil-join-001")
+	ctx := context.WithValue(context.Background(), member.CtxKeyUserID, "user-nil-join-001")
 	req := &pb.JoinGroupRequest{
 		GroupId: "group-nil-join-001",
 	}

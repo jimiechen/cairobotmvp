@@ -63,19 +63,22 @@ func (s *SvcRefresh) Handle(ctx context.Context, req *pb.RefreshTokenRequest) (*
 		}, nil
 	}
 
-	// Step 3: 检查 refresh_token 是否在黑名单中
-	if s.tokenStore != nil {
-		blacklisted, checkErr := s.tokenStore.IsBlacklisted(ctx, req.RefreshToken)
-		if checkErr != nil {
-			return nil, checkErr
-		}
-		if blacklisted {
-			return &pb.RefreshTokenResponse{
-				Result: &base.Result{
-					Code:    int32(base.ErrorCode_ERROR_CODE_UNAUTHORIZED),
-					Message: "refresh_token 已被撤销",
-				},
-			}, nil
+	// Step 3: 检查 refresh_token 的 jti 是否在黑名单中
+	if s.tokenStore != nil && s.jwtManager != nil {
+		jti := s.jwtManager.ParseJTI(req.RefreshToken)
+		if jti != "" {
+			blacklisted, checkErr := s.tokenStore.Exists(ctx, jti)
+			if checkErr != nil {
+				return nil, checkErr
+			}
+			if blacklisted {
+				return &pb.RefreshTokenResponse{
+					Result: &base.Result{
+						Code:    int32(base.ErrorCode_ERROR_CODE_UNAUTHORIZED),
+						Message: "refresh_token 已被撤销",
+					},
+				}, nil
+			}
 		}
 	}
 
@@ -98,9 +101,12 @@ func (s *SvcRefresh) Handle(ctx context.Context, req *pb.RefreshTokenRequest) (*
 		}, nil
 	}
 
-	// Step 4: 将旧的 refresh_token 加入黑名单（一次性使用）
-	if s.tokenStore != nil {
-		_ = s.tokenStore.Blacklist(ctx, req.RefreshToken, DefaultRefreshTTL)
+	// Step 4: 将旧 refresh_token 的 jti 加入黑名单（一次性使用，Rotation 策略）
+	if s.tokenStore != nil && s.jwtManager != nil {
+		oldJTI := s.jwtManager.ParseJTI(req.RefreshToken)
+		if oldJTI != "" {
+			_ = s.tokenStore.Store(ctx, oldJTI, int64(DefaultRefreshTTL.Seconds()))
+		}
 	}
 
 	// 签发新的令牌对

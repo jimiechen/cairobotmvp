@@ -23,6 +23,7 @@ type ModuleOption func(*moduleConfig)
 type moduleConfig struct {
 	publisher  event.Publisher
 	jwtManager *member.JWTManager
+	tokenStore member.TokenStore
 }
 
 // WithPublisher 注入事件发布器
@@ -33,16 +34,27 @@ func WithPublisher(p event.Publisher) ModuleOption {
 	}
 }
 
-// WithJWTManager 注入 JWT 管理器（Member 域登录/刷新令牌需要）
-// 不注入时 UserLogin/UserRefresh 会因 nil jwtManager 而 panic
+// WithJWTManager 注入 JWT 管理器（三域黑名单检查需要）
+// 不注入时黑名单检查静默跳过（降级放行）
 func WithJWTManager(m *member.JWTManager) ModuleOption {
 	return func(c *moduleConfig) {
 		c.jwtManager = m
 	}
 }
 
+// WithTokenStore 注入令牌黑名单存储（三域鉴权路径拦截需要）
+// 不注入时黑名单检查静默跳过（降级放行）
+func WithTokenStore(ts member.TokenStore) ModuleOption {
+	return func(c *moduleConfig) {
+		c.tokenStore = ts
+	}
+}
+
 // NewModule 创建社交域模块实例，注入各域 Repository 和可选的事件发布器
 // 不传 WithPublisher 时默认使用 NoopPublisher
+//
+// JWTManager 和 TokenStore 会同步注入到 Member/Group/Topic 三个 Servant，
+// 确保三域鉴权路径的黑名单检查一致生效。
 func NewModule(
 	memberRepo member.Repository,
 	groupRepo group.Repository,
@@ -61,9 +73,17 @@ func NewModule(
 		GroupServant:  group.NewServant(groupRepo, cfg.publisher),
 		TopicServant:   topic.NewServant(topicRepo, cfg.publisher),
 	}
-	// 延迟注入 JWTManager（解决循环依赖：Module 创建时 JWT 配置可能尚未就绪）
+	// 延迟注入 JWTManager 到三域 Servant（解决循环依赖）
 	if cfg.jwtManager != nil {
 		socialMod.MemberServant.InjectJWTManager(cfg.jwtManager)
+		socialMod.GroupServant.InjectJWTManager(cfg.jwtManager)
+		socialMod.TopicServant.InjectJWTManager(cfg.jwtManager)
+	}
+	// 延迟注入 TokenStore 到三域 Servant（解决循环依赖）
+	if cfg.tokenStore != nil {
+		socialMod.MemberServant.InjectTokenStore(cfg.tokenStore)
+		socialMod.GroupServant.InjectTokenStore(cfg.tokenStore)
+		socialMod.TopicServant.InjectTokenStore(cfg.tokenStore)
 	}
 	return socialMod
 }

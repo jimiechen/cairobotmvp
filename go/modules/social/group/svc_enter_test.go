@@ -6,6 +6,7 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	memberpkg "github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // TestSvcEnter_正常进入 当圈子存在时_应返回圈子详情和成员信息
@@ -35,7 +36,7 @@ func TestSvcEnter_正常进入(t *testing.T) {
 	mockRepo.members[member.ID] = member
 	mockRepo.memberIdx["group-001:user-001"] = member
 
-	ctx := WithUserID(context.Background(), "user-001")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-001")
 	req := &pb.GroupUserEnterRequest{
 		GroupId: "group-001",
 		UserId:  "user-001",

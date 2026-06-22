@@ -6,6 +6,7 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	memberpkg "github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // TestSvcLeave_正常退出 当用户是普通成员时_应返回成功
@@ -27,7 +28,7 @@ func TestSvcLeave_正常退出(t *testing.T) {
 	mockRepo.members[member.ID] = member
 	mockRepo.memberIdx["group-001:user-001"] = member
 
-	ctx := WithUserID(context.Background(), "user-001")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-001")
 	req := &pb.LeaveGroupRequest{GroupId: "group-001"}
 
 	resp, err := svc.Handle(ctx, req)
@@ -52,7 +53,7 @@ func TestSvcLeave_非成员退出(t *testing.T) {
 	mockRepo.groups[group.ID] = group
 	mockRepo.groups[group.Slug] = group
 
-	ctx := WithUserID(context.Background(), "user-nonexistent")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-nonexistent")
 	req := &pb.LeaveGroupRequest{GroupId: "group-002"}
 
 	resp, err := svc.Handle(ctx, req)
@@ -82,7 +83,7 @@ func TestSvcLeave_群主退出(t *testing.T) {
 	mockRepo.members[member.ID] = member
 	mockRepo.memberIdx["group-003:user-owner"] = member
 
-	ctx := WithUserID(context.Background(), "user-owner")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-owner")
 	req := &pb.LeaveGroupRequest{GroupId: "group-003"}
 
 	resp, err := svc.Handle(ctx, req)

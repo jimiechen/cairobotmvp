@@ -31,25 +31,23 @@ func (s *SvcLogout) Handle(ctx context.Context, req *pb.UserLogoutRequest) (*pb.
 
 	// Step 2: 权限校验 — 登出为公开操作（令牌自身即凭证）
 
-	// Step 3: 将 access_token 加入黑名单
-	if req.AccessToken != "" && s.tokenStore != nil {
-		// 解析令牌获取剩余有效期作为黑名单 TTL
-		userID, tokenType, parseErr := s.jwtManager.ParseToken(req.AccessToken)
-		if parseErr == nil && tokenType == "access" {
-			// 计算剩余 TTL：默认使用 access TTL 上限
-			ttl := DefaultAccessTTL
+	// Step 3: 将 access_token 的 jti 加入黑名单
+	if req.AccessToken != "" && s.tokenStore != nil && s.jwtManager != nil {
+		jti := s.jwtManager.ParseJTI(req.AccessToken)
+		if jti != "" {
+			// 计算剩余 TTL：使用 access TTL 上限作为默认值
+			ttlSec := int64(DefaultAccessTTL.Seconds())
 			if expClaims, ok := s.extractExpiry(req.AccessToken); ok {
-				remaining := time.Until(expClaims)
-				if remaining > 0 && remaining < ttl {
-					ttl = remaining
+				remaining := time.Until(expClaims).Seconds()
+				if remaining > 0 && remaining < float64(ttlSec) {
+					ttlSec = int64(remaining)
 				}
 			}
-			if err := s.tokenStore.Blacklist(ctx, req.AccessToken, ttl); err != nil {
+			if err := s.tokenStore.Store(ctx, jti, ttlSec); err != nil {
 				// 黑名单写入失败不阻断登出响应（best-effort）
 				// 生产环境应记录告警日志
 			}
 		}
-		_ = userID // 登出时仅用令牌本身做失效，不依赖 user_id
 	}
 
 	// Step 4: 领域事件 — 登出成功事件（后续接入事件系统）

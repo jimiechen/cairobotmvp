@@ -6,6 +6,7 @@ import (
 
 	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	base "github.com/jimiechen/mineplanet/protocols/generated/go/base"
+	memberpkg "github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // TestSvcJoin_正常加入 当圈子存在且用户未加入时_应返回成功响应
@@ -18,7 +19,7 @@ func TestSvcJoin_正常加入(t *testing.T) {
 	mockRepo.groups[group.ID] = group
 	mockRepo.groups[group.Slug] = group
 
-	ctx := WithUserID(context.Background(), "user-001")
+ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-001")
 	req := &pb.JoinGroupRequest{
 		GroupId:    "group-001",
 		JoinReason: "想学习技术",
@@ -44,7 +45,7 @@ func TestSvcJoin_圈子不存在(t *testing.T) {
 	mockRepo := newMockRepository()
 	svc := NewSvcJoin(mockRepo, nil)
 
-	ctx := WithUserID(context.Background(), "user-001")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-001")
 	req := &pb.JoinGroupRequest{
 		GroupId: "nonexistent-group",
 	}
@@ -72,7 +73,7 @@ func TestSvcJoin_已成员重复加入(t *testing.T) {
 	mockRepo.members[member.ID] = member
 	mockRepo.memberIdx[member.GroupID+":"+member.UserID] = member
 
-	ctx := WithUserID(context.Background(), "user-002")
+	ctx := context.WithValue(context.Background(), memberpkg.CtxKeyUserID, "user-002")
 	req := &pb.JoinGroupRequest{
 		GroupId: "group-002",
 	}
