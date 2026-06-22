@@ -2,21 +2,20 @@ package member
 
 import (
 	"context"
-	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
-	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	"github.com/jimiechen/mineplanet/go/modules/social/event"
+	"github.com/jimiechen/mineplanet/go/modules/social/internal/dispatch"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
-// switch case 以外禁止业务逻辑
+// 使用 dispatch.ProtoRouter 消除重复的 Unmarshal→Handle→Marshal 样板代码
 type Handler struct {
 	// 用户 Repository（延迟注入 JWTManager 时需要重建 svc）
 	repo Repository
 	// 领域事件发布器（可为 nil，nil 时不发布事件）
 	publisher event.Publisher
+	// 协议路由器
+	router *dispatch.ProtoRouter
 	// JWT 令牌管理器
 	jwtManager *JWTManager
 	// 令牌黑名单存储
@@ -56,11 +55,12 @@ func WithTokenStore(ts TokenStore) HandlerOption {
 	}
 }
 
-// NewHandler 创建 Handler 实例，注入所有 svc 依赖
+// NewHandler 创建 Handler 实例，注入所有 svc 依赖并注册协议路由
 func NewHandler(repo Repository, publisher event.Publisher, opts ...HandlerOption) *Handler {
 	h := &Handler{
 		repo:              repo,
 		publisher:         publisher,
+		router:            dispatch.NewProtoRouter(),
 		registerSvc:      NewSvcRegister(repo, publisher),
 		loginSvc:         NewSvcLogin(repo, nil), // 延迟：通过 opts 注入 jwtManager
 		logoutSvc:        NewSvcLogout(nil, nil), // 延迟：通过 opts 注入 tokenStore + jwtManager
@@ -82,7 +82,34 @@ func NewHandler(repo Repository, publisher event.Publisher, opts ...HandlerOptio
 		h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
 		h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, repo)
 	}
+	h.registerRoutes()
 	return h
+}
+
+// registerRoutes 注册所有 Member 域协议路由到 ProtoRouter
+func (h *Handler) registerRoutes() {
+	// 用户注册（minType=1021）
+	dispatch.Register(h.router, "1021", h.registerSvc)
+	// 用户登录（minType=1023）
+	dispatch.Register(h.router, "1023", h.loginSvc)
+	// 用户登出（minType=1025）
+	dispatch.Register(h.router, "1025", h.logoutSvc)
+	// 令牌刷新（minType=1027）
+	dispatch.Register(h.router, "1027", h.refreshSvc)
+	// 查询用户信息（minType=1029）
+	dispatch.Register(h.router, "1029", h.getUserInfoSvc)
+	// 更新用户信息（minType=1031）
+	dispatch.Register(h.router, "1031", h.updateUserInfoSvc)
+	// 拉黑用户（minType=1039）
+	dispatch.Register(h.router, "1039", h.blockSvc)
+	// 取消拉黑（minType=1041）
+	dispatch.Register(h.router, "1041", h.unblockSvc)
+	// 查询拉黑列表（minType=1043）
+	dispatch.Register(h.router, "1043", h.getBlockListSvc)
+	// 更新用户状态（minType=1033）
+	dispatch.Register(h.router, "1033", h.updateMemberStatusSvc)
+	// 获取用户统计（minType=1045）
+	dispatch.Register(h.router, "1045", h.getUserStatsSvc)
 }
 
 // InjectJWTManager 延迟注入 JWT 管理器并重建依赖它的 svc
@@ -93,6 +120,8 @@ func (h *Handler) InjectJWTManager(m *JWTManager) {
 	h.loginSvc = NewSvcLogin(h.repo, h.jwtManager)
 	h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
 	h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, h.repo)
+	// 重新注册路由（svc 引用已更新）
+	h.registerRoutes()
 }
 
 // InjectTokenStore 延迟注入令牌黑名单存储并重建依赖它的 svc
@@ -104,145 +133,11 @@ func (h *Handler) InjectTokenStore(ts TokenStore) {
 		h.logoutSvc = NewSvcLogout(h.tokenStore, h.jwtManager)
 		h.refreshSvc = NewSvcRefresh(h.tokenStore, h.jwtManager, h.repo)
 	}
+	// 重新注册路由（svc 引用已更新）
+	h.registerRoutes()
 }
 
-// Dispatch 根据 minType 分发到对应的 svc 处理
-// 每个 case 统一：Unmarshal → svc.Handle → Marshal
+// Dispatch 根据 minType 分发到对应的 svc 处理（委托给 ProtoRouter）
 func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
-	switch minType {
-	// 用户注册（minType=1021）
-	case "1021":
-		var req pb.UserRegisterRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UserRegisterRequest failed: %w", err)
-		}
-		rsp, err := h.registerSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 用户登录（minType=1023）
-	case "1023":
-		var req pb.UserLoginRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UserLoginRequest failed: %w", err)
-		}
-		rsp, err := h.loginSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 用户登出（minType=1025）
-	case "1025":
-		var req pb.UserLogoutRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UserLogoutRequest failed: %w", err)
-		}
-		rsp, err := h.logoutSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 令牌刷新（minType=1027）
-	case "1027":
-		var req pb.RefreshTokenRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal RefreshTokenRequest failed: %w", err)
-		}
-		rsp, err := h.refreshSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 查询用户信息（minType=1029）
-	case "1029":
-		var req pb.GetUserInfoRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetUserInfoRequest failed: %w", err)
-		}
-		rsp, err := h.getUserInfoSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 更新用户信息（minType=1031）
-	case "1031":
-		var req pb.UpdateUserInfoRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UpdateUserInfoRequest failed: %w", err)
-		}
-		rsp, err := h.updateUserInfoSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 拉黑用户（minType=1039）
-	case "1039":
-		var req pb.BlockUserRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal BlockUserRequest failed: %w", err)
-		}
-		rsp, err := h.blockSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 取消拉黑（minType=1041）
-	case "1041":
-		var req pb.UnblockUserRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UnblockUserRequest failed: %w", err)
-		}
-		rsp, err := h.unblockSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 查询拉黑列表（minType=1043）
-	case "1043":
-		var req pb.GetBlockListRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetBlockListRequest failed: %w", err)
-		}
-		rsp, err := h.getBlockListSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 更新用户状态（minType=1033）
-	case "1033":
-		var req pb.UpdateMemberStatusRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UpdateMemberStatusRequest failed: %w", err)
-		}
-		rsp, err := h.updateMemberStatusSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	// 获取用户统计（minType=1045）
-	case "1045":
-		var req pb.GetUserStatsRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetUserStatsRequest failed: %w", err)
-		}
-		rsp, err := h.getUserStatsSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
-	default:
-		return nil, fmt.Errorf("unsupported minType: %s", minType)
-	}
+	return h.router.Dispatch(ctx, minType, reqBytes)
 }

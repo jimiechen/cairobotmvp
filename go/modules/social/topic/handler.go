@@ -2,36 +2,35 @@ package topic
 
 import (
 	"context"
-	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
-	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	"github.com/jimiechen/mineplanet/go/modules/social/event"
+	"github.com/jimiechen/mineplanet/go/modules/social/internal/dispatch"
 	"github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
-// switch case 以外禁止业务逻辑
+// 使用 dispatch.ProtoRouter 消除重复的 Unmarshal→Handle→Marshal 样板代码
 type Handler struct {
-	publisher          event.Publisher
-	createTopicSvc    *SvcCreateTopic
-	listTopicSvc      *SvcListTopic
-	deleteTopicSvc     *SvcDeleteTopic
-	replyTopicSvc      *SvcReplyTopic
-	likeTopicSvc       *SvcLikeTopic
-	favoriteTopicSvc   *SvcFavoriteTopic
-	getTopicDetailSvc  *SvcGetTopicDetail
-	updateTopicSvc     *SvcUpdateTopic
-	createReportSvc    *SvcCreateReport
-	readTopicSvc       *SvcReadTopic
-	getReplyListSvc    *SvcGetReplyList
+	publisher        event.Publisher
+	router           *dispatch.ProtoRouter
+	createTopicSvc   *SvcCreateTopic
+	listTopicSvc     *SvcListTopic
+	deleteTopicSvc    *SvcDeleteTopic
+	replyTopicSvc     *SvcReplyTopic
+	likeTopicSvc      *SvcLikeTopic
+	favoriteTopicSvc  *SvcFavoriteTopic
+	getTopicDetailSvc *SvcGetTopicDetail
+	updateTopicSvc    *SvcUpdateTopic
+	createReportSvc   *SvcCreateReport
+	readTopicSvc      *SvcReadTopic
+	getReplyListSvc   *SvcGetReplyList
 }
 
-// NewHandler 创建 Handler 实例，注入所有 svc 依赖
+// NewHandler 创建 Handler 实例，注入所有 svc 依赖并注册协议路由
 func NewHandler(repo Repository, publisher event.Publisher) *Handler {
-	return &Handler{
+	h := &Handler{
 		publisher:        publisher,
+		router:           dispatch.NewProtoRouter(),
 		createTopicSvc:   NewSvcCreateTopic(repo, publisher),
 		listTopicSvc:     NewSvcListTopic(repo),
 		deleteTopicSvc:   NewSvcDeleteTopic(repo),
@@ -44,135 +43,37 @@ func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 		readTopicSvc:     NewSvcReadTopic(repo),
 		getReplyListSvc:  NewSvcGetReplyList(repo),
 	}
+	h.registerRoutes()
+	return h
 }
 
-// Dispatch 根据 minType 分发到对应的 svc 处理
-// 每个 case 统一：Unmarshal → svc.Handle → Marshal
-func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
-	switch minType {
+// registerRoutes 注册所有 Topic 域协议路由到 ProtoRouter
+func (h *Handler) registerRoutes() {
 	// 创建主题（minType=3001）
-	case "3001":
-		var req pb.CreateTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal CreateTopicRequest failed: %w", err)
-		}
-		rsp, err := h.createTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3001", h.createTopicSvc)
 	// 主题列表（minType=3005）
-	case "3005":
-		var req pb.GetTopicListRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetTopicListRequest failed: %w", err)
-		}
-		rsp, err := h.listTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3005", h.listTopicSvc)
 	// 删除主题（minType=3009）
-	case "3009":
-		var req pb.DeleteTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal DeleteTopicRequest failed: %w", err)
-		}
-		rsp, err := h.deleteTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3009", h.deleteTopicSvc)
 	// 回复主题（minType=3043）
-	case "3043":
-		var req pb.AddTopicReplyRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal AddTopicReplyRequest failed: %w", err)
-		}
-		rsp, err := h.replyTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3043", h.replyTopicSvc)
 	// 点赞/取消点赞主题（minType=3061, 通过 is_like 区分）
-	case "3061":
-		var req pb.LikeTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal LikeTopicRequest failed: %w", err)
-		}
-		rsp, err := h.likeTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3061", h.likeTopicSvc)
 	// 收藏/取消收藏主题（minType=3063, 通过 is_favorite 区分）
-	case "3063":
-		var req pb.FavoriteTopicRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal FavoriteTopicRequest failed: %w", err)
-		}
-		rsp, err := h.favoriteTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3063", h.favoriteTopicSvc)
 	// 主题详情/批量查询（minType=3057）
-	case "3057":
-		var req pb.BatchGetTopicInfoRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal BatchGetTopicInfoRequest(GetDetail) failed: %w", err)
-		}
-		rsp, err := h.getTopicDetailSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3057", h.getTopicDetailSvc)
 	// 提交举报（minType=3095）
-	case "3095":
-		var req pb.CreateReportRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal CreateReportRequest failed: %w", err)
-		}
-		rsp, err := h.createReportSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3095", h.createReportSvc)
 	// 已读主题（minType=3099）
-	case "3099":
-		var req pb.CheckTopicActionsRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal CheckTopicActionsRequest(Read) failed: %w", err)
-		}
-		rsp, err := h.readTopicSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "3099", h.readTopicSvc)
 	// 获取评论列表（minType=3065）
-	case "3065":
-		var req pb.GetReplyListRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetReplyListRequest failed: %w", err)
-		}
-		rsp, err := h.getReplyListSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
+	dispatch.Register(h.router, "3065", h.getReplyListSvc)
+}
 
-	default:
-		return nil, fmt.Errorf("unsupported minType: %s", minType)
-	}
+// Dispatch 根据 minType 分发到对应的 svc 处理（委托给 ProtoRouter）
+func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
+	return h.router.Dispatch(ctx, minType, reqBytes)
 }
 
 // InjectJWTManager 延迟注入 JWT 管理器（预留接口，Topic 域当前不直接使用 JWT）

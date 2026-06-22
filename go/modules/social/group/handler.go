@@ -2,20 +2,19 @@ package group
 
 import (
 	"context"
-	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
-	pb "github.com/jimiechen/mineplanet/protocols/generated/go/social"
 	"github.com/jimiechen/mineplanet/go/modules/social/event"
+	"github.com/jimiechen/mineplanet/go/modules/social/internal/dispatch"
 	"github.com/jimiechen/mineplanet/go/modules/social/member"
 )
 
 // Handler 协议分发器，按 minType 路由到对应的 svc
-// switch case 以外禁止业务逻辑
+// 使用 dispatch.ProtoRouter 消除重复的 Unmarshal→Handle→Marshal 样板代码
 type Handler struct {
 	// 领域事件发布器（可为 nil，nil 时不发布事件）
 	publisher event.Publisher
+	// 协议路由器
+	router *dispatch.ProtoRouter
 	// 群组创建/加入/进入
 	createSvc *SvcCreate
 	joinSvc   *SvcJoin
@@ -34,10 +33,11 @@ type Handler struct {
 	getMemberUserIdsSvc   *SvcGetGroupMemberUserIds
 }
 
-// NewHandler 创建 Handler 实例，注入 Repository 并初始化所有 svc
+// NewHandler 创建 Handler 实例，注入 Repository 并初始化所有 svc 和协议路由
 func NewHandler(repo Repository, publisher event.Publisher) *Handler {
-	return &Handler{
+	h := &Handler{
 		publisher:      publisher,
+		router:         dispatch.NewProtoRouter(),
 		createSvc:      NewSvcCreate(repo, publisher),
 		joinSvc:        NewSvcJoin(repo, publisher),
 		enterSvc:       NewSvcEnter(repo),
@@ -52,171 +52,43 @@ func NewHandler(repo Repository, publisher event.Publisher) *Handler {
 		getGroupStatsSvc:    NewSvcGetGroupStats(repo),
 		getMemberUserIdsSvc: NewSvcGetGroupMemberUserIds(repo),
 	}
+	h.registerRoutes()
+	return h
 }
 
-// Dispatch 根据 minType 分发到对应的 svc 处理
-// 每个 case 统一：Unmarshal → svc.Handle → Marshal
-func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
-	switch minType {
+// registerRoutes 注册所有 Group 域协议路由到 ProtoRouter
+func (h *Handler) registerRoutes() {
 	// 创建圈子（minType=2005）
-	case "2005":
-		var req pb.CreateGroupRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal CreateGroupRequest failed: %w", err)
-		}
-		rsp, err := h.createSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2005", h.createSvc)
 	// 加入圈子（minType=2013）
-	case "2013":
-		var req pb.JoinGroupRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal JoinGroupRequest failed: %w", err)
-		}
-		rsp, err := h.joinSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2013", h.joinSvc)
 	// 用户进入圈子（minType=2087）
-	case "2087":
-		var req pb.GroupUserEnterRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GroupUserEnterRequest failed: %w", err)
-		}
-		rsp, err := h.enterSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2087", h.enterSvc)
 	// 退出圈子（minType=2015）
-	case "2015":
-		var req pb.LeaveGroupRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal LeaveGroupRequest failed: %w", err)
-		}
-		rsp, err := h.leaveSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2015", h.leaveSvc)
 	// 成员续费（minType=2037）
-	case "2037":
-		var req pb.RenewMemberRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal RenewMemberRequest failed: %w", err)
-		}
-		rsp, err := h.renewSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2037", h.renewSvc)
 	// 计算应付金额（minType=2073）
-	case "2073":
-		var req pb.CalcPayableAmountRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal CalcPayableAmountRequest failed: %w", err)
-		}
-		rsp, err := h.calcPayableSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2073", h.calcPayableSvc)
 	// 禁言成员（minType=2019）
-	case "2019":
-		var req pb.MuteMemberRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal MuteMemberRequest failed: %w", err)
-		}
-		rsp, err := h.muteSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2019", h.muteSvc)
 	// 封禁成员（minType=2023）
-	case "2023":
-		var req pb.BanMemberRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal BanMemberRequest failed: %w", err)
-		}
-		rsp, err := h.banSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2023", h.banSvc)
 	// 踢出成员（minType=2027）
-	case "2027":
-		var req pb.RemoveMemberRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal RemoveMemberRequest failed: %w", err)
-		}
-		rsp, err := h.removeSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2027", h.removeSvc)
 	// 修改成员角色（minType=2029）
-	case "2029":
-		var req pb.UpdateMemberRoleRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal UpdateMemberRoleRequest failed: %w", err)
-		}
-		rsp, err := h.updateRoleSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2029", h.updateRoleSvc)
 	// 获取圈子统计（minType=2039）
-	case "2039":
-		var req pb.GetGroupStatsRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetGroupStatsRequest failed: %w", err)
-		}
-		rsp, err := h.getGroupStatsSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2039", h.getGroupStatsSvc)
 	// 批量获取圈子信息（minType=2047）
-	case "2047":
-		var req pb.BatchGetGroupsRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal BatchGetGroupsRequest failed: %w", err)
-		}
-		rsp, err := h.batchGetGroupsSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
-
+	dispatch.Register(h.router, "2047", h.batchGetGroupsSvc)
 	// 分页查询成员 UserID 列表（minType=2077）
-	case "2077":
-		var req pb.GetGroupMemberUserIdsRequest
-		if err := proto.Unmarshal(reqBytes, &req); err != nil {
-			return nil, fmt.Errorf("unmarshal GetGroupMemberUserIdsRequest failed: %w", err)
-		}
-		rsp, err := h.getMemberUserIdsSvc.Handle(ctx, &req)
-		if err != nil {
-			return nil, err
-		}
-		return proto.Marshal(rsp)
+	dispatch.Register(h.router, "2077", h.getMemberUserIdsSvc)
+}
 
-	default:
-		return nil, fmt.Errorf("unsupported minType: %s", minType)
-	}
+// Dispatch 根据 minType 分发到对应的 svc 处理（委托给 ProtoRouter）
+func (h *Handler) Dispatch(ctx context.Context, minType string, reqBytes []byte) ([]byte, error) {
+	return h.router.Dispatch(ctx, minType, reqBytes)
 }
 
 // InjectJWTManager 延迟注入 JWT 管理器（预留接口，Group 域当前不直接使用 JWT）
