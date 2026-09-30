@@ -1,0 +1,17 @@
+# FA-Orchestrator 编排配置（PRD-12 F-01：图拓扑配置化，核心代码不硬编码图结构）
+# ISS-FA1 范围：PlannerAgent → DataAgent → 就绪率报告 的最小链路
+# 分析类节点（fundamental/odds/sentiment/synthesis/review）由 ISS-FA2/FA3 按此配置追加
+graph:
+  entry_point: planner
+  nodes:
+    - name: planner
+      agent: planner_agent      # PlannerAgent：Plan-and-Execute 产出结构化分析计划（F-02）
+    - name: data_agent
+      agent: data_agent         # DataAgent：Q1 清单 → ID 解析 → Q2b 完整性核查（F-06~F-09）
+    - name: ready_report
+      agent: ready_report       # 就绪率报告汇总（ISS-FA1 交付物，ReportAgent 前身骨架）
+  edges:
+    - from: planner
+      to: data_agent
+    - from: data_agent
+      to: ready_report
