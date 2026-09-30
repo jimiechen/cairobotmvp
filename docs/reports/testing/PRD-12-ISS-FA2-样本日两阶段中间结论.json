@@ -1,0 +1,888 @@
+{
+  "match_date": "2026-09-29",
+  "channel": "fixture",
+  "total_matches": 7,
+  "matches": [
+    {
+      "fid": "1398594",
+      "match_no": "周二008",
+      "home_team": "北城红鹰",
+      "away_team": "南岭蓝鲨",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 3,
+          "away_favor": 1,
+          "home_against": 1,
+          "away_against": 2,
+          "general": 1,
+          "net_favor": 3,
+          "balance": false,
+          "dense_direction": "home",
+          "conclusion": "利好天平倾向主队"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.25,
+          "handicap_movement": "升盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 1,
+          "win_rate": 0.6666666666666666,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.8571428571428572,
+          "home_avg_conceded": 1.0,
+          "away_avg_scored": 1.1428571428571428,
+          "away_avg_conceded": 1.2857142857142858,
+          "home_recent5_avg": 2.0,
+          "away_recent5_avg": 1.0,
+          "expected_total_goals": 2.7,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "league",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.916
+        },
+        "euro_asia": {
+          "raise_count": 4,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.785,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 2,
+          "overunder_raise_count": 0,
+          "total": 3,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 4.2,
+          "away_pp": -4.2,
+          "trend": "home_heat_rising",
+          "note": ""
+        }
+      }
+    },
+    {
+      "fid": "1398595",
+      "match_no": "周二009",
+      "home_team": "东川闪电",
+      "away_team": "西湖巨浪",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 3,
+          "away_favor": 3,
+          "home_against": 2,
+          "away_against": 2,
+          "general": 1,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.0,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 1,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.2857142857142858,
+          "home_avg_conceded": 1.1428571428571428,
+          "away_avg_scored": 1.2857142857142858,
+          "away_avg_conceded": 1.1428571428571428,
+          "home_recent5_avg": 1.2,
+          "away_recent5_avg": 1.2,
+          "expected_total_goals": 2.3142857142857145,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "league",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.906
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 0,
+          "overunder_raise_count": 0,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.6,
+          "away_pp": -0.6,
+          "trend": "stable",
+          "note": ""
+        }
+      }
+    },
+    {
+      "fid": "1398596",
+      "match_no": "周二010",
+      "home_team": "中原猛虎",
+      "away_team": "滨海飞鱼",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 1,
+          "away_favor": 1,
+          "home_against": 2,
+          "away_against": 2,
+          "general": 3,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.0,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 0,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.1428571428571428,
+          "home_avg_conceded": 1.2857142857142858,
+          "away_avg_scored": 3.4285714285714284,
+          "away_avg_conceded": 1.4285714285714286,
+          "home_recent5_avg": 1.4,
+          "away_recent5_avg": 3.4,
+          "expected_total_goals": 4.114285714285714,
+          "hot_sides": [
+            "away"
+          ],
+          "fire_note": "状态火热一方火力保留（对手成色折扣上限30%）",
+          "correction": "cup",
+          "anchor_note": "杯赛/锦标赛：数据主锚（场均进球和×0.9）降级为参考项，市场升线动作升为共同主锚"
+        },
+        "schedule": {
+          "competition": "cup",
+          "level_gap": true,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.911
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": true,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": true,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 0,
+          "overunder_raise_count": 2,
+          "total": 2,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": -2.0,
+          "away_pp": 2.0,
+          "trend": "home_heat_cooling",
+          "note": ""
+        }
+      }
+    },
+    {
+      "fid": "1398597",
+      "match_no": "周二011",
+      "home_team": "高原雄鹰",
+      "away_team": "平原野牛",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 2,
+          "away_favor": 2,
+          "home_against": 1,
+          "away_against": 1,
+          "general": 2,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.25,
+          "current_handicap": 0.25,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 1,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.0,
+          "home_avg_conceded": 0.8571428571428571,
+          "away_avg_scored": 1.0,
+          "away_avg_conceded": 1.5714285714285714,
+          "home_recent5_avg": 1.8,
+          "away_recent5_avg": 0.8,
+          "expected_total_goals": 2.7,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": "international",
+          "anchor_note": "国际赛/友谊赛：0.9 外推仅作参考项（国际赛方差大），大小球轻仓≤0.3 单位或弃配"
+        },
+        "schedule": {
+          "competition": "international",
+          "level_gap": false,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.908
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 0,
+          "overunder_raise_count": 0,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": false,
+          "note": "无法推演时序"
+        }
+      }
+    },
+    {
+      "fid": "1398598",
+      "match_no": "周二012",
+      "home_team": "星城流星",
+      "away_team": "月城潮汐",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 1,
+          "away_favor": 1,
+          "home_against": 2,
+          "away_against": 1,
+          "general": 2,
+          "net_favor": -1,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.25,
+          "current_handicap": 0.25,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 0,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.0,
+          "home_avg_conceded": 0.7142857142857143,
+          "away_avg_scored": 0.8571428571428571,
+          "away_avg_conceded": 2.0,
+          "home_recent5_avg": 1.8,
+          "away_recent5_avg": 1.0,
+          "expected_total_goals": 2.5714285714285716,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "league",
+          "level_gap": true,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.907
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": true,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": true,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "存在联赛级别断层（实力进一步倾斜，防冷降噪）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 0,
+          "overunder_raise_count": 0,
+          "total": 2,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 1.1,
+          "away_pp": -1.1,
+          "trend": "home_heat_rising",
+          "note": ""
+        }
+      }
+    },
+    {
+      "fid": "1398599",
+      "match_no": "周二013",
+      "home_team": "火焰城",
+      "away_team": "冰晶城",
+      "integrity": {
+        "ready": false,
+        "status": "incomplete",
+        "missing_modules": [
+          "vote"
+        ]
+      },
+      "vote_available": false,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 2,
+          "away_favor": 1,
+          "home_against": 1,
+          "away_against": 2,
+          "general": 1,
+          "net_favor": 2,
+          "balance": false,
+          "dense_direction": null,
+          "conclusion": "利好天平倾向主队"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.25,
+          "handicap_movement": "升盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 3,
+          "win_rate": 0.6666666666666666,
+          "suppression": "strong",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.2857142857142856,
+          "home_avg_conceded": 0.7142857142857143,
+          "away_avg_scored": 0.8571428571428571,
+          "away_avg_conceded": 1.8571428571428572,
+          "home_recent5_avg": 2.2,
+          "away_recent5_avg": 1.0,
+          "expected_total_goals": 2.8285714285714287,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "league",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.909
+        },
+        "euro_asia": {
+          "raise_count": 3,
+          "raise_form": "共振升盘",
+          "avg_home_water": 1.1766666666666665,
+          "state_alignment": "同向",
+          "deep_market": true,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "strong"
+          },
+          "strength_endorsed": true,
+          "interpretation": "真信号",
+          "two_layer_divergence": true,
+          "tags": [
+            "[两层背离｜信让球层]"
+          ],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 0,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 6.5,
+          "away_pp": -6.5,
+          "trend": "home_heat_rising",
+          "note": ""
+        }
+      }
+    },
+    {
+      "fid": "1398600",
+      "match_no": "周二014",
+      "home_team": "长风队",
+      "away_team": "短雨队",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 2,
+          "away_favor": 1,
+          "home_against": 1,
+          "away_against": 1,
+          "general": 1,
+          "net_favor": 1,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.25,
+          "current_handicap": 0.25,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 2,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.2857142857142858,
+          "home_avg_conceded": 1.0,
+          "away_avg_scored": 1.5714285714285714,
+          "away_avg_conceded": 1.1428571428571428,
+          "home_recent5_avg": 1.2,
+          "away_recent5_avg": 1.6,
+          "expected_total_goals": 2.5714285714285716,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "league",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 4,
+          "mainstream_missing": [],
+          "avg_payout": 0.908
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": true,
+            "pct": 6.7,
+            "bk": "Bet365",
+            "tag": "[单家背离-6.7%｜降星/减半仓]"
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": false,
+          "note": "无法推演时序"
+        },
+        "heat_drift": {
+          "available": false,
+          "note": "无法推演时序"
+        }
+      }
+    }
+  ]
+}
