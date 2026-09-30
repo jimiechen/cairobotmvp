@@ -15,6 +15,7 @@
 | ADR-0009 | [Tabbit 任务归档流程](../adr/ADR-0009-tabbit-task-archive-flow.md) | 已接受 | | |
 | ADR-0012 | [多语言 Monorepo 目录布局](../adr/ADR-0012-polyglot-monorepo-directory-layout.md) | 已接受 | 2026-05-19 | 按语言分层：Go 进 go/、Python 进 python/、TypeScript 进 typescript/ |
 | ADR-0013 | [Makefile 工程入口与规则强制执行](../adr/ADR-0013-makefile-engineering-entrypoint-and-rule-enforcement.md) | 已接受 | 2026-05-19 | 三层 Makefile 结构 + 规范检查脚本自动化 |
+| ADR-017 | [FA 情报分析采用 LangGraph 多 Agent 编排](../adr/ADR-017-FA情报分析采用LangGraph多Agent编排.md) | 已确认 | 2026-09-30 | PRD-12 FA-Orchestrator 编排内核决策：StateGraph + agent-plan 外接大模型 |
 
 ## 快速链接
 
