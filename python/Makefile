@@ -1,5 +1,8 @@
 .PHONY: install proto lint unit coverage build package clean help
 
+# Python 解释器（未指定时用 python3；可用 PYTHON=xxx 覆盖）
+PYTHON ?= python3
+
 help: ## 显示 Python 子模块帮助
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
