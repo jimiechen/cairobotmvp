@@ -1,0 +1,28 @@
+graph TD
+    __start__(__start__)
+    planner(planner)
+    data_agent(data_agent)
+    ready_report(ready_report)
+    fundamental_agent(fundamental_agent)
+    odds_verify_agent(odds_verify_agent)
+    sentiment_agent(sentiment_agent)
+    synthesis_agent(synthesis_agent)
+    review_agent(review_agent)
+    human_review(human_review)
+    report_agent(report_agent)
+    phase_report(phase_report)
+    __end__(__end__)
+    __start__ --> planner
+    data_agent --> ready_report
+    fundamental_agent --> odds_verify_agent
+    human_review --> report_agent
+    odds_verify_agent --> sentiment_agent
+    planner --> data_agent
+    ready_report --> fundamental_agent
+    report_agent --> phase_report
+    review_agent -->|manual| human_review
+    review_agent -->|pass| report_agent
+    review_agent -->|retry| synthesis_agent
+    sentiment_agent --> synthesis_agent
+    synthesis_agent --> review_agent
+    phase_report --> __end__

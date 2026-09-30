@@ -1,0 +1,3 @@
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.3.0) or chardet (7.1.0)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+人工裁决：竞彩日 2026-09-29 有矛盾检查未通过场次 ['1398597']（F-20），graph 驱动已暂停；使用 --resume --checkpoint-db 续跑

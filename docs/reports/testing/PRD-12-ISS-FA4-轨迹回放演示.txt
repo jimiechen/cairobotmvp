@@ -1,0 +1,13 @@
+轨迹回放 thread=2026-09-29 共 12 个节点事件:
+   1. planner  耗时 0ms  状态 ok  来源 fixture  输出[plan]
+   2. data_agent  耗时 0ms  状态 ok  来源 fixture  输出[channel,integrity_report,matches]
+   3. ready_report  耗时 0ms  状态 ok  来源 fixture  输出[ready_report]
+   4. fundamental_agent  耗时 0ms  状态 ok  来源 fixture  输出[fundamentals]
+   5. odds_verify_agent  耗时 0ms  状态 ok  来源 fixture  输出[history_deduction,odds_verification]
+   6. sentiment_agent  耗时 0ms  状态 ok  来源 fixture  输出[sentiment,vote_availability]
+   7. synthesis_agent  耗时 0ms  状态 ok  来源 fixture  输出[synthesis,synthesis_attempts_by_match]
+   8. review_agent  耗时 0ms  状态 ok  来源 fixture  输出[manual_review,review,review_decision]
+   9. synthesis_agent  耗时 0ms  状态 ok  来源 fixture  输出[synthesis,synthesis_attempts_by_match]
+  10. review_agent  耗时 0ms  状态 ok  来源 fixture  输出[manual_review,review,review_decision]
+  11. synthesis_agent  耗时 0ms  状态 ok  来源 fixture  输出[synthesis,synthesis_attempts_by_match]
+  12. review_agent  耗时 0ms  状态 ok  来源 fixture  输出[manual_review,review,review_decision]
