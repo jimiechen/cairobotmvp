@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+"""历史推演（F-16）测试：升降盘时序与热度漂移推导，MySQL 专属数据缺失时明确标注。
+
+依据：SKILL v7.4 M5 能力（tracks：change>0 主让加深/大球升线；drift 单位百分点）；
+PRD-12 F-16：缺失时明确标注"无法推演时序"。全程无外部服务调用。
+"""
+from fa_orchestrator.history_deduction import deduce_heat_drift, deduce_trend
+
+
+class TestDeduceTrend:
+    def test_轨迹缺失时标注无法推演时序(self):
+        result = deduce_trend(None)
+        assert result["available"] is False
+        assert "无法推演时序" in result["note"]
+
+    def test_轨迹为空列表时同样标注无法推演(self):
+        result = deduce_trend([])
+        assert result["available"] is False
+        assert "无法推演时序" in result["note"]
+
+    def test_正变化按类型分别计数主让加深与大球升线(self):
+        tracks = [
+            {"kind": "asian", "change": 1},
+            {"kind": "asian", "change": 1},
+            {"kind": "overunder", "change": 1},
+            {"kind": "overunder", "change": 0},
+        ]
+        result = deduce_trend(tracks)
+        assert result["available"] is True
+        assert result["asian_deepen_count"] == 2
+        assert result["overunder_raise_count"] == 1
+        assert result["total"] == 4
+
+    def test_负变化与零变化不计入加深或升线(self):
+        tracks = [
+            {"kind": "asian", "change": -1},
+            {"kind": "overunder", "change": -1},
+            {"kind": "asian", "change": 0},
+        ]
+        result = deduce_trend(tracks)
+        assert result["available"] is True
+        assert result["asian_deepen_count"] == 0
+        assert result["overunder_raise_count"] == 0
+
+
+class TestDeduceHeatDrift:
+    def test_漂移缺失时标注无法推演时序(self):
+        result = deduce_heat_drift(None)
+        assert result["available"] is False
+        assert "无法推演时序" in result["note"]
+
+    def test_漂移正常返回百分点与热度走向(self):
+        result = deduce_heat_drift({"home_pp": 4.2, "away_pp": -4.2})
+        assert result["available"] is True
+        assert result["home_pp"] == 4.2
+        assert result["trend"] == "home_heat_rising"
+
+    def test_漂移回落至平稳带判平稳(self):
+        result = deduce_heat_drift({"home_pp": 0.5, "away_pp": -0.5})
+        assert result["trend"] == "stable"
+
+    def test_漂移大幅下行判热度降温(self):
+        result = deduce_heat_drift({"home_pp": -3.0, "away_pp": 3.0})
+        assert result["trend"] == "home_heat_cooling"

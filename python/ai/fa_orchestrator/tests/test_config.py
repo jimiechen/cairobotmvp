@@ -16,13 +16,20 @@ class TestLoadOrchestrationConfig:
         config = load_orchestration_config(_CONFIG_PATH)
         assert config.entry_point == "planner"
         node_names = [n.name for n in config.nodes]
-        assert node_names == ["planner", "data_agent", "ready_report"]
+        # ISS-FA2 追加分析链路：基本面 → 赔率验证 → 两阶段结论汇总
+        assert node_names == [
+            "planner", "data_agent", "ready_report",
+            "fundamental_agent", "odds_verify_agent", "phase_report",
+        ]
 
     def test_加载边定义(self):
         config = load_orchestration_config(_CONFIG_PATH)
         edge_pairs = [(e.from_node, e.to_node) for e in config.edges]
         assert ("planner", "data_agent") in edge_pairs
         assert ("data_agent", "ready_report") in edge_pairs
+        assert ("ready_report", "fundamental_agent") in edge_pairs
+        assert ("fundamental_agent", "odds_verify_agent") in edge_pairs
+        assert ("odds_verify_agent", "phase_report") in edge_pairs
 
     def test_文件不存在报错(self, tmp_path):
         with pytest.raises(ConfigError):

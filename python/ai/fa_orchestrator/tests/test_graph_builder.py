@@ -35,6 +35,9 @@ def registry():
         "planner_agent": _make_trace_agent("planner"),
         "data_agent": _make_trace_agent("data_agent"),
         "ready_report": _make_trace_agent("ready_report"),
+        "fundamental_agent": _make_trace_agent("fundamental_agent"),
+        "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
+        "phase_report": _make_trace_agent("phase_report"),
     }
 
 
@@ -56,6 +59,9 @@ class TestBuildGraph:
         assert "planner" in mermaid
         assert "data_agent" in mermaid
         assert "ready_report" in mermaid
+        assert "fundamental_agent" in mermaid
+        assert "odds_verify_agent" in mermaid
+        assert "phase_report" in mermaid
 
     def test_节点按拓扑顺序流转(self, registry):
         config = load_orchestration_config(_CONFIG_PATH)
@@ -63,5 +69,8 @@ class TestBuildGraph:
         result = graph.invoke(
             {"match_date": "2026-09-29", "trace": []}, config=RunnableConfig()
         )
-        # planner → data_agent → ready_report 顺序执行
-        assert result["trace"] == ["planner", "data_agent", "ready_report"]
+        # planner → data_agent → ready_report → fundamental_agent → odds_verify_agent → phase_report
+        assert result["trace"] == [
+            "planner", "data_agent", "ready_report",
+            "fundamental_agent", "odds_verify_agent", "phase_report",
+        ]

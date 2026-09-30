@@ -1,0 +1,2562 @@
+{
+ "_说明": "ISS-FA2 analysis fixture：2026-09-29 竞彩日两阶段分析所需数据块（与 sample_day_20260929.json 配套）。q3_odds=Q3 赔率明细（欧赔/亚盘/大小球，snapshot_time 短格式 MM-DD HH:MM，is_final_snapshot 标注临场快照）；q5_vote=Q5 投票支持率（h_error 口径，周二013 与 q2b_counts.vote=0 一致缺失）；q9_intelligence=Q9 情报条目（party: home/away/both，sentiment: favor/against/general）；q10_h2h=Q10 历史交锋（主队视角 W/D/L + 年份 + 时效衰减旗标）；q11_recent=Q11 近期状态（逐场进球/失球，热身赛 is_friendly 标注）；q12_schedule=Q12 赛程（competition 赛事类型 + level_gap 级别断层）；history_tracks/heat_drift=M5 历史推演（升降盘时序 change 与热度漂移百分点，缺失场标注无法推演）。",
+ "match_date": "2026-09-29",
+ "q3_odds": {
+  "1398594": {
+   "kickoff_time": "09-30 18:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 2.1,
+      "draw": 3.25,
+      "lose": 3.4
+     },
+     "current": {
+      "win": 2.02,
+      "draw": 3.3,
+      "lose": 3.55
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 2.15,
+      "draw": 3.2,
+      "lose": 3.45
+     },
+     "current": {
+      "win": 2.05,
+      "draw": 3.25,
+      "lose": 3.6
+     },
+     "payout": 0.918,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 2.12,
+      "draw": 3.28,
+      "lose": 3.42
+     },
+     "current": {
+      "win": 2.04,
+      "draw": 3.3,
+      "lose": 3.5
+     },
+     "payout": 0.911,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 2.08,
+      "draw": 3.3,
+      "lose": 3.5
+     },
+     "current": {
+      "win": 2.0,
+      "draw": 3.35,
+      "lose": 3.58
+     },
+     "payout": 0.929,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.9,
+      "handicap": 0.0,
+      "away_water": 0.95
+     },
+     "current": {
+      "home_water": 0.78,
+      "handicap": 0.25,
+      "away_water": 1.08
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.91,
+      "handicap": 0.0,
+      "away_water": 0.94
+     },
+     "current": {
+      "home_water": 0.8,
+      "handicap": 0.25,
+      "away_water": 1.06
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.88,
+      "handicap": 0.0,
+      "away_water": 0.98
+     },
+     "current": {
+      "home_water": 0.77,
+      "handicap": 0.25,
+      "away_water": 1.09
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.86,
+      "handicap": 0.0,
+      "away_water": 1.0
+     },
+     "current": {
+      "home_water": 0.79,
+      "handicap": 0.25,
+      "away_water": 1.07
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.92,
+      "line": 2.5,
+      "under_odds": 0.94
+     },
+     "current": {
+      "over_odds": 0.9,
+      "line": 2.5,
+      "under_odds": 0.96
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.95,
+      "line": 2.5,
+      "under_odds": 0.91
+     },
+     "current": {
+      "over_odds": 0.93,
+      "line": 2.5,
+      "under_odds": 0.93
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398595": {
+   "kickoff_time": "09-30 19:35",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 2.55,
+      "draw": 3.15,
+      "lose": 2.75
+     },
+     "current": {
+      "win": 2.58,
+      "draw": 3.2,
+      "lose": 2.7
+     },
+     "payout": 0.9,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 2.6,
+      "draw": 3.1,
+      "lose": 2.8
+     },
+     "current": {
+      "win": 2.62,
+      "draw": 3.15,
+      "lose": 2.72
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 2.52,
+      "draw": 3.18,
+      "lose": 2.78
+     },
+     "current": {
+      "win": 2.55,
+      "draw": 3.22,
+      "lose": 2.68
+     },
+     "payout": 0.902,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 2.58,
+      "draw": 3.12,
+      "lose": 2.76
+     },
+     "current": {
+      "win": 2.6,
+      "draw": 3.18,
+      "lose": 2.66
+     },
+     "payout": 0.915,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.95,
+      "handicap": 0.0,
+      "away_water": 0.9
+     },
+     "current": {
+      "home_water": 0.96,
+      "handicap": 0.0,
+      "away_water": 0.89
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.93,
+      "handicap": 0.0,
+      "away_water": 0.92
+     },
+     "current": {
+      "home_water": 0.95,
+      "handicap": 0.0,
+      "away_water": 0.9
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.94,
+      "handicap": 0.0,
+      "away_water": 0.91
+     },
+     "current": {
+      "home_water": 0.94,
+      "handicap": 0.0,
+      "away_water": 0.91
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.96,
+      "handicap": 0.0,
+      "away_water": 0.89
+     },
+     "current": {
+      "home_water": 0.97,
+      "handicap": 0.0,
+      "away_water": 0.88
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.88,
+      "line": 2.25,
+      "under_odds": 0.98
+     },
+     "current": {
+      "over_odds": 0.9,
+      "line": 2.25,
+      "under_odds": 0.96
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.9,
+      "line": 2.25,
+      "under_odds": 0.96
+     },
+     "current": {
+      "over_odds": 0.91,
+      "line": 2.25,
+      "under_odds": 0.95
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398596": {
+   "kickoff_time": "09-30 19:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 3.1,
+      "draw": 3.45,
+      "lose": 2.1
+     },
+     "current": {
+      "win": 3.2,
+      "draw": 3.5,
+      "lose": 2.05
+     },
+     "payout": 0.912,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 3.15,
+      "draw": 3.4,
+      "lose": 2.15
+     },
+     "current": {
+      "win": 3.25,
+      "draw": 3.45,
+      "lose": 2.02
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 3.08,
+      "draw": 3.42,
+      "lose": 2.12
+     },
+     "current": {
+      "win": 3.18,
+      "draw": 3.48,
+      "lose": 2.06
+     },
+     "payout": 0.908,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 3.12,
+      "draw": 3.44,
+      "lose": 2.08
+     },
+     "current": {
+      "win": 3.22,
+      "draw": 3.52,
+      "lose": 2.0
+     },
+     "payout": 0.918,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.98,
+      "handicap": 0.0,
+      "away_water": 0.87
+     },
+     "current": {
+      "home_water": 1.02,
+      "handicap": 0.0,
+      "away_water": 0.83
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 1.0,
+      "handicap": 0.0,
+      "away_water": 0.85
+     },
+     "current": {
+      "home_water": 1.04,
+      "handicap": 0.0,
+      "away_water": 0.81
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.97,
+      "handicap": 0.0,
+      "away_water": 0.88
+     },
+     "current": {
+      "home_water": 1.01,
+      "handicap": 0.0,
+      "away_water": 0.84
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.99,
+      "handicap": 0.0,
+      "away_water": 0.86
+     },
+     "current": {
+      "home_water": 1.03,
+      "handicap": 0.0,
+      "away_water": 0.82
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.85,
+      "line": 2.5,
+      "under_odds": 1.01
+     },
+     "current": {
+      "over_odds": 0.8,
+      "line": 2.75,
+      "under_odds": 1.06
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.87,
+      "line": 2.5,
+      "under_odds": 0.99
+     },
+     "current": {
+      "over_odds": 0.82,
+      "line": 2.75,
+      "under_odds": 1.04
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398597": {
+   "kickoff_time": "09-30 22:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 2.3,
+      "draw": 3.2,
+      "lose": 3.0
+     },
+     "current": {
+      "win": 2.28,
+      "draw": 3.25,
+      "lose": 3.02
+     },
+     "payout": 0.903,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 2.35,
+      "draw": 3.18,
+      "lose": 3.05
+     },
+     "current": {
+      "win": 2.33,
+      "draw": 3.22,
+      "lose": 3.08
+     },
+     "payout": 0.91,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 2.32,
+      "draw": 3.22,
+      "lose": 3.01
+     },
+     "current": {
+      "win": 2.3,
+      "draw": 3.26,
+      "lose": 3.04
+     },
+     "payout": 0.906,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 2.28,
+      "draw": 3.24,
+      "lose": 3.06
+     },
+     "current": {
+      "win": 2.26,
+      "draw": 3.28,
+      "lose": 3.1
+     },
+     "payout": 0.912,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.82,
+      "handicap": 0.25,
+      "away_water": 1.04
+     },
+     "current": {
+      "home_water": 0.8,
+      "handicap": 0.25,
+      "away_water": 1.06
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.84,
+      "handicap": 0.25,
+      "away_water": 1.02
+     },
+     "current": {
+      "home_water": 0.83,
+      "handicap": 0.25,
+      "away_water": 1.03
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.81,
+      "handicap": 0.25,
+      "away_water": 1.05
+     },
+     "current": {
+      "home_water": 0.79,
+      "handicap": 0.25,
+      "away_water": 1.07
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.83,
+      "handicap": 0.25,
+      "away_water": 1.03
+     },
+     "current": {
+      "home_water": 0.81,
+      "handicap": 0.25,
+      "away_water": 1.05
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.86,
+      "line": 2.75,
+      "under_odds": 1.0
+     },
+     "current": {
+      "over_odds": 0.84,
+      "line": 2.75,
+      "under_odds": 1.02
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.88,
+      "line": 2.75,
+      "under_odds": 0.98
+     },
+     "current": {
+      "over_odds": 0.86,
+      "line": 2.75,
+      "under_odds": 1.0
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398598": {
+   "kickoff_time": "09-30 20:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 2.05,
+      "draw": 3.3,
+      "lose": 3.55
+     },
+     "current": {
+      "win": 2.02,
+      "draw": 3.05,
+      "lose": 3.7
+     },
+     "payout": 0.902,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 2.08,
+      "draw": 3.28,
+      "lose": 3.6
+     },
+     "current": {
+      "win": 2.05,
+      "draw": 3.02,
+      "lose": 3.75
+     },
+     "payout": 0.908,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 2.06,
+      "draw": 3.32,
+      "lose": 3.52
+     },
+     "current": {
+      "win": 2.03,
+      "draw": 3.08,
+      "lose": 3.66
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 2.03,
+      "draw": 3.34,
+      "lose": 3.58
+     },
+     "current": {
+      "win": 2.0,
+      "draw": 3.06,
+      "lose": 3.72
+     },
+     "payout": 0.915,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.88,
+      "handicap": 0.25,
+      "away_water": 0.98
+     },
+     "current": {
+      "home_water": 0.9,
+      "handicap": 0.25,
+      "away_water": 0.96
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.9,
+      "handicap": 0.25,
+      "away_water": 0.96
+     },
+     "current": {
+      "home_water": 0.92,
+      "handicap": 0.25,
+      "away_water": 0.94
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.87,
+      "handicap": 0.25,
+      "away_water": 0.99
+     },
+     "current": {
+      "home_water": 0.89,
+      "handicap": 0.25,
+      "away_water": 0.97
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.89,
+      "handicap": 0.25,
+      "away_water": 0.97
+     },
+     "current": {
+      "home_water": 0.91,
+      "handicap": 0.25,
+      "away_water": 0.95
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.91,
+      "line": 2.5,
+      "under_odds": 0.95
+     },
+     "current": {
+      "over_odds": 0.92,
+      "line": 2.5,
+      "under_odds": 0.94
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.93,
+      "line": 2.5,
+      "under_odds": 0.93
+     },
+     "current": {
+      "over_odds": 0.94,
+      "line": 2.5,
+      "under_odds": 0.92
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398599": {
+   "kickoff_time": "09-30 21:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 1.85,
+      "draw": 3.4,
+      "lose": 4.2
+     },
+     "current": {
+      "win": 1.82,
+      "draw": 3.45,
+      "lose": 4.3
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 1.88,
+      "draw": 3.38,
+      "lose": 4.25
+     },
+     "current": {
+      "win": 1.85,
+      "draw": 3.42,
+      "lose": 4.35
+     },
+     "payout": 0.91,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 1.86,
+      "draw": 3.42,
+      "lose": 4.18
+     },
+     "current": {
+      "win": 1.83,
+      "draw": 3.46,
+      "lose": 4.28
+     },
+     "payout": 0.906,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 1.84,
+      "draw": 3.44,
+      "lose": 4.22
+     },
+     "current": {
+      "win": 1.81,
+      "draw": 3.48,
+      "lose": 4.32
+     },
+     "payout": 0.913,
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "asian": [
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "home_water": 0.72,
+      "handicap": 0.0,
+      "away_water": 1.14
+     },
+     "current": {
+      "home_water": 0.72,
+      "handicap": 0.0,
+      "away_water": 1.14
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.88,
+      "handicap": 0.0,
+      "away_water": 0.98
+     },
+     "current": {
+      "home_water": 1.18,
+      "handicap": 0.25,
+      "away_water": 0.68
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.9,
+      "handicap": 0.0,
+      "away_water": 0.96
+     },
+     "current": {
+      "home_water": 1.16,
+      "handicap": 0.25,
+      "away_water": 0.7
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.87,
+      "handicap": 0.0,
+      "away_water": 0.99
+     },
+     "current": {
+      "home_water": 1.19,
+      "handicap": 0.25,
+      "away_water": 0.67
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.89,
+      "line": 2.5,
+      "under_odds": 0.97
+     },
+     "current": {
+      "over_odds": 0.91,
+      "line": 2.5,
+      "under_odds": 0.95
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.91,
+      "line": 2.5,
+      "under_odds": 0.95
+     },
+     "current": {
+      "over_odds": 0.92,
+      "line": 2.5,
+      "under_odds": 0.94
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  },
+  "1398600": {
+   "kickoff_time": "10-01 03:00",
+   "euro": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "win": 2.3,
+      "draw": 3.25,
+      "lose": 3.05
+     },
+     "current": {
+      "win": 2.29,
+      "draw": 3.26,
+      "lose": 3.06
+     },
+     "payout": 0.905,
+     "snapshot_time": "09-30 20:30",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "win": 2.33,
+      "draw": 3.22,
+      "lose": 3.08
+     },
+     "current": {
+      "win": 2.32,
+      "draw": 3.24,
+      "lose": 3.1
+     },
+     "payout": 0.91,
+     "snapshot_time": "09-30 20:30",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "威廉希尔",
+     "initial": {
+      "win": 2.31,
+      "draw": 3.26,
+      "lose": 3.03
+     },
+     "current": {
+      "win": 2.3,
+      "draw": 3.28,
+      "lose": 3.05
+     },
+     "payout": 0.906,
+     "snapshot_time": "09-30 20:30",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "win": 2.25,
+      "draw": 3.3,
+      "lose": 3.15
+     },
+     "current": {
+      "win": 2.4,
+      "draw": 3.3,
+      "lose": 2.98
+     },
+     "payout": 0.912,
+     "snapshot_time": "10-01 01:52",
+     "is_final_snapshot": true
+    }
+   ],
+   "asian": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "home_water": 0.84,
+      "handicap": 0.25,
+      "away_water": 1.02
+     },
+     "current": {
+      "home_water": 0.85,
+      "handicap": 0.25,
+      "away_water": 1.01
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "皇冠",
+     "initial": {
+      "home_water": 0.86,
+      "handicap": 0.25,
+      "away_water": 1.0
+     },
+     "current": {
+      "home_water": 0.87,
+      "handicap": 0.25,
+      "away_water": 0.99
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "home_water": 0.83,
+      "handicap": 0.25,
+      "away_water": 1.03
+     },
+     "current": {
+      "home_water": 0.88,
+      "handicap": 0.25,
+      "away_water": 0.98
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    },
+    {
+     "bk": "立博",
+     "initial": {
+      "home_water": 0.85,
+      "handicap": 0.25,
+      "away_water": 1.01
+     },
+     "current": {
+      "home_water": 0.86,
+      "handicap": 0.25,
+      "away_water": 1.0
+     },
+     "snapshot_time": "09-29 20:10",
+     "is_final_snapshot": false
+    }
+   ],
+   "overunder": [
+    {
+     "bk": "澳门",
+     "initial": {
+      "over_odds": 0.87,
+      "line": 2.5,
+      "under_odds": 0.99
+     },
+     "current": {
+      "over_odds": 0.88,
+      "line": 2.5,
+      "under_odds": 0.98
+     },
+     "snapshot_time": "09-29 20:10"
+    },
+    {
+     "bk": "Bet365",
+     "initial": {
+      "over_odds": 0.89,
+      "line": 2.5,
+      "under_odds": 0.97
+     },
+     "current": {
+      "over_odds": 0.9,
+      "line": 2.5,
+      "under_odds": 0.96
+     },
+     "snapshot_time": "09-29 20:10"
+    }
+   ]
+  }
+ },
+ "q5_vote": {
+  "1398594": {
+   "support": {
+    "win": 55.5,
+    "draw": 22.5,
+    "lose": 22.0
+   }
+  },
+  "1398595": {
+   "support": {
+    "win": 40.0,
+    "draw": 30.5,
+    "lose": 29.5
+   }
+  },
+  "1398596": {
+   "support": {
+    "win": 30.0,
+    "draw": 25.5,
+    "lose": 44.5
+   }
+  },
+  "1398597": {
+   "support": {
+    "win": 45.0,
+    "draw": 27.0,
+    "lose": 28.0
+   }
+  },
+  "1398598": {
+   "support": {
+    "win": 52.0,
+    "draw": 26.0,
+    "lose": 22.0
+   }
+  },
+  "1398600": {
+   "support": {
+    "win": 48.5,
+    "draw": 25.0,
+    "lose": 26.5
+   }
+  }
+ },
+ "q9_intelligence": {
+  "1398594": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主力前锋复出"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主场近5战4胜"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "中场核心续约士气高"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "新援门将状态佳"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "主力中卫累计黄牌停赛"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "客场三连败"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "右后卫伤缺"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "当晚有阵雨，场地湿滑"
+    }
+   ]
+  },
+  "1398595": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "边锋回归训练"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主场草皮改造完成"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "青年队两人上调"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "队长复出"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "冬窗引援到位"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "客战韧性提升"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "后腰伤停"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "门将轮换存疑"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "中卫组合重组"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "锋线哑火"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "双方均有球员参加国家队"
+    }
+   ]
+  },
+  "1398596": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主场球迷满座"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "头号射手火线复出"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "两名主力伤缺"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "一周双赛体能吃亏"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "客场旅途劳顿"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "联赛保级压力分心"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "杯赛轮换概率高"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "历史交锋客队占优"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "裁判尺度偏松"
+    }
+   ]
+  },
+  "1398597": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "归化球员首次首发"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "海拔主场优势"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "旅欧军团归队"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "热身赛两连胜"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "后防老将伤退"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "主力中场红牌停赛"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "国际赛轮换多"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "友谊赛性质成色存疑"
+    }
+   ]
+  },
+  "1398598": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "射手榜第一领衔"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "新帅上任首秀"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "两翼齐飞组合拆散"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "杯赛消耗大"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "降级区心态紧绷"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "当晚大风"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "主队联赛级别高一级"
+    }
+   ]
+  },
+  "1398599": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主场三连胜"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "锋线双子星连线成型"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "门将扑救率联赛第一"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "主力后腰累积停赛"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "客场进攻乏力的老毛病"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "边锋轻伤出战成疑"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "夜场灯光条件良好"
+    }
+   ]
+  },
+  "1398600": {
+   "items": [
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "主场对客队五连胜"
+    },
+    {
+     "party": "home",
+     "sentiment": "favor",
+     "text": "中前场全员健康"
+    },
+    {
+     "party": "away",
+     "sentiment": "favor",
+     "text": "反击效率联赛前列"
+    },
+    {
+     "party": "home",
+     "sentiment": "against",
+     "text": "门将赛前轻伤"
+    },
+    {
+     "party": "away",
+     "sentiment": "against",
+     "text": "主力中卫停赛"
+    },
+    {
+     "party": "both",
+     "sentiment": "general",
+     "text": "跨日凌晨场球员状态存疑"
+    }
+   ]
+  }
+ },
+ "q10_h2h": {
+  "1398594": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "W",
+     "score": "2-1"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "1-0"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "0-2"
+    },
+    {
+     "year": 2024,
+     "result": "W",
+     "score": "3-1"
+    },
+    {
+     "year": 2023,
+     "result": "W",
+     "score": "2-0"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398595": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "W",
+     "score": "1-0"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "2-2"
+    },
+    {
+     "year": 2025,
+     "result": "L",
+     "score": "1-2"
+    },
+    {
+     "year": 2024,
+     "result": "D",
+     "score": "0-0"
+    },
+    {
+     "year": 2024,
+     "result": "W",
+     "score": "2-1"
+    },
+    {
+     "year": 2023,
+     "result": "L",
+     "score": "1-3"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398596": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "L",
+     "score": "0-1"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "2-0"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "1-2"
+    },
+    {
+     "year": 2024,
+     "result": "W",
+     "score": "3-2"
+    },
+    {
+     "year": 2023,
+     "result": "D",
+     "score": "1-1"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398597": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "W",
+     "score": "2-0"
+    },
+    {
+     "year": 2025,
+     "result": "L",
+     "score": "0-1"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2024,
+     "result": "W",
+     "score": "1-0"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "0-3"
+    },
+    {
+     "year": 2023,
+     "result": "D",
+     "score": "2-2"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398598": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "0-0"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "2-1"
+    },
+    {
+     "year": 2024,
+     "result": "D",
+     "score": "2-2"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "0-1"
+    },
+    {
+     "year": 2023,
+     "result": "W",
+     "score": "1-0"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398599": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "W",
+     "score": "2-0"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "3-1"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "1-0"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "0-1"
+    },
+    {
+     "year": 2024,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2023,
+     "result": "W",
+     "score": "2-1"
+    }
+   ],
+   "decay_flags": []
+  },
+  "1398600": {
+   "records": [
+    {
+     "year": 2026,
+     "result": "W",
+     "score": "1-0"
+    },
+    {
+     "year": 2025,
+     "result": "D",
+     "score": "1-1"
+    },
+    {
+     "year": 2025,
+     "result": "W",
+     "score": "2-1"
+    },
+    {
+     "year": 2024,
+     "result": "D",
+     "score": "0-0"
+    },
+    {
+     "year": 2024,
+     "result": "L",
+     "score": "1-2"
+    },
+    {
+     "year": 2023,
+     "result": "D",
+     "score": "1-1"
+    }
+   ],
+   "decay_flags": []
+  }
+ },
+ "q11_recent": {
+  "1398594": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 0,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 1,
+      "scored": 1,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     }
+    ]
+   }
+  },
+  "1398595": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 0,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     }
+    ]
+   }
+  },
+  "1398596": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 0,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 4,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 5,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 4,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     }
+    ]
+   }
+  },
+  "1398597": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     }
+    ]
+   }
+  },
+  "1398598": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 1,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     }
+    ]
+   }
+  },
+  "1398599": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 3,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 4,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 3
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 1,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 2
+     }
+    ]
+   }
+  },
+  "1398600": {
+   "home": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 2,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 0
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     }
+    ]
+   },
+   "away": {
+    "matches": [
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 2
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 1,
+      "scored": 0,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 1,
+      "conceded": 1
+     },
+     {
+      "is_friendly": 0,
+      "scored": 2,
+      "conceded": 0
+     }
+    ]
+   }
+  }
+ },
+ "q12_schedule": {
+  "1398594": {
+   "competition": "league",
+   "level_gap": false,
+   "future": [
+    {
+     "days": 3,
+     "competition": "league"
+    },
+    {
+     "days": 7,
+     "competition": "league"
+    },
+    {
+     "days": 10,
+     "competition": "league"
+    }
+   ]
+  },
+  "1398595": {
+   "competition": "league",
+   "level_gap": false,
+   "future": [
+    {
+     "days": 4,
+     "competition": "league"
+    },
+    {
+     "days": 8,
+     "competition": "league"
+    },
+    {
+     "days": 11,
+     "competition": "league"
+    }
+   ]
+  },
+  "1398596": {
+   "competition": "cup",
+   "level_gap": true,
+   "future": [
+    {
+     "days": 5,
+     "competition": "cup"
+    },
+    {
+     "days": 9,
+     "competition": "league"
+    }
+   ]
+  },
+  "1398597": {
+   "competition": "international",
+   "level_gap": false,
+   "future": [
+    {
+     "days": 3,
+     "competition": "international"
+    },
+    {
+     "days": 6,
+     "competition": "international"
+    }
+   ]
+  },
+  "1398598": {
+   "competition": "league",
+   "level_gap": true,
+   "future": [
+    {
+     "days": 3,
+     "competition": "league"
+    },
+    {
+     "days": 7,
+     "competition": "cup"
+    },
+    {
+     "days": 12,
+     "competition": "league"
+    }
+   ]
+  },
+  "1398599": {
+   "competition": "league",
+   "level_gap": false,
+   "future": [
+    {
+     "days": 4,
+     "competition": "league"
+    },
+    {
+     "days": 8,
+     "competition": "league"
+    },
+    {
+     "days": 11,
+     "competition": "league"
+    }
+   ]
+  },
+  "1398600": {
+   "competition": "league",
+   "level_gap": false,
+   "future": [
+    {
+     "days": 3,
+     "competition": "league"
+    },
+    {
+     "days": 6,
+     "competition": "league"
+    },
+    {
+     "days": 10,
+     "competition": "cup"
+    }
+   ]
+  }
+ },
+ "history_tracks": {
+  "1398594": [
+   {
+    "kind": "asian",
+    "change": 1
+   },
+   {
+    "kind": "asian",
+    "change": 1
+   },
+   {
+    "kind": "overunder",
+    "change": 0
+   }
+  ],
+  "1398595": [
+   {
+    "kind": "asian",
+    "change": 0
+   }
+  ],
+  "1398596": [
+   {
+    "kind": "overunder",
+    "change": 1
+   },
+   {
+    "kind": "overunder",
+    "change": 1
+   }
+  ],
+  "1398597": [
+   {
+    "kind": "asian",
+    "change": -1
+   }
+  ],
+  "1398598": [
+   {
+    "kind": "asian",
+    "change": 0
+   },
+   {
+    "kind": "overunder",
+    "change": 0
+   }
+  ],
+  "1398599": [
+   {
+    "kind": "asian",
+    "change": 1
+   }
+  ]
+ },
+ "heat_drift": {
+  "1398594": {
+   "home_pp": 4.2,
+   "away_pp": -4.2
+  },
+  "1398595": {
+   "home_pp": 0.6,
+   "away_pp": -0.6
+  },
+  "1398596": {
+   "home_pp": -2.0,
+   "away_pp": 2.0
+  },
+  "1398598": {
+   "home_pp": 1.1,
+   "away_pp": -1.1
+  },
+  "1398599": {
+   "home_pp": 6.5,
+   "away_pp": -6.5
+  }
+ }
+}
