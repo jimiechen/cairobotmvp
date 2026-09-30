@@ -1,4 +1,4 @@
-.PHONY: install proto lint unit coverage build package clean help
+.PHONY: install proto lint unit integration coverage build package clean help
 
 # Python 解释器（未指定时用 python3；可用 PYTHON=xxx 覆盖）
 PYTHON ?= python3
@@ -38,6 +38,18 @@ unit: ## 运行 Python 单元测试
 		echo "[py] ⏭️  无 ai/ 目录，跳过 python test"; \
 	fi
 	@echo "[py] 单元测试完成"
+
+integration: ## 运行 Python 集成测试（真实连库，需 FA_MYSQL_INTEGRATION=1 门控 + FA_MYSQL_* 配置）
+	@echo "[py] ==> 运行集成测试..."
+	@if [ ! -d ai ]; then \
+		echo "[py] ⏭️  无 ai/ 目录，跳过 python integration"; \
+	elif [ "$(FA_MYSQL_INTEGRATION)" != "1" ]; then \
+		echo "[py] ⏭️  跳过 python integration：未设置 FA_MYSQL_INTEGRATION=1（真实连库门控，防止单测误连）"; \
+	else \
+		cd ai && $(PYTHON) -m pytest fa_orchestrator/tests/integration -v --tb=short \
+			|| echo "[py] ⚠️  集成测试未通过（检查 FA_MYSQL_* 连接配置与网络可达性）"; \
+	fi
+	@echo "[py] 集成测试完成"
 
 coverage: ## 生成 Python 覆盖率报告
 	@echo "[py] ==> 生成覆盖率报告..."

@@ -244,6 +244,7 @@ unit: ## 运行所有单元测试
 integration: ## 运行集成测试
 	@echo "==> 运行集成测试..."
 	@if [ -f go/Makefile ]; then $(MAKE) -C go integration || echo "跳过 go integration"; fi
+	@if [ -f python/Makefile ]; then $(MAKE) -C python integration || echo "跳过 python integration"; fi
 	@echo "==> 集成测试完成"
 
 coverage: ## 生成覆盖率报告，输出最终汇总结果
