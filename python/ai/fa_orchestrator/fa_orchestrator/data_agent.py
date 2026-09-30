@@ -36,7 +36,7 @@ class DataAgent:
         """
         matches = self.data_source.query_match_list(match_date)
         match_ids = self._resolve_all(matches, match_date)
-        per_match_counts = self._fetch_q2b_counts(matches)
+        per_match_counts = self._fetch_q2b_counts(matches, match_ids)
 
         report = build_integrity_report(per_match_counts)
         report["match_date"] = match_date
@@ -60,10 +60,14 @@ class DataAgent:
                 match_ids[row["fid"]] = None
         return match_ids
 
-    def _fetch_q2b_counts(self, matches: list) -> dict:
-        """批量 Q2b 六模块行数核查。"""
+    def _fetch_q2b_counts(self, matches: list, match_ids: dict = None) -> dict:
+        """批量 Q2b 六模块行数核查。
+
+        match_ids（fid → match.id）透传给数据源：MySQL 通道模块表的
+        ID 域是 `match`.id（非 fid），必须以解析结果定位；fixture 忽略。
+        """
         fids = [row["fid"] for row in matches]
-        return self.data_source.query_q2b_counts(fids)
+        return self.data_source.query_q2b_counts(fids, match_ids=match_ids)
 
     def _enrich_report(self, report: dict, matches: list, match_ids: dict) -> None:
         """重建每场明细：基础信息 + integrity 子对象 + 溯源快照。"""

@@ -5,10 +5,12 @@ description = "FA 足球情报分析多 Agent 可视化编排系统（PRD-12 / A
 requires-python = ">=3.11"
 # 依赖白名单（ADR-017 §9.1）：AI 框架仅允许 langgraph + langchain-core，版本精确锁定
 # pyyaml 为 F-01（图拓扑 YAML 配置化）的工程解析依赖，非 AI 框架
+# pymysql 为 R-04 联调 MySQL 真实通道（mysql_data_source.py）的 DB 驱动，非 AI 框架
 dependencies = [
     "langgraph==1.2.12",
     "langchain-core==1.6.6",
     "pyyaml>=6.0.1",
+    "pymysql==1.4.6",
 ]
 
 [project.optional-dependencies]

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-"""取数数据源（PRD-12 F-06/F-09/F-10/F-11/F-16）：MySQL / fixture 双通道 + 数据溯源快照。
+"""取数数据源（PRD-12 F-06/F-09/F-10/F-11/F-16）：fixture 通道 + 数据溯源快照。
 
 职责边界：
-- 负责：Q1/Q2b/候选行/两阶段分析数据块（Q3/Q5/Q9~Q12/历史推演）的
-  数据源抽象与 fixture 实现、溯源快照结构。
-- 不负责：SQL 契约文本（sql_contracts.py）、完整性判定（integrity.py）、
+- 负责：通道标识、溯源快照结构、fixture 数据源实现（Q1/Q2b/候选行/
+  两阶段分析数据块 Q3/Q5/Q9~Q12/历史推演）。
+- 不负责：SQL 契约文本（sql_contracts.py）、MySQL 真实通道
+  （mysql_data_source.py，R-04 联调）、完整性判定（integrity.py）、
   分析计算（fundamental_agent.py / odds_verify_agent.py）。
 
-MySQL 通道（MySqlDataSource）依赖 pymysql（仓库外联调环境，R-04 未就绪），
-ISS-FA1 仅保留接口骨架；单元测试一律使用 FixtureDataSource，禁止真实连库。
+测试约束：单元测试一律使用 FixtureDataSource 或 Fake 连接，禁止真实连库；
+真实联调走 tests/integration/test_mysql_integration.py（FA_MYSQL_INTEGRATION 门控）。
 analysis fixture 为可选配置：未配置时分析类查询返回 None/空 dict（向后兼容）。
 """
 import json
@@ -62,8 +63,12 @@ class FixtureDataSource:
             return []
         return list(self.fixture.get("q1_matches", []))
 
-    def query_q2b_counts(self, fids: list) -> dict:
-        """Q2b（六模块行数）：按 fid 过滤返回 {fid: {模块: 行数}}。"""
+    def query_q2b_counts(self, fids: list, match_ids: dict = None) -> dict:
+        """Q2b（六模块行数）：按 fid 过滤返回 {fid: {模块: 行数}}。
+
+        match_ids（fid → match.id，DataAgent 四路径解析结果）供 MySQL 通道
+        定位模块表数据块；fixture 数据块本身按 fid 组织，忽略该参数。
+        """
         all_counts = self.fixture.get("q2b_counts", {})
         return {fid: all_counts[fid] for fid in fids if fid in all_counts}
 
@@ -110,17 +115,3 @@ class FixtureDataSource:
     def _in_day_window(row: dict, match_date: str) -> bool:
         """竞彩日窗口判定：跨日场次按开球日归属（fixture 简化：同月即命中）。"""
         return str(row.get("match_date", "")).startswith(match_date[:7])
-
-
-class MySqlDataSource:
-    """MySQL 直连数据源（骨架）。
-
-    依赖 pymysql 与联调环境（R-04：192.168.1.6:3306/workbench），
-    ISS-FA1 不实现连接逻辑；实现时必须：全参数化 SQL、`match` 反引号、
-    连接串走环境变量、快照溯源落盘。
-    """
-
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError(
-            "MySQL 通道待联调环境就绪（R-04）后实现，当前请使用 FixtureDataSource"
-        )

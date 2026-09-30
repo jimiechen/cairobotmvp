@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """CLI 入口（PRD-12 F-05）：`run --date` 日级数据准备与两阶段分析。
 
-ISS-FA1 范围：run 子命令（fixture 数据源），产出并落盘就绪率报告。
-ISS-FA2 扩展：--analysis-fixture/--analysis-output 触发两阶段分析管线，
-产出七场中间结论 JSON。replay/show/graph 子命令由 ISS-FA4 实现。
+数据源通道（R-04 联调后双通道）：--source fixture（默认，测试/演示）
+与 --source mysql（真实 workbench 库，配置走 FA_MYSQL_* 环境变量）。
+MySQL 通道仅覆盖数据准备（Q1/Q2b/解析）；两阶段分析仍仅支持 fixture
+（分析类 SQL 契约未归档，经主控确认不纳入）。
+replay/show/graph 子命令由 ISS-FA4 实现。
 """
 import argparse
 import json
@@ -12,7 +14,8 @@ from pathlib import Path
 
 from fa_orchestrator.analysis_runner import AnalysisRunner
 from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.data_source import FixtureDataSource
+from fa_orchestrator.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
+from fa_orchestrator.mysql_data_source import MySqlConfigError, MySqlDataSource
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,6 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="日级数据准备与两阶段分析")
     run_parser.add_argument("--date", required=True, help="竞彩日，如 2026-09-29")
     run_parser.add_argument("--fixture", help="fixture 数据源路径（测试/演示）")
+    run_parser.add_argument(
+        "--source",
+        choices=(CHANNEL_FIXTURE, CHANNEL_MYSQL),
+        default=CHANNEL_FIXTURE,
+        help="数据源通道：fixture（默认）或 mysql（需 FA_MYSQL_* 环境变量）",
+    )
     run_parser.add_argument("--output", help="就绪率报告 JSON 输出路径")
     run_parser.add_argument(
         "--analysis-fixture", help="两阶段分析数据块 fixture 路径（ISS-FA2）"
@@ -36,14 +45,37 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_source(args):
+    """按 --source 构建数据源。
+
+    返回：data_source 实例。
+    失败行为：mysql 通道缺 FA_MYSQL_* 配置抛 MySqlConfigError（调用方转退出码 2）。
+    """
+    if args.source == CHANNEL_MYSQL:
+        return MySqlDataSource()
+    if not args.fixture:
+        raise ValueError("fixture 通道必须提供 --fixture 路径")
+    return FixtureDataSource(args.fixture, analysis_path=args.analysis_fixture)
+
+
 def _run(args) -> int:
     """执行 run 子命令：取数 → 核查 → 就绪率报告（→ 两阶段分析）。"""
-    if not args.fixture:
-        print("错误：当前仅支持 --fixture 数据源（MySQL 通道待 R-04 就绪）", file=sys.stderr)
+    if args.source == CHANNEL_MYSQL and args.analysis_output:
+        print(
+            "错误：MySQL 通道暂不支持两阶段分析（分析类 SQL 契约未归档，R-04 范围限定）",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        data_source = _build_source(args)
+    except MySqlConfigError as exc:
+        print(f"错误：{exc}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"错误：{exc}", file=sys.stderr)
         return 2
 
-    data_source = FixtureDataSource(args.fixture, analysis_path=args.analysis_fixture)
-    report = DataAgent(data_source).prepare(args.date)
+    report = DataAgent(data_source, channel=args.source).prepare(args.date)
     _print_ready_report(args, report)
 
     if args.output:
