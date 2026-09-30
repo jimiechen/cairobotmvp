@@ -81,3 +81,29 @@ class TestCli:
         stdout_text = capsys.readouterr().out
         assert "2026-09-29" in stdout_text
         assert "6/7" in stdout_text
+
+
+class TestCliMysqlSource:
+    """--source mysql 真实通道（R-04）：配置缺失必须明确报错，不静默。"""
+
+    _MYSQL_ENVS = ("FA_MYSQL_HOST", "FA_MYSQL_PORT", "FA_MYSQL_USER",
+                   "FA_MYSQL_PASSWORD", "FA_MYSQL_DB")
+
+    def test_source_mysql缺配置时报错退出码2(self, monkeypatch, capsys):
+        for key in self._MYSQL_ENVS:
+            monkeypatch.delenv(key, raising=False)
+        exit_code = main(["run", "--date", "2026-09-29", "--source", "mysql"])
+        assert exit_code == 2
+        assert "FA_MYSQL" in capsys.readouterr().err
+
+    def test_source_mysql禁止两阶段分析(self, monkeypatch, capsys):
+        # 分析类 SQL 契约未归档（主控确认不纳入）：提前拒绝，不发起连接
+        for key, val in (("FA_MYSQL_HOST", "db"), ("FA_MYSQL_USER", "u"),
+                         ("FA_MYSQL_PASSWORD", "p"), ("FA_MYSQL_DB", "workbench")):
+            monkeypatch.setenv(key, val)
+        exit_code = main([
+            "run", "--date", "2026-09-29", "--source", "mysql",
+            "--analysis-output", "out.json",
+        ])
+        assert exit_code == 2
+        assert "分析" in capsys.readouterr().err
