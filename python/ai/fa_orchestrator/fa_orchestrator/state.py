@@ -4,7 +4,8 @@
 ISS-FA1 定义编排骨架字段；ISS-FA2 扩展两阶段分析中间态
 （fundamentals/odds_verification/phase_conclusion）。
 ISS-FA3 扩展质检层字段（sentiment/synthesis/review/条件回退计数）。
-trace 使用 operator.add reducer 聚合。
+ISS-FA4 扩展追溯与人工裁决字段（trace_events/human_decisions/reports 等）。
+trace/trace_events 使用 operator.add reducer 聚合。
 """
 import operator
 from typing import Annotated, TypedDict
@@ -29,6 +30,12 @@ class AnalysisState(TypedDict, total=False):
     - synthesis_attempts：SynthesisAgent 条件回退执行次数（有界：≤2，ISS-FA3）
     - manual_review：需人工裁决的场次清单（仍不过转人工，ISS-FA3）
     - trace：节点执行轨迹（reducer 聚合，供追溯/回放扩展）
+    - trace_events：结构化轨迹事件（节点/耗时/输出/来源，F-18，ISS-FA4）
+    - synthesis_attempts_by_match：逐场回退执行计数（{fid: 次数}，ISS-FA4）
+    - vote_availability：逐场投票数据可用性（{fid: bool}，ISS-FA4）
+    - history_deduction：逐场历史推演结论（{fid: 结论}，F-16，ISS-FA4）
+    - human_decisions：人工裁决结论（{fid: 裁决值}，F-20，ISS-FA4）
+    - reports：逐场 Markdown 报告（{fid: 报告文本}，F-15，ISS-FA4）
     """
     match_date: str
     plan: dict
@@ -45,3 +52,9 @@ class AnalysisState(TypedDict, total=False):
     synthesis_attempts: int
     manual_review: list
     trace: Annotated[list, operator.add]
+    trace_events: Annotated[list, operator.add]
+    synthesis_attempts_by_match: dict
+    vote_availability: dict
+    history_deduction: dict
+    human_decisions: dict
+    reports: dict

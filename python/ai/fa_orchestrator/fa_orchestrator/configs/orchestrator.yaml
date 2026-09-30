@@ -2,8 +2,10 @@
 # ISS-FA1 范围：PlannerAgent → DataAgent → 就绪率报告 的最小链路
 # ISS-FA2 追加：就绪报告 → 基本面分析 → 赔率验证 → 两阶段结论汇总
 # ISS-FA3 追加：热度 → 综合判定 → 矛盾检查（F-12/F-13/F-14），
-#   矛盾检查回退经条件边图级强制：retry 回退 synthesis，pass/manual 直达报告；
+#   矛盾检查回退经条件边图级强制：retry 回退 synthesis，pass 直达报告；
 #   未知决策值兜底 manual（有界终止），branches 必须含 manual 分支（config.py 校验）
+# ISS-FA4 追加：manual → human_review（F-20 人工裁决 interrupt）→ report_agent
+#   （F-15 报告产出）→ phase_report；pass 分支同步改道 report_agent
 graph:
   entry_point: planner
   nodes:
@@ -12,7 +14,7 @@ graph:
     - name: data_agent
       agent: data_agent         # DataAgent：Q1 清单 → ID 解析 → Q2b 完整性核查（F-06~F-09）
     - name: ready_report
-      agent: ready_report       # 就绪率报告汇总（ISS-FA1 交付物，ReportAgent 前身骨架）
+      agent: ready_report       # 就绪率报告汇总（ISS-FA1 交付物）
     - name: fundamental_agent
       agent: fundamental_agent  # FundamentalAgent：第一阶段基本面五维分析（F-10）
     - name: odds_verify_agent
@@ -23,6 +25,10 @@ graph:
       agent: synthesis_agent    # SynthesisAgent：撤离门槛/反大众/让球单选/互斥（F-13）
     - name: review_agent
       agent: review_agent       # ReviewAgent：七项矛盾检查与条件回退决策（F-14）
+    - name: human_review
+      agent: human_review       # 人工裁决节点：manual 时 interrupt 等待确认（F-20，ISS-FA4）
+    - name: report_agent
+      agent: report_agent       # ReportAgent：模板报告 + 溯源声明 + 模拟数据告警（F-15，ISS-FA4）
     - name: phase_report
       agent: phase_report       # 中间结论日级汇总（ISS-FA2 交付物）
   edges:
@@ -46,5 +52,9 @@ graph:
         key: review_decision
         branches:
           retry: synthesis_agent
-          pass: phase_report
-          manual: phase_report
+          pass: report_agent
+          manual: human_review
+    - from: human_review
+      to: report_agent
+    - from: report_agent
+      to: phase_report

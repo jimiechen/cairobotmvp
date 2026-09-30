@@ -5,13 +5,14 @@
 与 --source mysql（真实 workbench 库，配置走 FA_MYSQL_* 环境变量）。
 MySQL 通道仅覆盖数据准备（Q1/Q2b/解析）；两阶段分析与推荐结构产出
 仍仅支持 fixture（分析类 SQL 契约未归档，经主控确认不纳入）。
-replay/show/graph 子命令由 ISS-FA4 实现。
+graph/replay/show 子命令与 run 图驱动模式（--checkpoint-db）在 cli_trace。
 """
 import argparse
 import json
 import sys
 from pathlib import Path
 
+from fa_orchestrator import cli_trace
 from fa_orchestrator.analysis_runner import AnalysisRunner
 from fa_orchestrator.data_agent import DataAgent
 from fa_orchestrator.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
@@ -45,6 +46,34 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--recommendation-output", help="推荐结构 JSON 输出路径（ISS-FA3）"
     )
+    run_parser.add_argument(
+        "--checkpoint-db",
+        help="图驱动 run 的 SQLite checkpointer 路径（ISS-FA4，与 --resume 配合）",
+    )
+    run_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="从人工裁决中断处恢复续跑（F-20，需 --checkpoint-db）",
+    )
+    run_parser.add_argument(
+        "--report-dir", help="单场报告 md 输出目录（F-15，图驱动模式）"
+    )
+
+    graph_parser = subparsers.add_parser(
+        "graph", help="导出 Mermaid 图并与编排配置做一致性断言（F-17）"
+    )
+    graph_parser.add_argument("--output", required=True, help="Mermaid 源码输出路径")
+
+    replay_parser = subparsers.add_parser(
+        "replay", help="按执行时序回放节点轨迹（F-18）"
+    )
+    replay_parser.add_argument("--checkpoint-db", required=True, help="checkpointer 数据库路径")
+    replay_parser.add_argument("--thread", required=True, help="thread_id（即竞彩日）")
+
+    show_parser = subparsers.add_parser("show", help="查询指定节点轨迹事件（F-18）")
+    show_parser.add_argument("--checkpoint-db", required=True, help="checkpointer 数据库路径")
+    show_parser.add_argument("--thread", required=True, help="thread_id（即竞彩日）")
+    show_parser.add_argument("--node", required=True, help="节点名，如 review_agent")
     return parser
 
 
@@ -62,8 +91,14 @@ def _build_source(args):
 
 
 def _run(args) -> int:
-    """执行 run 子命令：取数 → 核查 → 就绪率报告（→ 两阶段分析）。"""
-    if args.source == CHANNEL_MYSQL and (args.analysis_output or args.recommendation_output):
+    """执行 run 子命令：取数 → 核查 → 就绪率报告（→ 两阶段分析）。
+
+    --checkpoint-db 时切换为图驱动模式（cli_trace._run_graph），
+    跳过 runner 版分析路径。
+    """
+    if args.source == CHANNEL_MYSQL and (
+        args.analysis_output or args.recommendation_output or args.checkpoint_db
+    ):
         print(
             "错误：MySQL 通道暂不支持两阶段分析与推荐结构产出"
             "（分析类 SQL 契约未归档，R-04 范围限定）",
@@ -78,6 +113,9 @@ def _run(args) -> int:
     except ValueError as exc:
         print(f"错误：{exc}", file=sys.stderr)
         return 2
+
+    if args.checkpoint_db:
+        return cli_trace._run_graph(args, data_source)
 
     report = DataAgent(data_source, channel=args.source).prepare(args.date)
     _print_ready_report(args, report)
@@ -147,6 +185,12 @@ def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
         return _run(args)
+    if args.command == "graph":
+        return cli_trace.cmd_graph(args)
+    if args.command == "replay":
+        return cli_trace.cmd_replay(args)
+    if args.command == "show":
+        return cli_trace.cmd_show(args)
     return 2
 
 

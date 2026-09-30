@@ -39,14 +39,19 @@ unit: ## 运行 Python 单元测试
 	fi
 	@echo "[py] 单元测试完成"
 
-integration: ## 运行 Python 集成测试（真实连库，需 FA_MYSQL_INTEGRATION=1 门控 + FA_MYSQL_* 配置）
-	@echo "[py] ==> 运行集成测试..."
+integration: ## 运行 Python 集成测试（checkpoint 免门控；真实连库需 FA_MYSQL_INTEGRATION=1）
+	@echo "[py] ==> 运行 checkpoint 断点续跑集成测试（免门控）..."
+	@if [ -d ai ]; then \
+		cd ai && $(PYTHON) -m pytest fa_orchestrator/tests/integration/test_checkpoint_resume.py -v --tb=short \
+			|| { echo "[py] ❌ checkpoint 集成测试未通过"; exit 1; }; \
+	fi
+	@echo "[py] ==> 运行真实连库集成测试..."
 	@if [ ! -d ai ]; then \
 		echo "[py] ⏭️  无 ai/ 目录，跳过 python integration"; \
 	elif [ "$(FA_MYSQL_INTEGRATION)" != "1" ]; then \
 		echo "[py] ⏭️  跳过 python integration：未设置 FA_MYSQL_INTEGRATION=1（真实连库门控，防止单测误连）"; \
 	else \
-		cd ai && $(PYTHON) -m pytest fa_orchestrator/tests/integration -v --tb=short \
+		cd ai && $(PYTHON) -m pytest fa_orchestrator/tests/integration --ignore=fa_orchestrator/tests/integration/test_checkpoint_resume.py -v --tb=short \
 			|| echo "[py] ⚠️  集成测试未通过（检查 FA_MYSQL_* 连接配置与网络可达性）"; \
 	fi
 	@echo "[py] 集成测试完成"
