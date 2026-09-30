@@ -16,10 +16,11 @@ class TestLoadOrchestrationConfig:
         config = load_orchestration_config(_CONFIG_PATH)
         assert config.entry_point == "planner"
         node_names = [n.name for n in config.nodes]
-        # ISS-FA2 追加分析链路：基本面 → 赔率验证 → 两阶段结论汇总
+        # ISS-FA2 追加分析链路；ISS-FA3 追加热度→综合判定→矛盾检查质检链路
         assert node_names == [
             "planner", "data_agent", "ready_report",
-            "fundamental_agent", "odds_verify_agent", "phase_report",
+            "fundamental_agent", "odds_verify_agent",
+            "sentiment_agent", "synthesis_agent", "review_agent", "phase_report",
         ]
 
     def test_加载边定义(self):
@@ -29,7 +30,11 @@ class TestLoadOrchestrationConfig:
         assert ("data_agent", "ready_report") in edge_pairs
         assert ("ready_report", "fundamental_agent") in edge_pairs
         assert ("fundamental_agent", "odds_verify_agent") in edge_pairs
-        assert ("odds_verify_agent", "phase_report") in edge_pairs
+        assert ("odds_verify_agent", "sentiment_agent") in edge_pairs
+        assert ("sentiment_agent", "synthesis_agent") in edge_pairs
+        assert ("synthesis_agent", "review_agent") in edge_pairs
+        # review_agent → phase_report 为条件边（retry 分支回 synthesis_agent 形成回退环）
+        assert ("review_agent", "phase_report") in edge_pairs
 
     def test_文件不存在报错(self, tmp_path):
         with pytest.raises(ConfigError):

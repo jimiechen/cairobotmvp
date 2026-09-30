@@ -8,7 +8,7 @@ import pytest
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
-from fa_orchestrator.config import load_orchestration_config
+from fa_orchestrator.config import ConfigError, load_orchestration_config
 from fa_orchestrator.graph_builder import GraphBuildError, build_graph
 from fa_orchestrator.state import AnalysisState
 
@@ -37,6 +37,9 @@ def registry():
         "ready_report": _make_trace_agent("ready_report"),
         "fundamental_agent": _make_trace_agent("fundamental_agent"),
         "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
+        "sentiment_agent": _make_trace_agent("sentiment_agent"),
+        "synthesis_agent": _make_trace_agent("synthesis_agent"),
+        "review_agent": _make_trace_agent("review_agent"),
         "phase_report": _make_trace_agent("phase_report"),
     }
 
@@ -61,6 +64,9 @@ class TestBuildGraph:
         assert "ready_report" in mermaid
         assert "fundamental_agent" in mermaid
         assert "odds_verify_agent" in mermaid
+        assert "sentiment_agent" in mermaid
+        assert "synthesis_agent" in mermaid
+        assert "review_agent" in mermaid
         assert "phase_report" in mermaid
 
     def test_节点按拓扑顺序流转(self, registry):
@@ -69,8 +75,85 @@ class TestBuildGraph:
         result = graph.invoke(
             {"match_date": "2026-09-29", "trace": []}, config=RunnableConfig()
         )
-        # planner → data_agent → ready_report → fundamental_agent → odds_verify_agent → phase_report
+        # planner → data_agent → ready_report → fundamental_agent → odds_verify_agent
+        # → sentiment_agent → synthesis_agent → review_agent → phase_report（F-12/F-13/F-14）
         assert result["trace"] == [
             "planner", "data_agent", "ready_report",
-            "fundamental_agent", "odds_verify_agent", "phase_report",
+            "fundamental_agent", "odds_verify_agent",
+            "sentiment_agent", "synthesis_agent", "review_agent", "phase_report",
         ]
+
+
+class TestConditionalEdge:
+    """矛盾检查条件回退（F-14）：review 决策经条件边路由，纪律条款图级强制。"""
+
+    def _review_agent(self, decisions):
+        """构造按脚本返回决策的 fake review 节点。"""
+
+        def _node(state: AnalysisState) -> dict:
+            decision = decisions.pop(0) if decisions else "pass"
+            return {"trace": ["review_agent"], "review_decision": decision}
+
+        _node.__name__ = "review_agent"
+        return _node
+
+    def _invoke(self, decisions, extra_registry=None):
+        config = load_orchestration_config(_CONFIG_PATH)
+        registry = {
+            "planner_agent": _make_trace_agent("planner"),
+            "data_agent": _make_trace_agent("data_agent"),
+            "ready_report": _make_trace_agent("ready_report"),
+            "fundamental_agent": _make_trace_agent("fundamental_agent"),
+            "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
+            "sentiment_agent": _make_trace_agent("sentiment_agent"),
+            "synthesis_agent": _make_trace_agent("synthesis_agent"),
+            "review_agent": self._review_agent(decisions),
+            "phase_report": _make_trace_agent("phase_report"),
+        }
+        registry.update(extra_registry or {})
+        graph = build_graph(config, registry)
+        return graph.invoke({"match_date": "2026-09-29", "trace": []}, config=RunnableConfig())
+
+    def test_重试决策路由回synthesis_形成回退环(self):
+        result = self._invoke(["retry", "pass"])
+        assert result["trace"].count("synthesis_agent") == 2
+        assert result["trace"].count("review_agent") == 2
+        assert result["trace"][-1] == "phase_report"
+
+    def test_通过决策直达报告节点不再回退(self):
+        result = self._invoke(["pass"])
+        assert result["trace"].count("synthesis_agent") == 1
+        assert result["trace"][-1] == "phase_report"
+
+    def test_人工决策直达报告节点(self):
+        result = self._invoke(["manual"])
+        assert result["trace"].count("synthesis_agent") == 1
+        assert result["trace"][-1] == "phase_report"
+
+    def test_未知决策值兜底转人工路由_保证有界终止(self):
+        result = self._invoke(["boom"])
+        assert result["trace"].count("synthesis_agent") == 1
+        assert result["trace"][-1] == "phase_report"
+
+    def test_条件边缺少manual兜底分支报错(self, tmp_path):
+        config_path = tmp_path / "bad.yaml"
+        config_path.write_text(
+            "graph:\n"
+            "  entry_point: review_agent\n"
+            "  nodes:\n"
+            "    - name: review_agent\n"
+            "      agent: review_agent\n"
+            "    - name: synthesis_agent\n"
+            "      agent: synthesis_agent\n"
+            "    - name: phase_report\n"
+            "      agent: phase_report\n"
+            "  edges:\n"
+            "    - from: review_agent\n"
+            "      to: phase_report\n"
+            "      condition:\n"
+            "        key: review_decision\n"
+            "        branches: {retry: synthesis_agent}\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ConfigError):
+            load_orchestration_config(config_path)
