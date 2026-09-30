@@ -3,8 +3,8 @@
 
 数据源通道（R-04 联调后双通道）：--source fixture（默认，测试/演示）
 与 --source mysql（真实 workbench 库，配置走 FA_MYSQL_* 环境变量）。
-MySQL 通道仅覆盖数据准备（Q1/Q2b/解析）；两阶段分析仍仅支持 fixture
-（分析类 SQL 契约未归档，经主控确认不纳入）。
+MySQL 通道仅覆盖数据准备（Q1/Q2b/解析）；两阶段分析与推荐结构产出
+仍仅支持 fixture（分析类 SQL 契约未归档，经主控确认不纳入）。
 replay/show/graph 子命令由 ISS-FA4 实现。
 """
 import argparse
@@ -42,6 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--analysis-output", help="两阶段中间结论 JSON 输出路径（ISS-FA2）"
     )
+    run_parser.add_argument(
+        "--recommendation-output", help="推荐结构 JSON 输出路径（ISS-FA3）"
+    )
     return parser
 
 
@@ -60,9 +63,10 @@ def _build_source(args):
 
 def _run(args) -> int:
     """执行 run 子命令：取数 → 核查 → 就绪率报告（→ 两阶段分析）。"""
-    if args.source == CHANNEL_MYSQL and args.analysis_output:
+    if args.source == CHANNEL_MYSQL and (args.analysis_output or args.recommendation_output):
         print(
-            "错误：MySQL 通道暂不支持两阶段分析（分析类 SQL 契约未归档，R-04 范围限定）",
+            "错误：MySQL 通道暂不支持两阶段分析与推荐结构产出"
+            "（分析类 SQL 契约未归档，R-04 范围限定）",
             file=sys.stderr,
         )
         return 2
@@ -80,10 +84,15 @@ def _run(args) -> int:
 
     if args.output:
         _save_json(args.output, report, "就绪率报告")
-    if args.analysis_output:
+    conclusion = None
+    if args.analysis_output or args.recommendation_output:
         conclusion = AnalysisRunner(data_source).run(args.date)
+    if args.analysis_output:
         _print_phase_conclusion(conclusion)
         _save_json(args.analysis_output, conclusion, "两阶段中间结论")
+    if args.recommendation_output:
+        _print_recommendation(conclusion)
+        _save_json(args.recommendation_output, conclusion, "推荐结构产物")
     return 0
 
 
@@ -106,6 +115,24 @@ def _print_phase_conclusion(conclusion: dict) -> None:
         print(f"  [分析] {item['match_no']} 升盘解读={euro_asia['interpretation'] or '无升盘'}"
               f" 标签={''.join(euro_asia['tags']) or '-'}"
               f" 时序={'可推演' if item['history_deduction']['trend']['available'] else '无法推演'}")
+
+
+def _print_recommendation(conclusion: dict) -> None:
+    """输出推荐结构摘要到终端（ISS-FA3：决策 + 两层单元形态）。"""
+    for item in conclusion["matches"]:
+        units = item["recommendation"]
+        print(f"  [推荐] {item['match_no']} 决策={item['review']['decision']}"
+              f" 胜平负={_unit_desc(units['had_unit'])}"
+              f" 让球={_unit_desc(units['hhand_unit'])}")
+
+
+def _unit_desc(unit: dict | None) -> str:
+    """推荐单元终端摘要：单选显示方向与星级，双选显示腿组合与路径。"""
+    if not unit:
+        return "空"
+    if unit["form"] == "S":
+        return f"S:{unit['selection']}({unit['stars']}星)"
+    return f"D:{'+'.join(unit['legs'])}(路径{unit.get('path') or '无'})"
 
 
 def _save_json(output, payload: dict, label: str) -> None:

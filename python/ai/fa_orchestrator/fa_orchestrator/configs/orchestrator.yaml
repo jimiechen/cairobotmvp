@@ -1,7 +1,9 @@
 # FA-Orchestrator 编排配置（PRD-12 F-01：图拓扑配置化，核心代码不硬编码图结构）
 # ISS-FA1 范围：PlannerAgent → DataAgent → 就绪率报告 的最小链路
 # ISS-FA2 追加：就绪报告 → 基本面分析 → 赔率验证 → 两阶段结论汇总
-# 热度/综合/复核节点（sentiment/synthesis/review）由 ISS-FA3 按此配置追加
+# ISS-FA3 追加：热度 → 综合判定 → 矛盾检查（F-12/F-13/F-14），
+#   矛盾检查回退经条件边图级强制：retry 回退 synthesis，pass/manual 直达报告；
+#   未知决策值兜底 manual（有界终止），branches 必须含 manual 分支（config.py 校验）
 graph:
   entry_point: planner
   nodes:
@@ -15,8 +17,14 @@ graph:
       agent: fundamental_agent  # FundamentalAgent：第一阶段基本面五维分析（F-10）
     - name: odds_verify_agent
       agent: odds_verify_agent  # OddsVerifyAgent：第二阶段赔率验证（F-11）
+    - name: sentiment_agent
+      agent: sentiment_agent    # SentimentAgent：投票热度偏差与过热判定（F-12）
+    - name: synthesis_agent
+      agent: synthesis_agent    # SynthesisAgent：撤离门槛/反大众/让球单选/互斥（F-13）
+    - name: review_agent
+      agent: review_agent       # ReviewAgent：七项矛盾检查与条件回退决策（F-14）
     - name: phase_report
-      agent: phase_report       # 两阶段中间结论日级汇总（ISS-FA2 交付物）
+      agent: phase_report       # 中间结论日级汇总（ISS-FA2 交付物）
   edges:
     - from: planner
       to: data_agent
@@ -27,4 +35,16 @@ graph:
     - from: fundamental_agent
       to: odds_verify_agent
     - from: odds_verify_agent
+      to: sentiment_agent
+    - from: sentiment_agent
+      to: synthesis_agent
+    - from: synthesis_agent
+      to: review_agent
+    - from: review_agent        # F-14 条件回退（最多 2 次，仍不过转人工）
       to: phase_report
+      condition:
+        key: review_decision
+        branches:
+          retry: synthesis_agent
+          pass: phase_report
+          manual: phase_report

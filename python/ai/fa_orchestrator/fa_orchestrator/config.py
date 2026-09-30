@@ -24,9 +24,15 @@ class NodeSpec:
 
 @dataclass
 class EdgeSpec:
-    """图边定义：条件分支（condition）由后续 Issue 扩展。"""
+    """图边定义。
+
+    condition_key/branches 非空时为条件边：按 state[condition_key] 的值路由到
+    branches[value] 对应节点；未知值兜底路由到 branches["manual"]（有界终止）。
+    """
     from_node: str
     to_node: str
+    condition_key: str | None = None
+    branches: dict | None = None
 
 
 @dataclass
@@ -67,6 +73,22 @@ def load_orchestration_config(path) -> OrchestrationConfig:
         for endpoint in (item.get("from"), item.get("to")):
             if endpoint not in node_names:
                 raise ConfigError(f"边引用了未定义节点: {endpoint}")
-        edges.append(EdgeSpec(from_node=item["from"], to_node=item["to"]))
+        condition = item.get("condition")
+        if condition:
+            branches = condition.get("branches") or {}
+            if not condition.get("key") or not branches:
+                raise ConfigError("条件边缺少 condition.key 或 branches")
+            if "manual" not in branches:
+                # 硬性兜底要求：未知决策值必须路由到人工裁决分支，防止图死锁
+                raise ConfigError("条件边 branches 缺少 manual 兜底分支")
+            for target in branches.values():
+                if target not in node_names:
+                    raise ConfigError(f"条件分支引用了未定义节点: {target}")
+            edges.append(EdgeSpec(
+                from_node=item["from"], to_node=item["to"],
+                condition_key=condition["key"], branches=branches,
+            ))
+        else:
+            edges.append(EdgeSpec(from_node=item["from"], to_node=item["to"]))
 
     return OrchestrationConfig(entry_point=entry_point, nodes=nodes, edges=edges)

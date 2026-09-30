@@ -36,10 +36,25 @@ def build_graph(config, agent_registry) -> CompiledStateGraph:
 
     outgoing = set()
     for edge in config.edges:
-        builder.add_edge(edge.from_node, edge.to_node)
+        if edge.condition_key:
+            builder.add_conditional_edges(
+                edge.from_node, _make_condition_router(edge.condition_key, edge.branches)
+            )
+        else:
+            builder.add_edge(edge.from_node, edge.to_node)
         outgoing.add(edge.from_node)
 
     builder.add_edge(START, config.entry_point)
     for terminal in _collect_terminal_nodes(config, outgoing):
         builder.add_edge(terminal, END)
     return builder.compile()
+
+
+def _make_condition_router(condition_key: str, branches: dict):
+    """构造条件边路由函数（F-14）：按 state 值路由，未知/缺失值兜底 manual 分支。"""
+
+    def _route(state: AnalysisState) -> str:
+        decision = state.get(condition_key) or "manual"
+        return branches.get(decision, branches["manual"])
+
+    return _route
