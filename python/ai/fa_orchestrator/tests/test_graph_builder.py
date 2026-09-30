@@ -31,6 +31,11 @@ def _make_trace_agent(node_name: str):
 
 @pytest.fixture()
 def registry():
+    def _pass_review_agent(state):
+        # 拓扑流转测试固定走 pass 分支（manual 分支由 TestConditionalEdge 覆盖）
+        return {"trace": ["review_agent"], "review_decision": "pass"}
+
+    _pass_review_agent.__name__ = "review_agent"
     return {
         "planner_agent": _make_trace_agent("planner"),
         "data_agent": _make_trace_agent("data_agent"),
@@ -39,7 +44,9 @@ def registry():
         "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
         "sentiment_agent": _make_trace_agent("sentiment_agent"),
         "synthesis_agent": _make_trace_agent("synthesis_agent"),
-        "review_agent": _make_trace_agent("review_agent"),
+        "review_agent": _pass_review_agent,
+        "human_review": _make_trace_agent("human_review"),
+        "report_agent": _make_trace_agent("report_agent"),
         "phase_report": _make_trace_agent("phase_report"),
     }
 
@@ -67,6 +74,8 @@ class TestBuildGraph:
         assert "sentiment_agent" in mermaid
         assert "synthesis_agent" in mermaid
         assert "review_agent" in mermaid
+        assert "human_review" in mermaid
+        assert "report_agent" in mermaid
         assert "phase_report" in mermaid
 
     def test_节点按拓扑顺序流转(self, registry):
@@ -76,12 +85,27 @@ class TestBuildGraph:
             {"match_date": "2026-09-29", "trace": []}, config=RunnableConfig()
         )
         # planner → data_agent → ready_report → fundamental_agent → odds_verify_agent
-        # → sentiment_agent → synthesis_agent → review_agent → phase_report（F-12/F-13/F-14）
+        # → sentiment_agent → synthesis_agent → review_agent（pass）
+        # → report_agent → phase_report（F-12/F-13/F-14/F-15）
         assert result["trace"] == [
             "planner", "data_agent", "ready_report",
             "fundamental_agent", "odds_verify_agent",
-            "sentiment_agent", "synthesis_agent", "review_agent", "phase_report",
+            "sentiment_agent", "synthesis_agent", "review_agent",
+            "report_agent", "phase_report",
         ]
+
+    def test_checkpointer参数传递给编译图(self, registry, tmp_path):
+        from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+        config = load_orchestration_config(_CONFIG_PATH)
+        graph = build_graph(
+            config, registry,
+            checkpointer=SQLiteCheckpointer(str(tmp_path / "ckpt.db")),
+        )
+        result = graph.invoke(
+            {"match_date": "2026-09-29", "trace": []},
+            config={"configurable": {"thread_id": "t-ckpt"}},
+        )
+        assert result["trace"][-1] == "phase_report"
 
 
 class TestConditionalEdge:
@@ -108,6 +132,8 @@ class TestConditionalEdge:
             "sentiment_agent": _make_trace_agent("sentiment_agent"),
             "synthesis_agent": _make_trace_agent("synthesis_agent"),
             "review_agent": self._review_agent(decisions),
+            "human_review": _make_trace_agent("human_review"),
+            "report_agent": _make_trace_agent("report_agent"),
             "phase_report": _make_trace_agent("phase_report"),
         }
         registry.update(extra_registry or {})
@@ -125,14 +151,17 @@ class TestConditionalEdge:
         assert result["trace"].count("synthesis_agent") == 1
         assert result["trace"][-1] == "phase_report"
 
-    def test_人工决策直达报告节点(self):
+    def test_人工决策经human_review直达报告节点(self):
         result = self._invoke(["manual"])
         assert result["trace"].count("synthesis_agent") == 1
+        # ISS-FA4：manual 分支路由到人工裁决节点（F-20）再到报告
+        assert "human_review" in result["trace"]
         assert result["trace"][-1] == "phase_report"
 
     def test_未知决策值兜底转人工路由_保证有界终止(self):
         result = self._invoke(["boom"])
         assert result["trace"].count("synthesis_agent") == 1
+        assert "human_review" in result["trace"]
         assert result["trace"][-1] == "phase_report"
 
     def test_条件边缺少manual兜底分支报错(self, tmp_path):
