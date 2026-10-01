@@ -1,0 +1,159 @@
+{
+  "match_date": "2026-09-29",
+  "total": 7,
+  "hits": 3,
+  "partial": 2,
+  "misses": 2,
+  "given_up": 0,
+  "missing_result": 0,
+  "rule_violations": [],
+  "matches": [
+    {
+      "fid": "1398594",
+      "match_no": "周二008",
+      "verdict": "partial",
+      "had_hit": true,
+      "hhand_hit": false,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398595",
+      "match_no": "周二009",
+      "verdict": "partial",
+      "had_hit": false,
+      "hhand_hit": true,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398596",
+      "match_no": "周二010",
+      "verdict": "hit",
+      "had_hit": true,
+      "hhand_hit": true,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398597",
+      "match_no": "周二011",
+      "verdict": "hit",
+      "had_hit": true,
+      "hhand_hit": true,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398598",
+      "match_no": "周二012",
+      "verdict": "hit",
+      "had_hit": true,
+      "hhand_hit": null,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "pass",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398599",
+      "match_no": "周二013",
+      "verdict": "miss",
+      "had_hit": false,
+      "hhand_hit": null,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "fid": "1398600",
+      "match_no": "周二014",
+      "verdict": "miss",
+      "had_hit": false,
+      "hhand_hit": false,
+      "rule_checks": [
+        {
+          "id": "①",
+          "name": "撤离硬门槛合规（v7.9/v7.11）",
+          "result": "not_triggered",
+          "note": ""
+        },
+        {
+          "id": "②",
+          "name": "过热处置合规（v7.9）",
+          "result": "not_triggered",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}
