@@ -144,11 +144,13 @@ message GroupInfo {
   reserved 23, 24, 25;           // v3.0 已迁移: stats(23)/user_member_info(24)/extra(25) 移至独立响应或按需查询
 }
 
+// 实体说明：圈主资料摘要（群详情页展示圈主信息，不含完整用户字段）
 message OwnerProfile {
   string owner_name = 1;       // 圈主展示名，用于列表/Recent Posts抬头
   string owner_avatar = 2;     // 圈主头像（/.figma/image 路径）
 }
 
+// 实体说明：圈内最新帖子预览（群卡片/详情页展示最新动态入口）
 message LatestTopicPreview {
   string topic_id = 1;         // 最新帖子ID
   string summary = 2;          // 最新帖子摘要（截断）

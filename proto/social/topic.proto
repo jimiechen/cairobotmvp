@@ -139,12 +139,14 @@ enum MimeType {
   MIME_TYPE_TEXT_PLAIN = 30;
 }
 
+// 实体说明：帖子外链富预览（站点名/标题/封面，用于外链卡片渲染）
 message ExternalLink {
   string site_name = 1;        // 站点名称（如Reuters/FT）
   string title = 2;            // 链接标题
   string cover = 3;            // 封面图（/.figma/image 路径）
 }
 
+// 实体说明：帖子媒体项（图片/视频/文件统一结构，含处理状态与展示顺序）
 message MediaItem {
   string media_id = 1;         // 媒体唯一ID
   MediaType type = 2;          // 媒体类型
@@ -160,6 +162,7 @@ message MediaItem {
   int64 file_size = 12;        // 文件大小
 }
 
+// 实体说明：帖子内容扩展信息（内容类型/媒体列表/外链，v3.0 从 TopicInfo 拆分）
 message TopicInfoExtra {
   reserved 1, 2, 3, 4, 5, 6, 7, 8, 9, 13;
   ContentType content_type = 10; // 内容类型（枚举）
@@ -167,6 +170,7 @@ message TopicInfoExtra {
   ExternalLink external_link = 12; // 外链富预览
 }
 
+// 实体说明：帖子统计数据（点赞/评论/浏览/收藏计数及当前用户交互状态）
 message TopicStat {
   string topic_id = 1;              // 主题ID
   int32 like_count = 2;             // 点赞数量
@@ -218,6 +222,7 @@ message ReferReplyInfo {
   int64 created_at = 6;        // 创建时间
 }
 
+// 实体说明：评论/回复完整信息（支持二级嵌套、引用回复与媒体附件）
 message ReplyInfo {
   string reply_id = 1;         // 回复ID
   string topic_id = 2;         // 主题ID
@@ -239,6 +244,7 @@ message ReplyInfo {
   repeated MediaItem media_items = 19;   // 评论媒体列表（含长宽信息）
 }
 
+// 接口用途：新增帖子评论（支持嵌套回复与引用，协议号 3043）
 message AddTopicReplyRequest {
   enum Type {
     none = 0;
@@ -252,6 +258,7 @@ message AddTopicReplyRequest {
   repeated MediaItem media_items = 5;   // 评论媒体列表（含长宽信息）
 }
 
+// 接口用途：新增帖子评论响应，返回完整评论信息（协议号 3044）
 message AddTopicReplyResponse {
   enum Type {
     none = 0;
@@ -263,6 +270,7 @@ message AddTopicReplyResponse {
   string reply_id = 3; // 新增：透传 reply_id
 }
 
+// 接口用途：分页拉取帖子评论列表（支持层级深度与子评论数量控制，协议号 3065）
 message GetReplyListRequest {
   enum Type {
     none = 0;
@@ -280,6 +288,7 @@ message GetReplyListRequest {
   bool include_children = 9;        // 是否同时返回子评论（默认 true）
 }
 
+// 接口用途：评论列表响应，区分一级评论总数与全量评论总数（协议号 3066）
 message GetReplyListResponse {
   enum Type {
     none = 0;
@@ -297,6 +306,7 @@ message GetReplyListResponse {
 }
 
 
+// 接口用途：评论点赞/取消点赞（like 与 is_like 双字段兼容历史客户端，协议号 3077）
 message LikeReplyRequest {
   enum Type {
     none = 0;
@@ -308,6 +318,7 @@ message LikeReplyRequest {
   bool is_like = 3; // 非必填，兼容字段
   string topic_id = 4; // 必填，主题ID
 }
+// 接口用途：评论点赞操作响应，透传 reply_id/topic_id 供客户端定位（协议号 3078）
 message LikeReplyResponse {
   enum Type {
     none = 0;
@@ -562,6 +573,7 @@ message TopicAuthorInfo {
   string author_avatar = 4; // 作者头像URL
 }
 
+// 实体说明：链接卡片信息（创建链接类型帖子时的 URL 与标题）
 message LinkInfo {
   string url = 1;
   string title = 2;

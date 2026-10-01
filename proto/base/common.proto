@@ -32,6 +32,7 @@ enum PermissionType {
   PERMISSION_ADMIN = 5;
 }
 
+// 实体说明：用户基础信息（跨域共用的用户资料结构）
 message UserInfo {
   string user_id = 1;
   string username = 2;
@@ -50,6 +51,7 @@ message UserInfo {
   bool im_registered = 16; // 是否已激活 IM 功能
 }
 
+// 接口用途：登录成功后的凭据与用户信息打包（access/refresh 双令牌）
 message LoginData {
   UserInfo user_info = 1;
   string access_token = 2;

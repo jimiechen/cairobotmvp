@@ -98,6 +98,7 @@ enum GroupMemberRole {
   GROUP_ROLE_VISITOR = 6;   // 访客（非成员）
 }
 
+// 实体说明：群内用户视角信息（uid 在指定群中的角色与资料聚合）
 message GroupUserInfo {
   string uid = 1;
   string group_id = 2;
