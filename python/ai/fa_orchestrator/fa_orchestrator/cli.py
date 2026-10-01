@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from fa_orchestrator import cli_trace
+from fa_orchestrator import cli_trace, html_report, match_review
 from fa_orchestrator.analysis_runner import AnalysisRunner
 from fa_orchestrator.data_agent import DataAgent
 from fa_orchestrator.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
@@ -74,6 +74,16 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser.add_argument("--checkpoint-db", required=True, help="checkpointer 数据库路径")
     show_parser.add_argument("--thread", required=True, help="thread_id（即竞彩日）")
     show_parser.add_argument("--node", required=True, help="节点名，如 review_agent")
+
+    review_parser = subparsers.add_parser(
+        "review", help="D10 赛果复盘对照与规则命中核验（ISS-FA5）"
+    )
+    review_parser.add_argument("--results", required=True, help="D10 赛果 fixture 路径")
+    review_parser.add_argument(
+        "--recommendation-file", required=True, help="推荐结构 JSON 产物路径（FA4 产物）"
+    )
+    review_parser.add_argument("--output", required=True, help="复盘对照 JSON 输出路径")
+    review_parser.add_argument("--html", help="Standalone HTML 报告输出路径（可选）")
     return parser
 
 
@@ -180,6 +190,39 @@ def _save_json(output, payload: dict, label: str) -> None:
     print(f"{label}已写入: {output_path}")
 
 
+def _run_review(args) -> int:
+    """执行 review 子命令：D10 赛果 vs 推荐结构复盘对照（ISS-FA5）。
+
+    输入：--results 赛果 fixture、--recommendation-file 推荐产物 JSON。
+    输出：复盘对照 JSON（--output，必选）与 Standalone HTML（--html，可选）。
+    失败行为：推荐文件缺失/解析失败、赛果契约破损打印错误并返回退出码 2。
+    """
+    try:
+        payload = json.loads(
+            Path(args.recommendation_file).read_text(encoding="utf-8"))
+        results = match_review.load_match_results(args.results)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"错误：复盘输入读取失败：{exc}", file=sys.stderr)
+        return 2
+    reviews = [
+        match_review.review_recommendation(match, results.get(match.get("fid")))
+        for match in payload.get("matches") or []
+    ]
+    report = match_review.build_review_report(
+        reviews, match_date=payload.get("match_date") or "")
+    _save_json(args.output, report, "复盘对照报告")
+    if args.html:
+        html_report.write_html_report(
+            html_report.render_html_report(
+                report, None, title=f"FA 复盘对照报告 {report['match_date']}"),
+            args.html,
+        )
+        print(f"Standalone HTML 报告已写入: {args.html}")
+    print(f"复盘结论: 命中 {report['hits']}/{report['total']}"
+          f" 规则违规 {len(report['rule_violations'])} 项")
+    return 0
+
+
 def main(argv=None) -> int:
     """CLI 主入口。返回 0 表示成功，非 0 表示失败。"""
     args = build_parser().parse_args(argv)
@@ -191,6 +234,8 @@ def main(argv=None) -> int:
         return cli_trace.cmd_replay(args)
     if args.command == "show":
         return cli_trace.cmd_show(args)
+    if args.command == "review":
+        return _run_review(args)
     return 2
 
 
