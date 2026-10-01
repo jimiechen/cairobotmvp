@@ -17,37 +17,60 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 REGISTRY_FILE = PROJECT_ROOT / "docs" / "testing" / "测试用例注册表.md"
 
+# 排除目录：第三方依赖与 vendored 代码不要求登记自研注册表
+# - node_modules: npm/pnpm 第三方依赖，其自带测试文件不属于本项目测试资产
+# - go/third_party/TarsGo: vendored 的 TarsGo 1.4.6 官方源码
+# - go/admin: vendored 的 go-admin 开源框架（module go-admin，自带 LICENSE）
+EXCLUDED_DIR_PARTS = ("node_modules",)
+EXCLUDED_PATH_PREFIXES = (
+    "go/third_party/TarsGo/",
+    "go/admin/",
+)
+
+def is_excluded(rel_path: str) -> bool:
+    """判断相对路径是否命中第三方/vendored 排除规则"""
+    parts = rel_path.split("/")
+    if any(part in EXCLUDED_DIR_PARTS for part in parts):
+        return True
+    return any(rel_path.startswith(prefix) for prefix in EXCLUDED_PATH_PREFIXES)
+
 ERRORS = []
 WARNINGS = []
 
 def find_go_test_files():
-    """查找所有 Go 测试文件"""
+    """查找所有 Go 测试文件（排除 node_modules 与 vendored 目录）"""
     test_files = []
     go_dir = PROJECT_ROOT / "go"
     if go_dir.exists():
         for f in go_dir.rglob("*_test.go"):
             rel_path = f.relative_to(PROJECT_ROOT)
+            if is_excluded(str(rel_path)):
+                continue
             test_files.append(str(rel_path))
     return sorted(test_files)
 
 def find_python_test_files():
-    """查找所有 Python 测试文件"""
+    """查找所有 Python 测试文件（排除 node_modules 与 vendored 目录）"""
     test_files = []
     python_dir = PROJECT_ROOT / "python"
     if python_dir.exists():
         for f in python_dir.rglob("test_*.py"):
             rel_path = f.relative_to(PROJECT_ROOT)
+            if is_excluded(str(rel_path)):
+                continue
             test_files.append(str(rel_path))
     return sorted(test_files)
 
 def find_typescript_test_files():
-    """查找所有 TypeScript 测试文件"""
+    """查找所有 TypeScript 测试文件（排除 node_modules 与 vendored 目录）"""
     test_files = []
     ts_dir = PROJECT_ROOT / "typescript"
     if ts_dir.exists():
         for pattern in ["*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx"]:
             for f in ts_dir.rglob(pattern):
                 rel_path = f.relative_to(PROJECT_ROOT)
+                if is_excluded(str(rel_path)):
+                    continue
                 test_files.append(str(rel_path))
     return sorted(test_files)
 
@@ -93,8 +116,8 @@ def parse_registry():
         if not line.startswith("|"):
             continue
         
-        # 跳过表头和分隔行
-        if "---" in line or "测试用例 ID" in line or "前缀" in line:
+        # 跳过表头和分隔行（「前缀」过滤必须限定表头行，否则误伤函数名含"前缀"的测试行）
+        if "---" in line or "测试用例 ID" in line or line.startswith("| 前缀"):
             continue
             
         parts = [p.strip() for p in line.split("|")]

@@ -23,20 +23,30 @@ def check_go_work():
         return
     
     content = go_work.read_text(encoding="utf-8")
-    
+
     import re
-    modules = re.findall(r'\./([^\s\)]+)', content)
-    
-    for mod in modules:
-        mod_path = PROJECT_ROOT / "go" / mod
-        if not mod_path.exists():
-            ERRORS.append(f"❌ go.work 声明的模块不存在: go/{mod}")
-            print(f"  ❌ go/{mod}")
-        elif not (mod_path / "go.mod").exists():
-            WARNINGS.append(f"⚠️ go/{mod} 存在但无 go.mod")
-            print(f"  ⚠️ go/{mod} (无 go.mod)")
+    # go.work 相对于 go/ 目录解析：
+    # - ./xxx 指向 go/xxx
+    # - ../xxx 指向仓库根目录下的 xxx（如 ../proto/generated/go）
+    # 必须分别解析，此前用单一 \./ 正则会把 ../ 误当作 ./ 处理导致误报
+    entries = re.findall(r'(\.\./[^\s\)]+|\./[^\s\)]+)', content)
+
+    for entry in entries:
+        if entry.startswith("../"):
+            display = entry[3:]
+            mod_path = PROJECT_ROOT / display
         else:
-            print(f"  ✅ go/{mod}")
+            display = f"go/{entry[2:]}"
+            mod_path = PROJECT_ROOT / "go" / entry[2:]
+
+        if not mod_path.exists():
+            ERRORS.append(f"❌ go.work 声明的模块不存在: {display}")
+            print(f"  ❌ {display}")
+        elif not (mod_path / "go.mod").exists():
+            WARNINGS.append(f"⚠️ {display} 存在但无 go.mod")
+            print(f"  ⚠️ {display} (无 go.mod)")
+        else:
+            print(f"  ✅ {display}")
 
 def check_typescript_workspace():
     """检查 TypeScript workspace 配置"""

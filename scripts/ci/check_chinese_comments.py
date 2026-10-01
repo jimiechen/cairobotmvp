@@ -14,20 +14,29 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
+# vendored 第三方目录豁免：go-admin 为开源框架（module go-admin，自带 LICENSE），
+# 不属于本项目自研代码，不强制要求中文注释（与测试用例注册表排除规则保持一致）
+EXCLUDED_PATH_PREFIXES = (
+    "go/admin/",
+)
+
 ERRORS = []
 WARNINGS = []
 
 def check_go_comments():
-    """检查 Go 文件的导出符号注释"""
+    """检查 Go 文件的导出符号注释（豁免 vendored 第三方目录）"""
     print("[Go] 检查导出符号注释...")
-    
+
     go_dir = PROJECT_ROOT / "go"
     if not go_dir.exists():
         return
-    
+
     for go_file in go_dir.rglob("*.go"):
-        # 跳过生成的文件和测试文件
+        rel_path = str(go_file.relative_to(PROJECT_ROOT))
+        # 跳过生成的文件、测试文件和 vendored 第三方目录
         if "_test.go" in go_file.name or "generated" in str(go_file):
+            continue
+        if any(rel_path.startswith(prefix) for prefix in EXCLUDED_PATH_PREFIXES):
             continue
         
         content = go_file.read_text(encoding="utf-8", errors="ignore")
