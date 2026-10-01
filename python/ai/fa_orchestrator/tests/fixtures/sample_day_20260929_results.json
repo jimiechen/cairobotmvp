@@ -1,0 +1,13 @@
+{
+  "_说明": "D10 赛果数据块（ISS-FA5 复盘对照专用，PRD-12 §12 数据块 D10）。赛果值为演示数据（非真实赛果），用于复盘对照链路验证；hhad_result 为让球线折算后赛果的 fixture 预计算值（竞彩让球折算口径无 SQL 契约，预计算入 fixture 并在验收报告标注）。MySQL 层无现成 D10 查询契约（需求文档 §四 仅 Q1/Q2b），已登记遗留事项。",
+  "match_date": "2026-09-29",
+  "match_results": [
+    {"fid": "1398594", "home_goals": 2, "away_goals": 1, "had_result": "win", "hhad_result": "win"},
+    {"fid": "1398595", "home_goals": 1, "away_goals": 1, "had_result": "draw", "hhad_result": "draw"},
+    {"fid": "1398596", "home_goals": 0, "away_goals": 2, "had_result": "lose", "hhad_result": "lose"},
+    {"fid": "1398597", "home_goals": 3, "away_goals": 0, "had_result": "win", "hhad_result": "win"},
+    {"fid": "1398598", "home_goals": 1, "away_goals": 0, "had_result": "win", "hhad_result": "lose"},
+    {"fid": "1398599", "home_goals": 2, "away_goals": 2, "had_result": "draw", "hhad_result": "lose"},
+    {"fid": "1398600", "home_goals": 0, "away_goals": 1, "had_result": "lose", "hhad_result": "draw"}
+  ]
+}
