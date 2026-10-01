@@ -5,7 +5,7 @@
 报告模板输出（数据来源声明 + 预测表 + 反大众检查 + 矛盾检查章节）。
 全程使用构造数据，不依赖外部服务。
 """
-from fa_orchestrator.report_agent import ReportAgent, detect_data_anomalies
+from fa_orchestrator.report.report_agent import ReportAgent, detect_data_anomalies
 
 # 主流公司样例（fixture 同构）：威廉希尔/立博/澳门
 _NORMAL_EURO = [

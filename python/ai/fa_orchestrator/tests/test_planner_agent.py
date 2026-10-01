@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from fa_orchestrator.planner_agent import PlannerAgent, PlannerError
+from fa_orchestrator.agents.planner_agent import PlannerAgent, PlannerError
 
 
 class _FakeGateway:

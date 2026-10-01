@@ -8,7 +8,7 @@ v7.9 放弃规则优先级、撤离信号 2/3 重硬门槛边界、让球单选 
 """
 import pytest
 
-from fa_orchestrator.synthesis_agent import SynthesisAgent
+from fa_orchestrator.agents.synthesis_agent import SynthesisAgent
 
 
 def _fundamental(intel_items=(), h2h_suppression="none", h2h_decayed=False,

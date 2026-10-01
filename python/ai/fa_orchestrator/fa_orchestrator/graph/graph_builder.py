@@ -10,7 +10,7 @@
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from fa_orchestrator.state import AnalysisState
+from fa_orchestrator.graph.state import AnalysisState
 
 
 class GraphBuildError(Exception):

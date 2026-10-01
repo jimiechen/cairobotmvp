@@ -6,7 +6,7 @@
 """
 import pytest
 
-from fa_orchestrator.id_resolver import MatchResolveError, resolve_match_id
+from fa_orchestrator.data.id_resolver import MatchResolveError, resolve_match_id
 
 
 def _row(row_id, cc, match_date, home, away, home_alias=None, away_alias=None):

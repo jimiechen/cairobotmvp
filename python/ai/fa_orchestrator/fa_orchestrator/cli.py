@@ -12,11 +12,13 @@ import json
 import sys
 from pathlib import Path
 
-from fa_orchestrator import cli_trace, html_report, match_review
-from fa_orchestrator.analysis_runner import AnalysisRunner
-from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
-from fa_orchestrator.mysql_data_source import MySqlConfigError, MySqlDataSource
+from fa_orchestrator import cli_trace
+from fa_orchestrator.analysis import match_review
+from fa_orchestrator.report import html_report
+from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
+from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.data.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
+from fa_orchestrator.data.mysql_data_source import MySqlConfigError, MySqlDataSource
 
 
 def build_parser() -> argparse.ArgumentParser:

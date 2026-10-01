@@ -8,7 +8,7 @@
 """
 import pytest
 
-from fa_orchestrator.review_agent import MAX_REVIEW_RETRIES, ReviewAgent
+from fa_orchestrator.agents.review_agent import MAX_REVIEW_RETRIES, ReviewAgent
 
 
 def _unit(form="S", selection="win", legs=None, path=None, tag=None):

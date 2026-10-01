@@ -16,11 +16,11 @@ from pathlib import Path
 
 from langgraph.types import Command
 
-from fa_orchestrator.config import load_orchestration_config
-from fa_orchestrator.data_source import CHANNEL_MYSQL
-from fa_orchestrator.graph_builder import build_graph, export_mermaid, mermaid_matches_config
-from fa_orchestrator.graph_nodes import GraphNodes
-from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+from fa_orchestrator.graph.config import load_orchestration_config
+from fa_orchestrator.data.data_source import CHANNEL_MYSQL
+from fa_orchestrator.graph.graph_builder import build_graph, export_mermaid, mermaid_matches_config
+from fa_orchestrator.graph.graph_nodes import GraphNodes
+from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
 
 _YAML_PATH = Path(__file__).resolve().parent / "configs" / "orchestrator.yaml"
 _INTERRUPT_EXIT = 3

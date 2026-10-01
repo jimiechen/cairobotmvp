@@ -9,10 +9,10 @@ CLI --recommendation-output 完整推荐结构落盘、MySQL 通道限制。
 import json
 from pathlib import Path
 
-from fa_orchestrator.analysis_runner import AnalysisRunner
+from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
 from fa_orchestrator.cli import main
-from fa_orchestrator.data_source import FixtureDataSource
-from fa_orchestrator.synthesis_agent import SynthesisAgent
+from fa_orchestrator.data.data_source import FixtureDataSource
+from fa_orchestrator.agents.synthesis_agent import SynthesisAgent
 
 _FIXTURE = Path(__file__).resolve().parent / "fixtures" / "sample_day_20260929.json"
 _ANALYSIS = Path(__file__).resolve().parent / "fixtures" / "sample_day_20260929_analysis.json"

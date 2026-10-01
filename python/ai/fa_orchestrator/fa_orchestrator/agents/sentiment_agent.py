@@ -10,7 +10,7 @@
 
 数据缺失处理：投票/让球投票/必发任一缺失时明确标注降级，不编造结论。
 """
-from fa_orchestrator.odds_math import implied_probabilities
+from fa_orchestrator.analysis.odds_math import implied_probabilities
 
 # 过热两档阈值（SKILL v7.9）：支持率偏差单位为百分点（pp）
 OVERHEAT_HAD_PP = 20.0

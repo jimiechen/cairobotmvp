@@ -11,14 +11,14 @@
 输入数据块缺失时按降级标注保留场次（禁止静默跳过），不编造结论。
 """
 
-from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.fundamental_agent import FundamentalAgent
-from fa_orchestrator.history_deduction import deduce_heat_drift, deduce_trend
-from fa_orchestrator.odds_math import implied_probabilities
-from fa_orchestrator.odds_verify_agent import OddsVerifyAgent
-from fa_orchestrator.review_agent import MAX_REVIEW_RETRIES, ReviewAgent
-from fa_orchestrator.sentiment_agent import SentimentAgent
-from fa_orchestrator.synthesis_agent import SynthesisAgent
+from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.agents.fundamental_agent import FundamentalAgent
+from fa_orchestrator.analysis.history_deduction import deduce_heat_drift, deduce_trend
+from fa_orchestrator.analysis.odds_math import implied_probabilities
+from fa_orchestrator.agents.odds_verify_agent import OddsVerifyAgent
+from fa_orchestrator.agents.review_agent import MAX_REVIEW_RETRIES, ReviewAgent
+from fa_orchestrator.agents.sentiment_agent import SentimentAgent
+from fa_orchestrator.agents.synthesis_agent import SynthesisAgent
 
 # 近期交锋平局率 ≥ 该值判"平局方向有基本面支持"（draw_support，v7.2 防冷口径）
 DRAW_SUPPORT_RATE = 0.4

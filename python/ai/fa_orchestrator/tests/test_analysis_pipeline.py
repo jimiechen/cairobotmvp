@@ -7,9 +7,9 @@ CLI --analysis-output 落盘。全程 fixture 数据源，禁止真实 MySQL 调
 import json
 from pathlib import Path
 
-from fa_orchestrator.analysis_runner import AnalysisRunner
+from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
 from fa_orchestrator.cli import main
-from fa_orchestrator.data_source import FixtureDataSource
+from fa_orchestrator.data.data_source import FixtureDataSource
 
 _FIXTURE = Path(__file__).resolve().parent / "fixtures" / "sample_day_20260929.json"
 _ANALYSIS = Path(__file__).resolve().parent / "fixtures" / "sample_day_20260929_analysis.json"

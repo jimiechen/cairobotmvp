@@ -7,7 +7,7 @@
 import pytest
 from pathlib import Path
 
-from fa_orchestrator.match_review import (
+from fa_orchestrator.analysis.match_review import (
     build_review_report,
     load_match_results,
     review_recommendation,

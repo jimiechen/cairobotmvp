@@ -8,9 +8,9 @@ import pytest
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
-from fa_orchestrator.config import ConfigError, load_orchestration_config
-from fa_orchestrator.graph_builder import GraphBuildError, build_graph
-from fa_orchestrator.state import AnalysisState
+from fa_orchestrator.graph.config import ConfigError, load_orchestration_config
+from fa_orchestrator.graph.graph_builder import GraphBuildError, build_graph
+from fa_orchestrator.graph.state import AnalysisState
 
 from pathlib import Path
 
@@ -95,7 +95,7 @@ class TestBuildGraph:
         ]
 
     def test_checkpointer参数传递给编译图(self, registry, tmp_path):
-        from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+        from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
         config = load_orchestration_config(_CONFIG_PATH)
         graph = build_graph(
             config, registry,

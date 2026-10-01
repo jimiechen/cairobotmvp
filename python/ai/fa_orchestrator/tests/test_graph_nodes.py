@@ -10,12 +10,12 @@ from pathlib import Path
 
 from langgraph.types import Command
 
-from fa_orchestrator.analysis_runner import AnalysisRunner
-from fa_orchestrator.config import load_orchestration_config
-from fa_orchestrator.data_source import FixtureDataSource
-from fa_orchestrator.graph_builder import build_graph
-from fa_orchestrator.graph_nodes import GraphNodes
-from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
+from fa_orchestrator.graph.config import load_orchestration_config
+from fa_orchestrator.data.data_source import FixtureDataSource
+from fa_orchestrator.graph.graph_builder import build_graph
+from fa_orchestrator.graph.graph_nodes import GraphNodes
+from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
 
 _PKG = Path(__file__).resolve().parent.parent / "fa_orchestrator"
 _YAML = _PKG / "configs" / "orchestrator.yaml"

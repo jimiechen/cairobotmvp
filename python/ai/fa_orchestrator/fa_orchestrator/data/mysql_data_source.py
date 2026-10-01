@@ -22,7 +22,7 @@ import os
 import pymysql
 import pymysql.cursors
 
-from fa_orchestrator.sql_contracts import (
+from fa_orchestrator.data.sql_contracts import (
     INTEGRITY_MODULES,
     SQL_JC_MATCH_CANDIDATES,
     SQL_Q1_MATCH_LIST,

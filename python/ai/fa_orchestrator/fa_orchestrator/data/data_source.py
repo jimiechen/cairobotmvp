@@ -16,7 +16,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fa_orchestrator.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
+from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
 
 # 数据通道标识（F-09 溯源快照必填）
 CHANNEL_FIXTURE = "fixture"

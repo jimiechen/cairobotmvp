@@ -7,7 +7,7 @@ SQLite 为本地文件存储（非外部服务），全程不连真实 MySQL/HTT
 """
 import pytest
 
-from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
 
 
 def _config(thread_id: str = "t1", checkpoint_id: str | None = None) -> dict:

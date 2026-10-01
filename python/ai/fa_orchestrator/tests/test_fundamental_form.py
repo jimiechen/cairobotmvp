@@ -4,7 +4,7 @@
 案例锚点：进球外推 0.9 系数（v7.2 大小球主锚）、拉科场攻防主锚、弗赖堡场火力
 保留（v7.2 折扣上限30%）、杯赛修正（v7.8）、国际赛修正（v7.11）。
 """
-from fa_orchestrator.fundamental_agent import FundamentalAgent
+from fa_orchestrator.agents.fundamental_agent import FundamentalAgent
 
 from test_fundamental_agent import _form, _schedule
 

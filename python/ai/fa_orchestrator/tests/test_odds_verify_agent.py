@@ -5,7 +5,7 @@
 均势盘需验证（008 挪威场）、诱盘边界、两层背离信让球层、防冷分级、立博独开分流、
 单家临场背离。全程纯规则计算，不调用 LLM 与外部服务。
 """
-from fa_orchestrator.odds_verify_agent import (
+from fa_orchestrator.agents.odds_verify_agent import (
     NEED_STRENGTH_VERIFY,
     TAG_ANTI_COLD_DOWNGRADE,
     TAG_ANTI_COLD_VALID,

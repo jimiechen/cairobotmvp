@@ -9,8 +9,8 @@ import json
 from pathlib import Path
 
 from fa_orchestrator.cli import main
-from fa_orchestrator.graph_builder import mermaid_matches_config
-from fa_orchestrator.config import load_orchestration_config
+from fa_orchestrator.graph.graph_builder import mermaid_matches_config
+from fa_orchestrator.graph.config import load_orchestration_config
 
 _PKG = Path(__file__).resolve().parent.parent / "fa_orchestrator"
 _YAML = _PKG / "configs" / "orchestrator.yaml"
@@ -53,8 +53,8 @@ class TestGraphCommand:
 
     def test_graph一致性断言_导出与编排配置一致(self):
         """验收 6：Mermaid 导出与运行时 StateGraph 定义一致。"""
-        from fa_orchestrator.graph_builder import build_graph, export_mermaid
-        from fa_orchestrator.graph_nodes import GraphNodes
+        from fa_orchestrator.graph.graph_builder import build_graph, export_mermaid
+        from fa_orchestrator.graph.graph_nodes import GraphNodes
         config = load_orchestration_config(_YAML)
         graph = build_graph(config, GraphNodes(None).registry())
         assert mermaid_matches_config(export_mermaid(graph), config)

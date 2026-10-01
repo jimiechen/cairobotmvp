@@ -15,9 +15,9 @@ import time
 
 from langgraph.types import interrupt
 
-from fa_orchestrator.analysis_runner import AnalysisRunner
-from fa_orchestrator.data_agent import CHANNEL_FIXTURE, DataAgent
-from fa_orchestrator.report_agent import ReportAgent
+from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
+from fa_orchestrator.agents.data_agent import CHANNEL_FIXTURE, DataAgent
+from fa_orchestrator.report.report_agent import ReportAgent
 
 # 本地静态计划阶段（fixture 模式无 LLM 依赖；联调时可注入 LLM 版 planner）
 _LOCAL_PLAN_STAGES = ("fundamental", "odds_verify", "sentiment", "synthesis", "review")

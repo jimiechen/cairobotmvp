@@ -5,7 +5,7 @@
 不完整必须列出缺口触发补抓；全缺/无记录落 blocked 状态，禁止静默跳过
 （继承上游硬性规则：抓取失败必须回写 error/blocked）。
 """
-from fa_orchestrator.sql_contracts import INTEGRITY_MODULES
+from fa_orchestrator.data.sql_contracts import INTEGRITY_MODULES
 
 # 状态机：ready（全就绪）/ incomplete（部分缺口）/ blocked（全缺，禁止静默跳过）
 STATUS_READY = "ready"

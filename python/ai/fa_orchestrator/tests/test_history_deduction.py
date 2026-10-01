@@ -4,7 +4,7 @@
 依据：SKILL v7.4 M5 能力（tracks：change>0 主让加深/大球升线；drift 单位百分点）；
 PRD-12 F-16：缺失时明确标注"无法推演时序"。全程无外部服务调用。
 """
-from fa_orchestrator.history_deduction import deduce_heat_drift, deduce_trend
+from fa_orchestrator.analysis.history_deduction import deduce_heat_drift, deduce_trend
 
 
 class TestDeduceTrend:

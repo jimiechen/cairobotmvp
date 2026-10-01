@@ -7,7 +7,7 @@
 """
 import pytest
 
-from fa_orchestrator.fundamental_agent import (
+from fa_orchestrator.agents.fundamental_agent import (
     BALANCE_CONCLUSION,
     PHASE1_WEIGHTS,
     FundamentalAgent,

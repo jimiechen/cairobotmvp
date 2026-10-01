@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 from langchain_core.messages import AIMessage
 
-from fa_orchestrator.llm_gateway import GatewayError, LlmGateway
+from fa_orchestrator.infra.llm_gateway import GatewayError, LlmGateway
 
 
 class _MockOpenAIServer:

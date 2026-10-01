@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 from fa_orchestrator.cli import main
-from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.data_source import FixtureDataSource
+from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.data.data_source import FixtureDataSource
 
 _FIXTURE = Path(__file__).resolve().parent / "fixtures" / "sample_day_20260929.json"
 

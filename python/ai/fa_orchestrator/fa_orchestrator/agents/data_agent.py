@@ -6,14 +6,14 @@
 - 不负责：SQL 契约文本（sql_contracts.py）、数据源实现（data_source.py）、
   解析算法细节（id_resolver.py）、缺口补抓执行（后续 Issue）。
 """
-from fa_orchestrator.data_source import (
+from fa_orchestrator.data.data_source import (
     BLOCK_D1_MATCH_LIST,
     BLOCK_D2B_INTEGRITY,
     CHANNEL_FIXTURE,
     make_fetch_trace,
 )
-from fa_orchestrator.id_resolver import MatchResolveError, resolve_match_id
-from fa_orchestrator.integrity import build_integrity_report, check_module_integrity
+from fa_orchestrator.data.id_resolver import MatchResolveError, resolve_match_id
+from fa_orchestrator.data.integrity import build_integrity_report, check_module_integrity
 
 
 class DataAgent:

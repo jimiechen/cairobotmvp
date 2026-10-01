@@ -14,10 +14,10 @@ import os
 
 import pytest
 
-from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.data_source import CHANNEL_MYSQL
-from fa_orchestrator.id_resolver import resolve_match_id
-from fa_orchestrator.mysql_data_source import MySqlDataSource
+from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.data.data_source import CHANNEL_MYSQL
+from fa_orchestrator.data.id_resolver import resolve_match_id
+from fa_orchestrator.data.mysql_data_source import MySqlDataSource
 
 _GATE_ENV = "FA_MYSQL_INTEGRATION"
 

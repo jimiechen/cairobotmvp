@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from fa_orchestrator.config import ConfigError, load_orchestration_config
+from fa_orchestrator.graph.config import ConfigError, load_orchestration_config
 
 _CONFIG_PATH = (
     Path(__file__).resolve().parent.parent / "fa_orchestrator" / "configs" / "orchestrator.yaml"

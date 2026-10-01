@@ -18,7 +18,8 @@ _SELECTION_ZH = {"win": "胜", "draw": "平", "lose": "负"}
 _FORM_ZH = {"S": "单选", "D": "双选"}
 _ANOMALY_NONE = "未触发模拟数据告警。"
 
-_DEFAULT_TEMPLATE = Path(__file__).parent / "configs" / "OUTPUT_TEMPLATE.md"
+# 模板位于包根 configs/：本文件在 report/ 子包，需向上取包目录
+_DEFAULT_TEMPLATE = Path(__file__).resolve().parents[1] / "configs" / "OUTPUT_TEMPLATE.md"
 
 
 def _is_whole(value) -> bool:

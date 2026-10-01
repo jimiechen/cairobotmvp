@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from langgraph.types import Command, interrupt
 
-from fa_orchestrator.config import load_orchestration_config
-from fa_orchestrator.graph_builder import build_graph
-from fa_orchestrator.sqlite_checkpointer import SQLiteCheckpointer
+from fa_orchestrator.graph.config import load_orchestration_config
+from fa_orchestrator.graph.graph_builder import build_graph
+from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
 
 _PKG = Path(__file__).resolve().parent.parent.parent / "fa_orchestrator"
 _YAML = _PKG / "configs" / "orchestrator.yaml"

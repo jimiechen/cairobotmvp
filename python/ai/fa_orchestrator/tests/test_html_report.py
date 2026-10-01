@@ -6,7 +6,7 @@ Bug 与风险节、落盘行为。
 """
 import json
 
-from fa_orchestrator.html_report import render_html_report, write_html_report
+from fa_orchestrator.report.html_report import render_html_report, write_html_report
 
 
 def _review_report():

@@ -11,8 +11,8 @@
 
 语义解耦原则：禁止反买 ≠ 主推保留；v7.9 放弃规则优先于反大众阻断。
 """
-from fa_orchestrator.odds_math import dual_path, implied_probabilities
-from fa_orchestrator.sentiment_agent import OVERHEAT_HHAND_PP
+from fa_orchestrator.analysis.odds_math import dual_path, implied_probabilities
+from fa_orchestrator.agents.sentiment_agent import OVERHEAT_HHAND_PP
 
 # 撤离/反向信号清单（SKILL v7.2/v7.8/v7.11 口径，来源见行内注释）
 SIG_TWO_LAYER = "两层背离"           # v7.11：欧亚两层结论背离（单家背离联动）

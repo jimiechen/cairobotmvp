@@ -13,15 +13,15 @@ from datetime import date
 
 import pytest
 
-import fa_orchestrator.mysql_data_source as mysql_data_source_mod
-from fa_orchestrator.data_agent import DataAgent
-from fa_orchestrator.data_source import CHANNEL_MYSQL
-from fa_orchestrator.mysql_data_source import (
+import fa_orchestrator.data.mysql_data_source as mysql_data_source_mod
+from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.data.data_source import CHANNEL_MYSQL
+from fa_orchestrator.data.mysql_data_source import (
     SQL_JC_CANDIDATES_MYSQL,
     MySqlConfigError,
     MySqlDataSource,
 )
-from fa_orchestrator.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
+from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
 
 
 class FakeCursor:

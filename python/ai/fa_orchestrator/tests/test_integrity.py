@@ -4,7 +4,7 @@
 核查口径：ouzhi/yazhi/daxiao/vote/stats/intel 六模块行数 > 0 视为就绪；
 不完整必须列出缺口并触发补抓指令，全缺/无记录必须落 blocked 状态，禁止静默跳过。
 """
-from fa_orchestrator.integrity import (
+from fa_orchestrator.data.integrity import (
     INTEGRITY_MODULES,
     build_integrity_report,
     check_module_integrity,

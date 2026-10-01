@@ -11,7 +11,7 @@ LLM 一律经网关注入，测试时注入 fake gateway，禁止真实调用。
 import json
 import re
 
-from fa_orchestrator.llm_gateway import LlmGateway
+from fa_orchestrator.infra.llm_gateway import LlmGateway
 
 # 计划必填字段（缺失即视为 LLM 输出不合规）
 PLAN_REQUIRED_FIELDS = ("match_date", "matches", "parallel_groups")

@@ -7,7 +7,7 @@
 """
 import pytest
 
-from fa_orchestrator.sentiment_agent import INTEL_SUPPORT_MIN, SentimentAgent
+from fa_orchestrator.agents.sentiment_agent import INTEL_SUPPORT_MIN, SentimentAgent
 
 
 # 两家对称欧赔：1/2.0+1/4.0+1/4.0=1.0，去水后主胜隐含概率恰为 50.0%
