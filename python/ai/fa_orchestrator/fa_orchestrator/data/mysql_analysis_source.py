@@ -57,14 +57,22 @@ from fa_orchestrator.data.sql_contracts import (
 class MySqlAnalysisDataSource(MySqlDataSource):
     """MySQL 分析类数据源：消费解析映射，输出 fixture 对齐的分析数据块。
 
-    状态约束：只读；match_ids（fid → match.id）由 DataAgent 四路径解析结果
-    注入（构造参数传入，批次 2 接 resolver）；无映射时分析查询返回 None/空，
+    状态约束：只读；match_ids（fid → match.id）经构造参数或 set_match_ids
+    由 DataAgent 四路径解析结果注入；无映射时分析查询返回 None/空，
     不臆测（与 Q2b 口径一致）。D10 赛果例外：site_match_id == fid 直连。
     """
 
     def __init__(self, *, match_ids=None, **kwargs):
         """构建分析数据源；match_ids 为四路径解析结果（fid → match.id）。"""
         super().__init__(**kwargs)
+        self.match_ids = dict(match_ids or {})
+
+    def set_match_ids(self, match_ids: dict) -> None:
+        """回注 DataAgent 四路径解析结果（prepare 后调用，方案 A 批次 2 衔接点）。
+
+        输入：{fid → match.id}（解析失败的 fid 值为 None，_resolve 容错返回
+        None 使分析查询按缺口口径输出，不臆测）。
+        """
         self.match_ids = dict(match_ids or {})
 
     def _resolve(self, fid):

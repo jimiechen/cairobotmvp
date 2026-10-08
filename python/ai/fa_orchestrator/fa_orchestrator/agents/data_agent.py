@@ -36,6 +36,12 @@ class DataAgent:
         """
         matches = self.data_source.query_match_list(match_date)
         match_ids = self._resolve_all(matches, match_date)
+        # mysql 组装路径衔接（方案 A 批次 2）：模块表与分析表 ID 域均为
+        # `match`.id，解析结果回注支持该接口的数据源，供后续分析查询定位
+        # （fixture 等无此接口的数据源跳过，保持向后兼容）
+        inject = getattr(self.data_source, "set_match_ids", None)
+        if inject is not None:
+            inject(match_ids)
         per_match_counts = self._fetch_q2b_counts(matches, match_ids)
 
         report = build_integrity_report(per_match_counts)

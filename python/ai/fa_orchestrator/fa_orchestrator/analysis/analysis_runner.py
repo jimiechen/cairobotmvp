@@ -12,6 +12,7 @@
 """
 
 from fa_orchestrator.agents.data_agent import DataAgent
+from fa_orchestrator.data.data_source import CHANNEL_FIXTURE
 from fa_orchestrator.agents.fundamental_agent import FundamentalAgent
 from fa_orchestrator.analysis.history_deduction import deduce_heat_drift, deduce_trend
 from fa_orchestrator.analysis.odds_math import implied_probabilities
@@ -30,9 +31,10 @@ class AnalysisRunner:
     状态约束：无状态；数据源与 agent 均注入（测试可替换为 fake）。
     """
 
-    def __init__(self, data_source, fundamental_agent=None, odds_agent=None,
-                 sentiment_agent=None, synthesis_agent=None, review_agent=None):
+    def __init__(self, data_source, channel: str = CHANNEL_FIXTURE, fundamental_agent=None,
+                 odds_agent=None, sentiment_agent=None, synthesis_agent=None, review_agent=None):
         self.data_source = data_source
+        self.channel = channel
         self.fundamental_agent = fundamental_agent or FundamentalAgent()
         self.odds_agent = odds_agent or OddsVerifyAgent()
         self.sentiment_agent = sentiment_agent or SentimentAgent()
@@ -48,7 +50,7 @@ class AnalysisRunner:
         review/recommendation。
         失败行为：单场分析数据缺失按降级标注保留场次；数据源异常向上抛出。
         """
-        data_agent = DataAgent(self.data_source)
+        data_agent = DataAgent(self.data_source, channel=self.channel)
         report = data_agent.prepare(match_date)
         matches = [self._analyze_match(row) for row in report["matches"]]
         return {
