@@ -53,6 +53,13 @@ from fa_orchestrator.data.sql_contracts import (
     TRACK_BOOKMAKER_NAME,
 )
 
+# mysql 通道降级标注（缺口如实透出，随结论落盘，禁止编造补齐）
+DEGRADATION_NOTES = (
+    "D9 变盘轨迹为参考公司（澳门）快照序列降级口径，非全市场统计",
+    "Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底",
+    "D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）",
+)
+
 
 class MySqlAnalysisDataSource(MySqlDataSource):
     """MySQL 分析类数据源：消费解析映射，输出 fixture 对齐的分析数据块。
@@ -66,6 +73,7 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         """构建分析数据源；match_ids 为四路径解析结果（fid → match.id）。"""
         super().__init__(**kwargs)
         self.match_ids = dict(match_ids or {})
+        self.degradation_notes = DEGRADATION_NOTES
 
     def set_match_ids(self, match_ids: dict) -> None:
         """回注 DataAgent 四路径解析结果（prepare 后调用，方案 A 批次 2 衔接点）。
@@ -180,6 +188,10 @@ class MySqlAnalysisDataSource(MySqlDataSource):
             if row["side"] not in grouped:
                 continue
             score_home, score_away = split_score(row["score"])
+            if score_home is None or score_away is None:
+                # 比分缺失/异常行（真实库存在）：进失球无法统计，按缺口跳过，
+                # 不输出违反 {scored, conceded} 数值契约的 None 项
+                continue
             scored, conceded = ((score_home, score_away) if row["is_home"]
                                 else (score_away, score_home))
             grouped[row["side"]].append({

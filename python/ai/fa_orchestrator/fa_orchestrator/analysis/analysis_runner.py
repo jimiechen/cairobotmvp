@@ -61,7 +61,13 @@ class AnalysisRunner:
             "manual_review_matches": [
                 m["fid"] for m in matches if m["review"]["decision"] == "manual"
             ],
+            **self._degradation_notes(),
         }
+
+    def _degradation_notes(self) -> dict:
+        """数据源降级标注探测：支持自描述的数据源（如 mysql 通道）随结论透出。"""
+        notes = getattr(self.data_source, "degradation_notes", None)
+        return {"degradation_notes": list(notes)} if notes else {}
 
     def _analyze_match(self, row: dict) -> dict:
         """单场分析：基本面 → 赔率验证 → 历史推演 → 热度 → 综合判定+矛盾检查。"""

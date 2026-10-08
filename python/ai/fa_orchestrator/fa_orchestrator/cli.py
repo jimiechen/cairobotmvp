@@ -3,8 +3,9 @@
 
 数据源通道（R-04 联调后双通道）：--source fixture（默认，测试/演示）
 与 --source mysql（真实 workbench 库，配置走 FA_MYSQL_* 环境变量）。
-MySQL 通道仅覆盖数据准备（Q1/Q2b/解析）；两阶段分析与推荐结构产出
-仍仅支持 fixture（分析类 SQL 契约未归档，经主控确认不纳入）。
+MySQL 通道覆盖数据准备与分析产出（Q1/Q2b/解析 + Q3/Q5/Q9~Q12/D9/D12
+两阶段组装，方案 A 批次 3 放行）；结论带 degradation_notes 降级标注。
+review 复盘子命令仍为 fixture 输入（D10 折算属复盘层，未放行 mysql）。
 graph/replay/show 子命令与 run 图驱动模式（--checkpoint-db）在 cli_trace。
 """
 import argparse
@@ -18,7 +19,8 @@ from fa_orchestrator.report import html_report
 from fa_orchestrator.analysis.analysis_runner import AnalysisRunner
 from fa_orchestrator.agents.data_agent import DataAgent
 from fa_orchestrator.data.data_source import CHANNEL_FIXTURE, CHANNEL_MYSQL, FixtureDataSource
-from fa_orchestrator.data.mysql_data_source import MySqlConfigError, MySqlDataSource
+from fa_orchestrator.data.mysql_analysis_source import MySqlAnalysisDataSource
+from fa_orchestrator.data.mysql_data_source import MySqlConfigError
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -92,11 +94,11 @@ def build_parser() -> argparse.ArgumentParser:
 def _build_source(args):
     """按 --source 构建数据源。
 
-    返回：data_source 实例。
+    返回：data_source 实例（mysql 通道为分析数据源，支持两阶段组装）。
     失败行为：mysql 通道缺 FA_MYSQL_* 配置抛 MySqlConfigError（调用方转退出码 2）。
     """
     if args.source == CHANNEL_MYSQL:
-        return MySqlDataSource()
+        return MySqlAnalysisDataSource()
     if not args.fixture:
         raise ValueError("fixture 通道必须提供 --fixture 路径")
     return FixtureDataSource(args.fixture, analysis_path=args.analysis_fixture)
@@ -106,17 +108,9 @@ def _run(args) -> int:
     """执行 run 子命令：取数 → 核查 → 就绪率报告（→ 两阶段分析）。
 
     --checkpoint-db 时切换为图驱动模式（cli_trace._run_graph），
-    跳过 runner 版分析路径。
+    跳过 runner 版分析路径。mysql 通道由 MySqlAnalysisDataSource 提供
+    分析查询（方案 A 批次 3 放行），结论带降级标注。
     """
-    if args.source == CHANNEL_MYSQL and (
-        args.analysis_output or args.recommendation_output or args.checkpoint_db
-    ):
-        print(
-            "错误：MySQL 通道暂不支持两阶段分析与推荐结构产出"
-            "（分析类 SQL 契约未归档，R-04 范围限定）",
-            file=sys.stderr,
-        )
-        return 2
     try:
         data_source = _build_source(args)
     except MySqlConfigError as exc:
@@ -136,7 +130,7 @@ def _run(args) -> int:
         _save_json(args.output, report, "就绪率报告")
     conclusion = None
     if args.analysis_output or args.recommendation_output:
-        conclusion = AnalysisRunner(data_source).run(args.date)
+        conclusion = AnalysisRunner(data_source, channel=args.source).run(args.date)
     if args.analysis_output:
         _print_phase_conclusion(conclusion)
         _save_json(args.analysis_output, conclusion, "两阶段中间结论")

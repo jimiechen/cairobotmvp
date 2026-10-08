@@ -157,6 +157,18 @@ class TestD12HeatDrift:
         drift = _make_source({"1398605": 2635}).query_heat_drift("1398605")
         assert drift == {"home_pp": None, "away_pp": None}
 
+    def test_热度未计算快照行按缺口跳过(self, patch_mysql_connect):
+        # 真实库存在 cold_hot=None 快照行（e2e 2026-10-08 发现）：
+        # 热度未计算的快照不计入漂移，按有效快照首尾差计算
+        rows = [
+            dict(HEAT_ROWS[0], cold_hot=None),  # 亚美尼亚快照1：热度未计算
+            dict(HEAT_ROWS[1], cold_hot=None),  # 黑山快照1：热度未计算
+            HEAT_ROWS[3],                       # 亚美尼亚快照2：唯一有效 home 值
+        ]
+        patch_mysql_connect([rows])
+        drift = _make_source({"1398605": 2635}).query_heat_drift("1398605")
+        assert drift == {"home_pp": 0.0, "away_pp": None}
+
     def test_执行契约SQL且JOIN主客队名(self, patch_mysql_connect):
         conn = patch_mysql_connect([[]])
         _make_source({"1398605": 2635}).query_heat_drift("1398605")

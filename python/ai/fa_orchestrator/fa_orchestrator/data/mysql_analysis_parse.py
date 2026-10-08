@@ -140,8 +140,15 @@ def track_changes(kind, field, rows) -> list:
 
 
 def drift_of(rows, side_name):
-    """D12 热度漂移：指定队名侧的首尾快照 cold_hot 差；无匹配 → None；单快照 → 0.0。"""
-    values = [row["cold_hot"] for row in rows if row["side"] == side_name]
+    """D12 热度漂移：指定队名侧的首尾快照 cold_hot 差；无匹配 → None。
+
+    cold_hot=None（热度未计算的快照行，真实库存在）按缺口排除，
+    取有效快照首尾差；有效快照仅 1 个时差为 0.0。
+    """
+    values = [row["cold_hot"] for row in rows
+              if row["side"] == side_name and row["cold_hot"] is not None]
     if not values:
         return None
+    if len(values) == 1:
+        return 0.0
     return float(values[-1] - values[0])

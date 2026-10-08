@@ -120,7 +120,9 @@ class TestCliRecommendationOutput:
             assert "sentiment" in match
             assert "review" in match
 
-    def test_mysql通道禁止推荐结构输出(self, tmp_path, monkeypatch, capsys):
+    def test_mysql通道缺配置时推荐输出报错(self, tmp_path, monkeypatch, capsys):
+        # 方案 A 批次 3 放行 mysql 分析后，exit 2 仅来自配置缺失
+        # （MySqlConfigError），不再来自分析产出拦截
         import os
 
         for key in [k for k in os.environ if k.startswith("FA_MYSQL_")]:
@@ -130,3 +132,4 @@ class TestCliRecommendationOutput:
             "--recommendation-output", str(tmp_path / "rec.json"),
         ])
         assert exit_code == 2
+        assert "配置" in capsys.readouterr().err

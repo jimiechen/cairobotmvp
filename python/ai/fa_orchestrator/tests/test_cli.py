@@ -7,6 +7,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from fa_orchestrator.cli import main
 from fa_orchestrator.agents.data_agent import DataAgent
 from fa_orchestrator.data.data_source import FixtureDataSource
@@ -96,14 +98,16 @@ class TestCliMysqlSource:
         assert exit_code == 2
         assert "FA_MYSQL" in capsys.readouterr().err
 
-    def test_source_mysql禁止两阶段分析(self, monkeypatch, capsys):
-        # 分析类 SQL 契约未归档（主控确认不纳入）：提前拒绝，不发起连接
+    def test_source_mysql分析产出不再提前拒绝(self, monkeypatch):
+        # 方案 A 批次 3：分析类契约已归档，mysql 通道放行两阶段分析；
+        # 不再提前返回 2，流程推进到真实连接（'db' 主机不可达 → 连接异常）
+        import pymysql
+
         for key, val in (("FA_MYSQL_HOST", "db"), ("FA_MYSQL_USER", "u"),
                          ("FA_MYSQL_PASSWORD", "p"), ("FA_MYSQL_DB", "workbench")):
             monkeypatch.setenv(key, val)
-        exit_code = main([
-            "run", "--date", "2026-09-29", "--source", "mysql",
-            "--analysis-output", "out.json",
-        ])
-        assert exit_code == 2
-        assert "分析" in capsys.readouterr().err
+        with pytest.raises(pymysql.err.OperationalError):
+            main([
+                "run", "--date", "2026-09-29", "--source", "mysql",
+                "--analysis-output", "out.json",
+            ])

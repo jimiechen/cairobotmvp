@@ -165,6 +165,14 @@ class TestQ11Recent:
         recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
         assert recent == {"home": {"matches": []}, "away": {"matches": []}}
 
+    def test_比分异常行按缺口跳过不计入(self, patch_mysql_connect):
+        # 真实库存在比分缺失/异常行（e2e 2026-10-08 发现）：进失球无法统计，
+        # 该行不输出（违反 {scored, conceded} 数值契约），由 agent 场均统计跳过
+        bad_rows = [dict(FORM_ROWS[0], score="vs")]
+        patch_mysql_connect([[], [], bad_rows])
+        recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
+        assert recent["away"]["matches"] == []
+
 
 SCHEDULE_ROWS = [
     {"id": 2635, "league": "欧国联", "match_date": date(2026, 9, 29)},

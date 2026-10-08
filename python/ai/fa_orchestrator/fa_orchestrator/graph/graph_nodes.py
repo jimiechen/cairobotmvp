@@ -37,7 +37,8 @@ class GraphNodes:
         self.data_source = data_source
         self.channel = channel
         self._runner = AnalysisRunner(
-            data_source, fundamental_agent=fundamental_agent, odds_agent=odds_agent,
+            data_source, channel=channel,
+            fundamental_agent=fundamental_agent, odds_agent=odds_agent,
             sentiment_agent=sentiment_agent, synthesis_agent=synthesis_agent,
             review_agent=review_agent,
         )
