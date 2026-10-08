@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""SQL 契约常量（PRD-12 F-06）：Q1/Q2b 等取数 SQL 与需求文档 §四 逐字对齐。
+"""SQL 契约常量（PRD-12 F-06）：取数 SQL 与需求文档 §四 对齐 + 分析类契约按真实库归档。
 
 职责边界：
-- 负责：固化局域网取数 SQL 契约文本与六模块表名映射，供 DataAgent 拼装查询。
-- 不负责：数据库连接与执行（data_source.py）、结果解析（integrity.py / id_resolver.py）。
+- 负责：固化局域网取数 SQL 契约文本与六模块表名映射，供 DataAgent 拼装查询；
+  分析类契约（Q3/Q5/Q9~Q12/D9/D10/D12）以 workbench 真实库结构为准归档
+  （方案 A 批次 1，R-04 需求文档列名漂移已校准）。
+- 不负责：数据库连接与执行（data_source.py / mysql_data_source.py /
+  mysql_analysis_source.py）、结果解析与完整性判定（integrity.py / id_resolver.py）。
 
-约束来源：《需求文档 - 局域网数据获取》§四；
-`match` 是 MySQL 保留字，SQL 中必须反引号；全部参数化 %s 占位，禁止拼接。
+约束来源：《需求文档 - 局域网数据获取》§四 + 2026-10-08 workbench 只读探测；
+`match` 是 MySQL 保留字，SQL 中必须反引号；全部参数化 %s 占位，禁止拼接，
+禁止字面量日期/投票池名/轨迹公司名写死进契约。
 """
 
 # 六模块完整性核查映射（PRD-12 F-08）：模块名 → Q2b 同构替换表名
@@ -58,3 +62,154 @@ def build_q2b_sql(table: str, id_count: int) -> str:
         raise ValueError(f"表名不在六模块白名单内: {table}")
     placeholders = "(" + ",".join(["%s"] * id_count) + ")"
     return _Q2B_SQL_TEMPLATE.format(table=table, placeholders=placeholders)
+
+
+# ---- 分析类契约（Q3/Q5/Q9~Q12/D9/D10/D12，2026-10-08 按 workbench 真实库归档）----
+# 与需求文档 §四 列名漂移点（cc/home_team → cc_id/home/away、pool_code 取值
+# HAD/HHAD）已按实际库校准；数据域约束：模块表 match_id 域 = `match`.id，
+# D10 赛果例外（crawler_match_result.site_match_id == 500com fid 直连）。
+
+POOL_HAD = "HAD"          # 胜平负投票池（vote_snapshot.pool_code 取值）
+POOL_HHAD = "HHAD"        # 让球胜平负投票池
+TRACK_BOOKMAKER_NAME = "澳门"  # D9 变盘轨迹参考公司（降级口径，参数化传入）
+
+SQL_Q3_KICKOFF = """
+SELECT kickoff_time FROM `match` WHERE id = %s;
+"""
+
+SQL_Q3_EUROPE = """
+SELECT b.name AS bk, e.win, e.draw, e.lose, e.payout,
+       e.is_initial, e.snapshot_time
+FROM odds_europe e
+JOIN bookmaker b ON b.id = e.bookmaker_id
+WHERE e.match_id = %s
+ORDER BY b.sort_order, b.id, e.snapshot_time, e.id;
+"""
+
+SQL_Q3_ASIAN = """
+SELECT b.name AS bk, a.home_water, a.handicap, a.away_water,
+       a.is_initial, a.snapshot_time
+FROM odds_asian a
+JOIN bookmaker b ON b.id = a.bookmaker_id
+WHERE a.match_id = %s
+ORDER BY b.sort_order, b.id, a.snapshot_time, a.id;
+"""
+
+SQL_Q3_OVERUNDER = """
+SELECT b.name AS bk, o.over_odds, o.line, o.under_odds,
+       o.is_initial, o.snapshot_time
+FROM odds_overunder o
+JOIN bookmaker b ON b.id = o.bookmaker_id
+WHERE o.match_id = %s
+ORDER BY b.sort_order, b.id, o.snapshot_time, o.id;
+"""
+
+# 投票池：HAD 出支持率/SP，HHAD 出让球块；每池取最新快照（排序后取末行）
+SQL_Q5_VOTE = """
+SELECT pool_code, goal_line, h_odds, d_odds, a_odds,
+       h_support_rate, d_support_rate, a_support_rate, snapshot_time
+FROM vote_snapshot
+WHERE match_id = %s AND pool_code IN (%s, %s)
+ORDER BY pool_code, snapshot_time, id;
+"""
+
+# 必发交易：仅取 standard 类型（large 为大额口径，不用于方向判定）
+SQL_Q5_BF = """
+SELECT trade_type, total_volume, home_pct, draw_pct, away_pct, snapshot_time
+FROM betfair_trading
+WHERE match_id = %s AND trade_type = 'standard'
+ORDER BY snapshot_time, id;
+"""
+
+# 情报：仅取已填充行；party 由正文【主队】/【客队】标记解析（sentiment 无库维度）
+SQL_Q9_INTEL = """
+SELECT source, title, content, status, published_at
+FROM intelligence_text
+WHERE match_id = %s AND status = 'filled'
+ORDER BY id;
+"""
+
+# 历史交锋：按日期倒序（近年优先）；result_for_current_home 为当前主队视角
+SQL_Q10_H2H = """
+SELECT h2h_date, competition, home_team, away_team,
+       score, score_home, score_away, result_for_current_home
+FROM h2h_record
+WHERE match_id = %s
+ORDER BY h2h_date DESC, id DESC;
+"""
+
+# 近期战绩：side 分组倒序（近期优先）；进失球按 is_home 视角解析
+SQL_Q11_RECENT = """
+SELECT side, form_date, competition, home_team, away_team,
+       score, result, is_home
+FROM team_recent_form
+WHERE match_id = %s
+ORDER BY side, form_date DESC, id DESC;
+"""
+
+# 赛程：本场 + 双方未来场次（子查询锚定本场日期与主客队名，LIMIT 防全表）
+SQL_Q12_SCHEDULE = """
+SELECT m2.id, m2.league, m2.match_date
+FROM `match` m2
+WHERE m2.play_type = 'jingcai'
+  AND m2.match_date >= (SELECT m1.match_date FROM `match` m1 WHERE m1.id = %s)
+  AND (m2.home = (SELECT m1.home FROM `match` m1 WHERE m1.id = %s)
+       OR m2.away = (SELECT m1.home FROM `match` m1 WHERE m1.id = %s)
+       OR m2.home = (SELECT m1.away FROM `match` m1 WHERE m1.id = %s)
+       OR m2.away = (SELECT m1.away FROM `match` m1 WHERE m1.id = %s))
+ORDER BY m2.match_date, m2.id
+LIMIT 10;
+"""
+
+# 热度快照：side 为队名（含'平局'），JOIN `match` 取主客队名做匹配
+SQL_D12_HEAT = """
+SELECT h.side, h.cold_hot, h.snapshot_time, m.home, m.away
+FROM heat_analysis h
+JOIN `match` m ON m.id = h.match_id
+WHERE h.match_id = %s
+ORDER BY h.snapshot_time, h.id;
+"""
+
+# 变盘轨迹（D9 降级）：参考公司亚盘/大小盘快照序列，公司名参数化传入
+SQL_D9_ASIAN_TRACKS = """
+SELECT a.handicap, a.is_initial
+FROM odds_asian a
+JOIN bookmaker b ON b.id = a.bookmaker_id
+WHERE a.match_id = %s AND b.name = %s
+ORDER BY a.snapshot_time, a.id;
+"""
+
+SQL_D9_OVERUNDER_TRACKS = """
+SELECT o.line, o.is_initial
+FROM odds_overunder o
+JOIN bookmaker b ON b.id = o.bookmaker_id
+WHERE o.match_id = %s AND b.name = %s
+ORDER BY o.snapshot_time, o.id;
+"""
+
+# D10 赛果：site_match_id == 500com fid 直连，取最新更新行
+SQL_D10_RESULT = """
+SELECT site_match_id, match_no, home_team, away_team, league,
+       match_time, home_score, away_score, half_score, result_flag, play_type
+FROM crawler_match_result
+WHERE site_match_id = %s
+ORDER BY updated_at DESC, id DESC;
+"""
+
+# 分析契约注册表：键名供 get_sql_contracts 暴露与审计核对
+ANALYSIS_CONTRACTS = {
+    "Q3_kickoff": SQL_Q3_KICKOFF.strip(),
+    "Q3_europe": SQL_Q3_EUROPE.strip(),
+    "Q3_asian": SQL_Q3_ASIAN.strip(),
+    "Q3_overunder": SQL_Q3_OVERUNDER.strip(),
+    "Q5_vote": SQL_Q5_VOTE.strip(),
+    "Q5_bf": SQL_Q5_BF.strip(),
+    "Q9_intel": SQL_Q9_INTEL.strip(),
+    "Q10_h2h": SQL_Q10_H2H.strip(),
+    "Q11_recent": SQL_Q11_RECENT.strip(),
+    "Q12_schedule": SQL_Q12_SCHEDULE.strip(),
+    "D9_asian_tracks": SQL_D9_ASIAN_TRACKS.strip(),
+    "D9_overunder_tracks": SQL_D9_OVERUNDER_TRACKS.strip(),
+    "D12_heat": SQL_D12_HEAT.strip(),
+    "D10_result": SQL_D10_RESULT.strip(),
+}

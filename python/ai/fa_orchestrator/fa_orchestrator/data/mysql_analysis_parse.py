@@ -1,0 +1,147 @@
+# -*- coding: utf-8 -*-
+"""分析查询结果解析器（mysql_analysis_source 的纯函数层）。
+
+职责边界：
+- 负责：DB 行 → fixture 契约结构的纯函数归一——数值/时间格式化、比分解析、
+  盘口初即盘配对、投票池解构、情报分段、变盘轨迹与热度漂移推算。
+- 不负责：数据库连接与 SQL 执行（mysql_analysis_source.py）、
+  分析计算与趋势判断（analysis/ 层）。
+
+字段口径与降级标注（2026-10-08 workbench 只读探测校准，R-04）：
+- bk 用 bookmaker.name 原名（与 fixture 口径一致；name_alias 为脱敏名）
+- 库内无对应维度、禁止臆造的字段由调用方输出恒值并注明缺口：
+  Q5 bf.trend 恒 None（单时点快照）、Q10 decay_flags 恒 []、
+  Q12 level_gap 恒 False、Q3 is_final_snapshot 恒 False（无终盘标志）
+"""
+import re
+from datetime import date, datetime
+
+# 友谊赛判定关键词（team_recent_form.competition 含'友谊'计为热身赛）
+FRIENDLY_KEYWORD = "友谊"
+
+# 情报正文的主客标记（intelligence_text.content 分段解析依据）
+INTEL_MARKERS = {"【主队】": "home", "【客队】": "away"}
+
+
+def num(value):
+    """Decimal/None → float/None（DB 数值列统一归一，对齐 fixture 数字口径）。"""
+    return None if value is None else float(value)
+
+
+def fmt_time(value):
+    """datetime/str → 'MM-DD HH:MM'；None → None（对齐 fixture 时间格式）。"""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime("%m-%d %H:%M")
+    text = str(value)
+    return text[5:16] if len(text) >= 16 else text
+
+
+def to_day(value):
+    """date/datetime/str → date（未来赛程天数差计算用）。"""
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    return date.fromisoformat(str(value)[:10])
+
+
+def split_score(score):
+    """'主:客' 比分字符串 → (主分, 客分)；格式异常返回 (None, None)。"""
+    parts = str(score or "").split(":")
+    if len(parts) != 2:
+        return None, None
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        return None, None
+
+
+def pair_odds(rows, fields, final_flag) -> list:
+    """按公司归并初盘（is_initial=1 首行）与即时盘（最新非初盘行）。
+
+    输入 rows 已按公司、快照时间排序（契约 ORDER BY 保证）；
+    payout/snapshot_time 取 current 优先（回退 initial）；无初盘或
+    无即时盘时对应块 None；final_flag=True 时补 is_final_snapshot 恒 False。
+    """
+    by_bookmaker = {}
+    for row in rows:
+        by_bookmaker.setdefault(row["bk"], []).append(row)
+    paired = []
+    for bk, snapshots in by_bookmaker.items():
+        initial = next((r for r in snapshots if r["is_initial"]), None)
+        current = next((r for r in reversed(snapshots) if not r["is_initial"]), None)
+        item = {
+            "bk": bk,
+            "initial": {f: num(initial[f]) for f in fields} if initial else None,
+            "current": {f: num(current[f]) for f in fields} if current else None,
+        }
+        ref = current or initial
+        if ref is not None:
+            if "payout" in ref:
+                item["payout"] = num(ref["payout"])
+            item["snapshot_time"] = fmt_time(ref["snapshot_time"])
+        if final_flag:
+            item["is_final_snapshot"] = False   # 库无终盘标志（缺口标注）
+        paired.append(item)
+    return paired
+
+
+def had_block(row, suffix):
+    """vote_snapshot h/d/a 前缀列 → {win, draw, lose}（suffix 为列后缀）。"""
+    return {"win": num(row[f"h_{suffix}"]),
+            "draw": num(row[f"d_{suffix}"]),
+            "lose": num(row[f"a_{suffix}"])}
+
+
+def bf_block(row):
+    """必发最新 standard 快照 → {total_volume, direction, trend}。
+
+    direction 按三大占比最大者判定（占比缺失视为 0）；trend 需多时点快照，
+    库内单时点恒 None（缺口标注，由调用方输出）。
+    """
+    pcts = {"home": num(row["home_pct"]) or 0,
+            "draw": num(row["draw_pct"]) or 0,
+            "away": num(row["away_pct"]) or 0}
+    return {"total_volume": num(row["total_volume"]),
+            "direction": max(pcts, key=pcts.get),
+            "trend": None}
+
+
+def split_intel_items(content) -> list:
+    """Q9 前瞻正文 → items（按【主队】/【客队】标记切分段落）。
+
+    标记后的段落 party 与标记一致；无标记正文 party=None；
+    sentiment 库内无维度不输出（缺口标注）。
+    """
+    items = []
+    party = None
+    for chunk in re.split(r"(【主队】|【客队】)", str(content or "")):
+        if chunk in INTEL_MARKERS:
+            party = INTEL_MARKERS[chunk]
+        elif chunk.strip():
+            items.append({"party": party, "text": chunk.strip()})
+    return items
+
+
+def track_changes(kind, field, rows) -> list:
+    """D9 变盘轨迹：初盘为基准遍历快照，盘口变化记 {kind, change:±1}（等值不计）。"""
+    tracks = []
+    baseline = next((num(row[field]) for row in rows if row["is_initial"]), None)
+    for row in rows:
+        value = num(row[field])
+        if row["is_initial"] or value is None or baseline is None:
+            continue
+        if value != baseline:
+            tracks.append({"kind": kind, "change": 1 if value > baseline else -1})
+            baseline = value
+    return tracks
+
+
+def drift_of(rows, side_name):
+    """D12 热度漂移：指定队名侧的首尾快照 cold_hot 差；无匹配 → None；单快照 → 0.0。"""
+    values = [row["cold_hot"] for row in rows if row["side"] == side_name]
+    if not values:
+        return None
+    return float(values[-1] - values[0])

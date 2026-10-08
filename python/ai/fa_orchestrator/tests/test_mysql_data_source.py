@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """MySqlDataSource 单元测试（PRD-12 F-06 联调，R-04 退役）。
 
-全部使用 Fake 连接（monkeypatch pymysql.connect），禁止真实连库；
+全部使用 Fake 连接（conftest.patch_mysql_connect），禁止真实连库；
 真实 MySQL 联调见 tests/integration/test_mysql_integration.py（FA_MYSQL_INTEGRATION 门控）。
 
 联调已确认的环境事实（2026-09-30 只读探测，详见测试报告）：
 - workbench 库九张契约表齐全；Q1 契约 SQL 原样可运行
 - 六模块表 match_id 域 = `match`.id（非 500com fid），Q2b 需传入解析后的 match_id
 - 契约 SQL_JC_MATCH_CANDIDATES 列名与实际 schema 不符（cc→cc_id 等），数据源内做适配
+- 分析类查询已迁至 MySqlAnalysisDataSource（mysql_analysis_source.py），本文件不再覆盖
 """
 from datetime import date
 
@@ -22,63 +23,6 @@ from fa_orchestrator.data.mysql_data_source import (
     MySqlDataSource,
 )
 from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
-
-
-class FakeCursor:
-    """记录执行语句并按序返回预置结果集（DictCursor 语义）。"""
-
-    def __init__(self, result_sets):
-        self.result_sets = list(result_sets)
-        self.executed = []
-
-    def execute(self, sql, params=None):
-        self.executed.append((sql, params))
-
-    def __iter__(self):
-        return iter(self.result_sets.pop(0) if self.result_sets else [])
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-
-class FakeConnection:
-    """假连接：仅支撑 with 语义与单游标访问。"""
-
-    def __init__(self, result_sets):
-        self.cursor_obj = FakeCursor(result_sets)
-        self.closed = False
-
-    def cursor(self):
-        return self.cursor_obj
-
-    def close(self):
-        self.closed = True
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        self.closed = True
-        return False
-
-
-@pytest.fixture
-def patch_connect(monkeypatch):
-    """把 pymysql.connect 替换为返回 FakeConnection 的工厂。"""
-
-    def _install(result_sets):
-        conn = FakeConnection(result_sets)
-
-        def fake_connect(**kwargs):
-            return conn
-
-        monkeypatch.setattr(mysql_data_source_mod.pymysql, "connect", fake_connect)
-        return conn
-
-    return _install
 
 
 def _make_source(**overrides):
@@ -123,8 +67,8 @@ class TestMySqlConfig:
 
 
 class TestQ1MatchList:
-    def test_执行契约SQL原样并返回清单(self, patch_connect):
-        conn = patch_connect([Q1_ROWS])
+    def test_执行契约SQL原样并返回清单(self, patch_mysql_connect):
+        conn = patch_mysql_connect([Q1_ROWS])
         rows = _make_source().query_match_list("2026-09-29")
         assert rows[0]["fid"] == "1398605"
         assert rows[0]["match_no"] == "周一003"
@@ -132,16 +76,16 @@ class TestQ1MatchList:
         assert sql == SQL_Q1_MATCH_LIST.strip()
         assert params == ("2026-09-29",)
 
-    def test_日期与fid归一为字符串(self, patch_connect):
-        patch_connect([[dict(Q1_ROWS[0], match_date=date(2026, 9, 29), fid=1398605)]])
+    def test_日期与fid归一为字符串(self, patch_mysql_connect):
+        patch_mysql_connect([[dict(Q1_ROWS[0], match_date=date(2026, 9, 29), fid=1398605)]])
         rows = _make_source().query_match_list("2026-09-29")
         assert rows[0]["match_date"] == "2026-09-29"
         assert rows[0]["fid"] == "1398605"
 
 
 class TestJcCandidates:
-    def test_候选行列名适配为解析器口径(self, patch_connect):
-        patch_connect([CAND_ROWS])
+    def test_候选行列名适配为解析器口径(self, patch_mysql_connect):
+        patch_mysql_connect([CAND_ROWS])
         rows = _make_source().query_jc_candidates()
         assert rows[0] == {
             "id": 2635, "cc": "周一003", "match_date": "2026-09-29",
@@ -149,8 +93,8 @@ class TestJcCandidates:
         }
         assert "cc_id" not in rows[0] and "home" not in rows[0]
 
-    def test_适配SQL常量且确定性排序(self, patch_connect):
-        conn = patch_connect([CAND_ROWS])
+    def test_适配SQL常量且确定性排序(self, patch_mysql_connect):
+        conn = patch_mysql_connect([CAND_ROWS])
         _make_source().query_jc_candidates()
         sql, params = conn.cursor_obj.executed[0]
         assert sql == SQL_JC_CANDIDATES_MYSQL
@@ -165,13 +109,13 @@ class TestJcCandidates:
 
 
 class TestQ2bCounts:
-    def test_按解析后match_id查询六模块(self, patch_connect):
+    def test_按解析后match_id查询六模块(self, patch_mysql_connect):
         module_counts = [
             [{"match_id": 2635, "c": 231}], [{"match_id": 2635, "c": 272}],
             [{"match_id": 2635, "c": 32}], [{"match_id": 2635, "c": 20}],
             [{"match_id": 2635, "c": 6}], [{"match_id": 2635, "c": 4}],
         ]
-        conn = patch_connect(module_counts)
+        conn = patch_mysql_connect(module_counts)
         counts = _make_source().query_q2b_counts(["1398605"], match_ids={"1398605": 2635})
         assert counts["1398605"] == {
             "ouzhi": 231, "yazhi": 272, "daxiao": 32,
@@ -182,38 +126,26 @@ class TestQ2bCounts:
         assert len(executed) == 6
         assert executed[0] == (build_q2b_sql("odds_europe", 1), (2635,))
 
-    def test_无match_id映射时返回空不臆测(self, patch_connect):
-        patch_connect([[]])
+    def test_无match_id映射时返回空不臆测(self, patch_mysql_connect):
+        patch_mysql_connect([[]])
         assert _make_source().query_q2b_counts(["1398605"]) == {}
 
-    def test_部分fid缺映射时跳过该fid(self, patch_connect):
-        patch_connect([[{"match_id": 2635, "c": 231}]] + [[]] * 5)
+    def test_部分fid缺映射时跳过该fid(self, patch_mysql_connect):
+        patch_mysql_connect([[{"match_id": 2635, "c": 231}]] + [[]] * 5)
         counts = _make_source().query_q2b_counts(
             ["1398605", "1398610"], match_ids={"1398605": 2635}
         )
         assert "1398605" in counts and "1398610" not in counts
 
-    def test_模块无行计为0(self, patch_connect):
-        patch_connect([[{"match_id": 2635, "c": 231}], [], [], [], [], []])
+    def test_模块无行计为0(self, patch_mysql_connect):
+        patch_mysql_connect([[{"match_id": 2635, "c": 231}], [], [], [], [], []])
         counts = _make_source().query_q2b_counts(["1398605"], match_ids={"1398605": 2635})
         assert counts["1398605"]["yazhi"] == 0
 
 
-class TestAnalysisQueries:
-    """分析类查询契约未归档（主控已确认不纳入）：明确返回空，禁止臆造 SQL。"""
-
-    def test_分析类查询返回None或空(self):
-        source = _make_source()
-        assert source.query_match_odds("1398605") is None
-        assert source.query_vote("1398605") is None
-        assert source.query_fundamentals("1398605") == {}
-        assert source.query_history_tracks("1398605") is None
-        assert source.query_heat_drift("1398605") is None
-
-
 class TestContractAndTrace:
-    def test_通道标识与SQL契约暴露(self, patch_connect):
-        patch_connect([[]])
+    def test_通道标识与SQL契约暴露(self, patch_mysql_connect):
+        patch_mysql_connect([[]])
         source = _make_source()
         contracts = source.get_sql_contracts()
         assert contracts["Q1"] == SQL_Q1_MATCH_LIST.strip()

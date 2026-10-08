@@ -2,17 +2,18 @@
 """MySQL 直连数据源（PRD-12 F-06 联调通道，R-04）。
 
 职责边界：
-- 负责：workbench 库（192.168.1.6:3306）真实通道——Q1 清单、候选行、
+- 负责：workbench 库（192.168.1.6:3306）数据准备通道——Q1 清单、候选行、
   Q2b 六模块行数核查、连接配置管理（环境变量 + 构造参数，凭据不入库）。
-- 不负责：fixture 通道（data_source.py）、SQL 契约文本维护
+- 不负责：fixture 通道（data_source.py）、分析类查询
+  （mysql_analysis_source.py，方案 A 批次 1 起归档实现）、SQL 契约文本
   （sql_contracts.py）、解析与完整性判定（id_resolver.py / integrity.py）。
 
-联调确认的环境事实（2026-09-30 只读探测，详见联调测试报告）：
+联调确认的环境事实（2026-09-30 / 2026-10-08 只读探测，详见测试报告）：
 - workbench 库九张契约表齐全；Q1 契约 SQL 原样可运行
 - 六模块表 match_id 域 = `match`.id（非 500com fid），Q2b 须传入解析后 match_ids
 - 契约 SQL_JC_MATCH_CANDIDATES 列名与实际 schema 不符（cc→cc_id 等），本层适配
-- 分析类查询（Q3/Q5/Q9~Q12/历史推演）契约在外部需求文档 §四，未归档，
-  经主控确认本阶段不实现：一律返回 None/空（与 fixture 未配置 analysis 行为一致）
+- 分析类契约（Q3/Q5/Q9~Q12/D9/D10/D12）已按真实库结构归档至 sql_contracts.py，
+  由 MySqlAnalysisDataSource 执行（本模块不再保留桩方法）
 
 单元测试一律使用 Fake 连接，禁止真实连库；
 真实联调走 tests/integration/test_mysql_integration.py（FA_MYSQL_INTEGRATION 门控）。
@@ -193,26 +194,6 @@ class MySqlDataSource:
             }
             for fid, mid in id_by_fid.items()
         }
-
-    def query_match_odds(self, fid: str):
-        """Q3（三盘赔率明细）：契约未归档，经主控确认不实现，恒 None。"""
-        return None
-
-    def query_vote(self, fid: str):
-        """Q5（投票支持率）：契约未归档，经主控确认不实现，恒 None。"""
-        return None
-
-    def query_fundamentals(self, fid: str) -> dict:
-        """Q9~Q12（基本面四块）：契约未归档，经主控确认不实现，恒空。"""
-        return {}
-
-    def query_history_tracks(self, fid: str):
-        """升降盘时序轨迹：契约未归档，经主控确认不实现，恒 None。"""
-        return None
-
-    def query_heat_drift(self, fid: str):
-        """投票热度漂移：契约未归档，经主控确认不实现，恒 None。"""
-        return None
 
     def get_sql_contracts(self) -> dict:
         """暴露数据源对应的 SQL 契约（供联调核对与审计）。
