@@ -16,6 +16,10 @@ HEAT_DRIFT_STABLE_BAND = 1.0
 # 无法推演时的固定标注（v7.4 M5：缺失时明确标注，禁止编造）
 NOTE_UNAVAILABLE = "无法推演时序"
 
+# 热度走向缺口标注（BUG-FA-103：侧向无有效热度快照时不编造走向）
+TREND_UNKNOWN = "unknown"
+NOTE_HEAT_SIDE_MISSING = "存在热度快照缺失侧，走向按缺口标注"
+
 
 def deduce_trend(tracks) -> dict:
     """推导升降盘时序趋势。
@@ -42,14 +46,25 @@ def deduce_trend(tracks) -> dict:
 def deduce_heat_drift(drift) -> dict:
     """推导投票热度漂移走向。
 
-    输入：drift（{"home_pp": 百分点, "away_pp": 百分点}，正值为热度上升）。
-    输出：走向结论 dict（available + home_pp/away_pp + trend）。
-    失败行为：drift 为 None 时返回 available=False 并标注无法推演。
+    输入：drift（{"home_pp": 百分点, "away_pp": 百分点}，正值为热度上升；
+    侧向 None 表示该侧无有效热度快照，由数据源缺口口径（BUG-FA-102）传入）。
+    输出：走向结论 dict（available + home_pp/away_pp + trend + note）。
+    失败行为：drift 为 None 时返回 available=False 并标注无法推演；
+    侧向热度缺失时 trend 按缺口标注 unknown（主侧缺失时走向不可判定），
+    有效侧数值照常透传，禁止 TypeError 与编造（BUG-FA-103）。
     """
     if not drift:
         return {"available": False, "note": NOTE_UNAVAILABLE}
-    home_pp = drift.get("home_pp", 0.0)
-    away_pp = drift.get("away_pp", 0.0)
+    home_pp = drift.get("home_pp")
+    away_pp = drift.get("away_pp")
+    if home_pp is None or away_pp is None:
+        return {
+            "available": True,
+            "home_pp": home_pp,
+            "away_pp": away_pp,
+            "trend": TREND_UNKNOWN if home_pp is None else _classify_drift(home_pp),
+            "note": NOTE_HEAT_SIDE_MISSING,
+        }
     return {
         "available": True,
         "home_pp": home_pp,
