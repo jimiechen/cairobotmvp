@@ -1,0 +1,3718 @@
+{
+  "match_date": "2026-09-29",
+  "channel": "mysql",
+  "total_matches": 13,
+  "matches": [
+    {
+      "fid": "1398605",
+      "match_no": "周一003",
+      "home_team": "亚美尼亚",
+      "away_team": "黑山",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.0,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 3,
+          "streak_wins": 0,
+          "win_rate": 0.3333333333333333,
+          "suppression": "weak",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.2857142857142856,
+          "home_avg_conceded": 1.1428571428571428,
+          "away_avg_scored": 2.6,
+          "away_avg_conceded": 1.2,
+          "home_recent5_avg": 1.0,
+          "away_recent5_avg": 2.6,
+          "expected_total_goals": 4.397142857142858,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 93.453
+        },
+        "euro_asia": {
+          "raise_count": 2,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.795,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "weak"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": false,
+          "note": "无法推演时序"
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "draw",
+          "support": 40.0,
+          "implied": 29.3,
+          "deviation_pp": 10.7,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": -9.1,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "weak",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": false,
+          "note": "反大众锚点命中，禁止反买输出；禁止反买≠主推保留（语义解耦）"
+        },
+        "main_action": "downgrade",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 2,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "lose",
+              "draw"
+            ],
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "notes": [
+            "无补位需求（主推SP≥1.5）"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 2
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "violation",
+            "action": "回退补充 hhand_unit 收益比路径或改单选",
+            "note": "双选缺路径"
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "manual",
+        "violations": [
+          "⑥"
+        ]
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 2,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "lose",
+            "draw"
+          ],
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "notes": [
+          "无补位需求（主推SP≥1.5）"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1398610",
+      "match_no": "周一004",
+      "home_team": "土耳其",
+      "away_team": "意大利",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.0,
+          "current_handicap": 0.0,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 4,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.25,
+          "home_avg_conceded": 0.875,
+          "away_avg_scored": 1.5,
+          "away_avg_conceded": 2.125,
+          "home_recent5_avg": 1.4,
+          "away_recent5_avg": 1.8,
+          "expected_total_goals": 2.475,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 27,
+          "mainstream_missing": [],
+          "avg_payout": 93.851
+        },
+        "euro_asia": {
+          "raise_count": 2,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.8,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 0,
+          "overunder_raise_count": 1,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 40.0,
+          "implied": 38.7,
+          "deviation_pp": 1.3,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "win",
+          "deviation_pp": -11.0,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "notes": [
+            "无补位需求（主推SP≥1.5）"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 2
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "violation",
+            "action": "回退补充 hhand_unit 收益比路径或改单选",
+            "note": "双选缺路径"
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "manual",
+        "violations": [
+          "⑥"
+        ]
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "notes": [
+          "无补位需求（主推SP≥1.5）"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1398607",
+      "match_no": "周一005",
+      "home_team": "比利时",
+      "away_team": "法国",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.5,
+          "current_handicap": 0.5,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 5,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.0,
+          "home_avg_conceded": 2.142857142857143,
+          "away_avg_scored": 1.7777777777777777,
+          "away_avg_conceded": 1.6666666666666667,
+          "home_recent5_avg": 1.0,
+          "away_recent5_avg": 2.0,
+          "expected_total_goals": 2.5,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 93.79
+        },
+        "euro_asia": {
+          "raise_count": 2,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.96,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 2,
+          "overunder_raise_count": 1,
+          "total": 4,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 65.0,
+          "implied": 45.8,
+          "deviation_pp": 19.2,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "draw",
+          "deviation_pp": 16.7,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": true,
+          "layer": "hhand",
+          "deviation_pp": 16.7,
+          "support_intel": false,
+          "disposition": "abandon",
+          "tag": "[过热+16.7pp｜情报支撑：无]"
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "abandon",
+        "recommendation": {
+          "had_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[过热放弃｜防守向双选]"
+          },
+          "hhand_unit": null,
+          "notes": [
+            "互斥修正：D+D 仅撤离≥3重允许，砍剩让球层"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "D+空",
+            "adjusted": true
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[过热放弃｜防守向双选]"
+        },
+        "hhand_unit": null,
+        "notes": [
+          "互斥修正：D+D 仅撤离≥3重允许，砍剩让球层"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "D+空",
+          "adjusted": true
+        }
+      }
+    },
+    {
+      "fid": "1398591",
+      "match_no": "周一006",
+      "home_team": "罗马尼亚",
+      "away_team": "波黑",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": -0.25,
+          "current_handicap": -0.25,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 5,
+          "streak_wins": 0,
+          "win_rate": 0.2,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.6666666666666665,
+          "home_avg_conceded": 0.8333333333333334,
+          "away_avg_scored": 1.625,
+          "away_avg_conceded": 0.75,
+          "home_recent5_avg": 2.8,
+          "away_recent5_avg": 1.6,
+          "expected_total_goals": 3.8624999999999994,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 93.807
+        },
+        "euro_asia": {
+          "raise_count": 9,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.8733333333333334,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 0,
+          "total": 4,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "win",
+          "support": 46.0,
+          "implied": 38.7,
+          "deviation_pp": 7.3,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": -9.1,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 home，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "win",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "lose",
+              "draw"
+            ],
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "notes": [
+            "无补位需求（主推SP≥1.5）"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 2
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "violation",
+            "action": "回退补充 hhand_unit 收益比路径或改单选",
+            "note": "双选缺路径"
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "manual",
+        "violations": [
+          "⑥"
+        ]
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "win",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "lose",
+            "draw"
+          ],
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "notes": [
+          "无补位需求（主推SP≥1.5）"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1398592",
+      "match_no": "周一007",
+      "home_team": "瑞典",
+      "away_team": "波兰",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": -0.5,
+          "current_handicap": -0.5,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 4,
+          "streak_wins": 1,
+          "win_rate": 0.5,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.625,
+          "home_avg_conceded": 1.25,
+          "away_avg_scored": 1.5714285714285714,
+          "away_avg_conceded": 1.4285714285714286,
+          "home_recent5_avg": 3.0,
+          "away_recent5_avg": 1.6,
+          "expected_total_goals": 3.776785714285714,
+          "hot_sides": [
+            "home"
+          ],
+          "fire_note": "状态火热一方火力保留（对手成色折扣上限30%）",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 3,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 93.741
+        },
+        "euro_asia": {
+          "raise_count": 9,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.8644444444444443,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 1,
+          "total": 3,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "win",
+          "support": 73.0,
+          "implied": 46.6,
+          "deviation_pp": 26.4,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "draw",
+          "deviation_pp": 19.9,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 home，形态 None"
+        },
+        "overheat": {
+          "triggered": true,
+          "layer": "had",
+          "deviation_pp": 26.4,
+          "support_intel": true,
+          "disposition": "downgrade_keep",
+          "tag": "[过热+26.4pp｜情报支撑：有]"
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "downgrade",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "win",
+            "legs": null,
+            "path": null,
+            "stars": 2,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "lose",
+              "draw"
+            ],
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "notes": [
+            "无补位需求（主推SP≥1.5）"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 2
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "violation",
+            "action": "回退补充 hhand_unit 收益比路径或改单选",
+            "note": "双选缺路径"
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "manual",
+        "violations": [
+          "⑥"
+        ]
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "win",
+          "legs": null,
+          "path": null,
+          "stars": 2,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "lose",
+            "draw"
+          ],
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "notes": [
+          "无补位需求（主推SP≥1.5）"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1398590",
+      "match_no": "周一008",
+      "home_team": "北爱尔兰",
+      "away_team": "匈牙利",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.25,
+          "current_handicap": 0.0,
+          "handicap_movement": "降盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 2,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.2857142857142858,
+          "home_avg_conceded": 0.42857142857142855,
+          "away_avg_scored": 1.3333333333333333,
+          "away_avg_conceded": 1.6666666666666667,
+          "home_recent5_avg": 1.4,
+          "away_recent5_avg": 1.6,
+          "expected_total_goals": 2.357142857142857,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "欧国联",
+          "level_gap": false,
+          "future_count": 2,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 93.656
+        },
+        "euro_asia": {
+          "raise_count": 1,
+          "raise_form": "孤立升盘",
+          "avg_home_water": 0.48,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 0,
+          "total": 4,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 43.0,
+          "implied": 35.0,
+          "deviation_pp": 8.0,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "win",
+          "deviation_pp": -15.9,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 home，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "notes": [
+            "无补位需求（主推SP≥1.5）"
+          ],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 2
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "violation",
+            "action": "回退补充 hhand_unit 收益比路径或改单选",
+            "note": "双选缺路径"
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "manual",
+        "violations": [
+          "⑥"
+        ]
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "notes": [
+          "无补位需求（主推SP≥1.5）"
+        ],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1495539",
+      "match_no": "周二001",
+      "home_team": "朝鲜女",
+      "away_team": "中国女",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": -1.0,
+          "current_handicap": -1.25,
+          "handicap_movement": "降盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 3,
+          "streak_wins": 0,
+          "win_rate": 0.3333333333333333,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 2.4444444444444446,
+          "home_avg_conceded": 2.4444444444444446,
+          "away_avg_scored": 1.2857142857142858,
+          "away_avg_conceded": 1.5714285714285714,
+          "home_recent5_avg": 1.2,
+          "away_recent5_avg": 0.8,
+          "expected_total_goals": 3.357142857142857,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "亚运女足",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 89.736
+        },
+        "euro_asia": {
+          "raise_count": 2,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.875,
+          "state_alignment": "同向",
+          "deep_market": true,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 11,
+          "overunder_raise_count": 0,
+          "total": 24,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "win",
+          "support": 43.0,
+          "implied": 64.4,
+          "deviation_pp": -21.4,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "win",
+          "deviation_pp": -5.6,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 home，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "win",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "draw",
+              "lose"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "win",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "draw",
+            "lose"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1427510",
+      "match_no": "周二002",
+      "home_team": "澳大利亚",
+      "away_team": "巴西",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 1.5,
+          "current_handicap": 1.5,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 2,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "weak",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.8333333333333333,
+          "home_avg_conceded": 0.3333333333333333,
+          "away_avg_scored": 1.4,
+          "away_avg_conceded": 1.4,
+          "home_recent5_avg": 2.0,
+          "away_recent5_avg": 1.4,
+          "expected_total_goals": 2.91,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "国际友谊",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 29,
+          "mainstream_missing": [],
+          "avg_payout": 92.283
+        },
+        "euro_asia": {
+          "raise_count": 2,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.77,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "weak"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": ""
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": false,
+          "note": "无法推演时序"
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": null,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 68.0,
+          "implied": 69.9,
+          "deviation_pp": -1.9,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": 1.4,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "weak",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": false,
+          "note": "反大众锚点命中，禁止反买输出；禁止反买≠主推保留（语义解耦）"
+        },
+        "main_action": "downgrade",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 2,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 2,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1493612",
+      "match_no": "周二003",
+      "home_team": "藤枝MYFC",
+      "away_team": "大阪樱花",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.75,
+          "current_handicap": 1.0,
+          "handicap_movement": "升盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 0,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.5,
+          "home_avg_conceded": 1.3,
+          "away_avg_scored": 2.111111111111111,
+          "away_avg_conceded": 0.4444444444444444,
+          "home_recent5_avg": 1.8,
+          "away_recent5_avg": 2.0,
+          "expected_total_goals": 3.25,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "日联杯",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 90.859
+        },
+        "euro_asia": {
+          "raise_count": 9,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.9688888888888888,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 0,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 63.0,
+          "implied": 60.7,
+          "deviation_pp": 2.3,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": 1.1,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1493607",
+      "match_no": "周二004",
+      "home_team": "枥木城",
+      "away_team": "广岛三箭",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 1.5,
+          "current_handicap": 2.25,
+          "handicap_movement": "升盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 0,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.5,
+          "home_avg_conceded": 1.8,
+          "away_avg_scored": 2.3333333333333335,
+          "away_avg_conceded": 1.1111111111111112,
+          "home_recent5_avg": 1.6,
+          "away_recent5_avg": 1.8,
+          "expected_total_goals": 3.45,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "日联杯",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 27,
+          "mainstream_missing": [],
+          "avg_payout": 91.444
+        },
+        "euro_asia": {
+          "raise_count": 10,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.9159999999999998,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 2,
+          "overunder_raise_count": 1,
+          "total": 4,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 73.0,
+          "implied": 81.8,
+          "deviation_pp": -8.8,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": -1.3,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1493610",
+      "match_no": "周二005",
+      "home_team": "富山胜利",
+      "away_team": "浦和红钻",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.75,
+          "current_handicap": 0.75,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 2,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "none",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.6,
+          "home_avg_conceded": 1.5,
+          "away_avg_scored": 2.2222222222222223,
+          "away_avg_conceded": 1.8888888888888888,
+          "home_recent5_avg": 2.4,
+          "away_recent5_avg": 2.8,
+          "expected_total_goals": 3.4400000000000004,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "日联杯",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 90.925
+        },
+        "euro_asia": {
+          "raise_count": 12,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.9158333333333334,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "none"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 1,
+          "total": 3,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 62.0,
+          "implied": 63.7,
+          "deviation_pp": -1.7,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "draw",
+          "deviation_pp": 9.7,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "none",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": true,
+          "note": "三条锚点全不命中，允许反买（仓位减半）"
+        },
+        "main_action": "keep",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 3,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 3,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1493609",
+      "match_no": "周二006",
+      "home_team": "山形山神",
+      "away_team": "横滨水手",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": 0.75,
+          "current_handicap": 1.25,
+          "handicap_movement": "升盘",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 1,
+          "streak_wins": 0,
+          "win_rate": 0.0,
+          "suppression": "weak",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 1.2,
+          "home_avg_conceded": 1.1,
+          "away_avg_scored": 1.3333333333333333,
+          "away_avg_conceded": 1.2222222222222223,
+          "home_recent5_avg": 1.6,
+          "away_recent5_avg": 1.6,
+          "expected_total_goals": 2.28,
+          "hot_sides": [],
+          "fire_note": "",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "日联杯",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 28,
+          "mainstream_missing": [],
+          "avg_payout": 90.829
+        },
+        "euro_asia": {
+          "raise_count": 13,
+          "raise_form": "共振升盘",
+          "avg_home_water": 0.8353846153846152,
+          "state_alignment": "同向",
+          "deep_market": false,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "weak"
+          },
+          "strength_endorsed": false,
+          "interpretation": "真信号",
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": false,
+            "tag": null,
+            "reasons": []
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 1,
+          "overunder_raise_count": 0,
+          "total": 1,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "lose",
+          "support": 70.0,
+          "implied": 62.4,
+          "deviation_pp": 7.6,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "lose",
+          "deviation_pp": 2.4,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 away，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "weak",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": false,
+          "note": "反大众锚点命中，禁止反买输出；禁止反买≠主推保留（语义解耦）"
+        },
+        "main_action": "downgrade",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "lose",
+            "legs": null,
+            "path": null,
+            "stars": 2,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "win",
+              "draw"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "lose",
+          "legs": null,
+          "path": null,
+          "stars": 2,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "win",
+            "draw"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    },
+    {
+      "fid": "1495540",
+      "match_no": "周二007",
+      "home_team": "日本女",
+      "away_team": "韩国女",
+      "integrity": {
+        "ready": true,
+        "status": "ready",
+        "missing_modules": []
+      },
+      "vote_available": true,
+      "fundamental": {
+        "phase": "fundamental",
+        "weights": {
+          "intelligence": 30,
+          "initial_position": 25,
+          "h2h": 15,
+          "recent_form": 20,
+          "schedule": 10
+        },
+        "intelligence": {
+          "home_favor": 0,
+          "away_favor": 0,
+          "home_against": 0,
+          "away_against": 0,
+          "general": 0,
+          "net_favor": 0,
+          "balance": true,
+          "dense_direction": null,
+          "conclusion": "均势，方向交由赔率验证层"
+        },
+        "initial_position": {
+          "initial_handicap": -1.75,
+          "current_handicap": -1.75,
+          "handicap_movement": "持平",
+          "same_handicap_hint": null,
+          "note": "ℹ️ 7M 同盘路统计缺失"
+        },
+        "h2h": {
+          "window_records_count": 6,
+          "streak_wins": 1,
+          "win_rate": 0.5,
+          "suppression": "weak",
+          "decayed": false,
+          "note": ""
+        },
+        "recent_form": {
+          "home_avg_scored": 3.2,
+          "home_avg_conceded": 1.8,
+          "away_avg_scored": 2.9,
+          "away_avg_conceded": 3.2,
+          "home_recent5_avg": 3.2,
+          "away_recent5_avg": 3.0,
+          "expected_total_goals": 5.49,
+          "hot_sides": [
+            "home",
+            "away"
+          ],
+          "fire_note": "状态火热一方火力保留（对手成色折扣上限30%）",
+          "correction": null,
+          "anchor_note": ""
+        },
+        "schedule": {
+          "competition": "亚运女足",
+          "level_gap": false,
+          "future_count": 0,
+          "note": ""
+        }
+      },
+      "odds_verify": {
+        "phase": "odds_verify",
+        "structure": {
+          "company_count": 29,
+          "mainstream_missing": [],
+          "avg_payout": 89.987
+        },
+        "euro_asia": {
+          "raise_count": 0,
+          "raise_form": "无升盘",
+          "avg_home_water": null,
+          "state_alignment": "同向",
+          "deep_market": true,
+          "strength": {
+            "value_ratio": null,
+            "level_gap": false,
+            "h2h_suppression": "weak"
+          },
+          "strength_endorsed": false,
+          "interpretation": null,
+          "two_layer_divergence": false,
+          "tags": [],
+          "note": ""
+        },
+        "anomalies": {
+          "anti_cold": {
+            "present": true,
+            "tag": "[利润平衡，降级]",
+            "reasons": [
+              "平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）"
+            ]
+          },
+          "ladbrokes_solo": {
+            "present": false,
+            "tag": null,
+            "note": "亚盘无立博数据，独开信号不可判定"
+          },
+          "single_house_deviation": {
+            "present": false,
+            "pct": null,
+            "bk": null,
+            "tag": null
+          }
+        }
+      },
+      "history_deduction": {
+        "trend": {
+          "available": true,
+          "asian_deepen_count": 2,
+          "overunder_raise_count": 0,
+          "total": 4,
+          "note": ""
+        },
+        "heat_drift": {
+          "available": true,
+          "home_pp": 0.0,
+          "away_pp": 0.0,
+          "trend": "stable",
+          "note": ""
+        }
+      },
+      "sentiment": {
+        "phase": "sentiment",
+        "had": {
+          "popular": "win",
+          "support": 76.0,
+          "implied": 74.9,
+          "deviation_pp": 1.1,
+          "note": ""
+        },
+        "hhand": {
+          "available": true,
+          "popular": "win",
+          "deviation_pp": 2.6,
+          "note": ""
+        },
+        "bf": {
+          "available": true,
+          "trend": null,
+          "summary": "必发成交方向 home，形态 None"
+        },
+        "overheat": {
+          "triggered": false,
+          "layer": null,
+          "deviation_pp": null,
+          "support_intel": null,
+          "disposition": null,
+          "tag": null
+        },
+        "note": ""
+      },
+      "synthesis": {
+        "phase": "synthesis",
+        "evacuation": {
+          "count": 0,
+          "signals": [],
+          "hard_gate": false
+        },
+        "anti_public": {
+          "anchor1": "weak",
+          "decay_applied": false,
+          "anchor2": false,
+          "anchor3": false,
+          "allow_counter": false,
+          "note": "反大众锚点命中，禁止反买输出；禁止反买≠主推保留（语义解耦）"
+        },
+        "main_action": "downgrade",
+        "recommendation": {
+          "had_unit": {
+            "form": "S",
+            "selection": "win",
+            "legs": null,
+            "path": null,
+            "stars": 2,
+            "tag": null
+          },
+          "hhand_unit": {
+            "form": "D",
+            "legs": [
+              "draw",
+              "lose"
+            ],
+            "path": "A",
+            "stars": 3,
+            "tag": "[低赔补位｜路径A]"
+          },
+          "notes": [],
+          "mutual_exclusion": {
+            "legal": true,
+            "form": "S+D",
+            "adjusted": false
+          }
+        },
+        "attempt": 0
+      },
+      "review": {
+        "phase": "review",
+        "checks": [
+          {
+            "id": "①",
+            "name": "风险提示与大小球方向一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "②",
+            "name": "次选降级替换（深盘次选保护位）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "③",
+            "name": "盘口与比分池净胜分布一致",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "④",
+            "name": "穿盘证据 S1-S4 幅度联动",
+            "result": "na",
+            "action": null,
+            "note": "大小球/比分池层 ISS-FA4 前未产出，标注不适用"
+          },
+          {
+            "id": "⑤",
+            "name": "次选决策树（深盘禁平局次选）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑥",
+            "name": "双选收益比路径合规（A/B/C）",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          },
+          {
+            "id": "⑦",
+            "name": "推荐结构互斥合规",
+            "result": "pass",
+            "action": null,
+            "note": ""
+          }
+        ],
+        "decision": "pass",
+        "violations": []
+      },
+      "recommendation": {
+        "had_unit": {
+          "form": "S",
+          "selection": "win",
+          "legs": null,
+          "path": null,
+          "stars": 2,
+          "tag": null
+        },
+        "hhand_unit": {
+          "form": "D",
+          "legs": [
+            "draw",
+            "lose"
+          ],
+          "path": "A",
+          "stars": 3,
+          "tag": "[低赔补位｜路径A]"
+        },
+        "notes": [],
+        "mutual_exclusion": {
+          "legal": true,
+          "form": "S+D",
+          "adjusted": false
+        }
+      }
+    }
+  ],
+  "manual_review_matches": [
+    "1398605",
+    "1398610",
+    "1398591",
+    "1398592",
+    "1398590"
+  ],
+  "degradation_notes": [
+    "D9 变盘轨迹为参考公司（澳门）快照序列降级口径，非全市场统计",
+    "Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底",
+    "D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）"
+  ]
+}
