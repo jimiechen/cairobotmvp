@@ -173,6 +173,28 @@ class TestQ11Recent:
         recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
         assert recent["away"]["matches"] == []
 
+    def test_home行比分异常同样跳过不误伤away(self, patch_mysql_connect):
+        # BUG-FA-101 对称性：缺口剔除只按行判定，不得影响另一侧
+        bad_rows = [dict(FORM_ROWS[1], score="vs"), FORM_ROWS[0]]
+        patch_mysql_connect([[], [], bad_rows])
+        recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
+        assert recent["home"]["matches"] == []
+        assert len(recent["away"]["matches"]) == 1
+
+    def test_异常行与有效行混合时仅剔除异常行(self, patch_mysql_connect):
+        # 剔除按行粒度：同侧有效行必须保留，不得整侧丢弃
+        bad_rows = [dict(FORM_ROWS[0], score="vs"), FORM_ROWS[0]]
+        patch_mysql_connect([[], [], bad_rows])
+        recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
+        assert recent["away"]["matches"] == [{"is_friendly": 0, "scored": 0, "conceded": 2}]
+
+    def test_score为NULL或空串的行按缺口跳过(self, patch_mysql_connect):
+        # 真实库 score 列可能为 NULL：split_score(None/"") → (None, None)，同缺口口径
+        bad_rows = [dict(FORM_ROWS[0], score=None), dict(FORM_ROWS[0], score="")]
+        patch_mysql_connect([[], [], bad_rows])
+        recent = _make_source({"1398605": 2635}).query_fundamentals("1398605")["recent_form"]
+        assert recent["away"]["matches"] == []
+
 
 SCHEDULE_ROWS = [
     {"id": 2635, "league": "欧国联", "match_date": date(2026, 9, 29)},

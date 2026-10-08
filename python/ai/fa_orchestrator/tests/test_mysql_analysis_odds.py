@@ -169,6 +169,33 @@ class TestD12HeatDrift:
         drift = _make_source({"1398605": 2635}).query_heat_drift("1398605")
         assert drift == {"home_pp": 0.0, "away_pp": None}
 
+    def test_中间快照热度缺失不影响首尾漂移(self, patch_mysql_connect):
+        # BUG-FA-102：中间 None 剔除后仍取有效首尾差，不得中断序列
+        rows = [
+            {"side": "亚美尼亚", "cold_hot": 9, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0),
+             "home": "亚美尼亚", "away": "黑山"},
+            {"side": "亚美尼亚", "cold_hot": None, "snapshot_time": datetime(2026, 9, 29, 9, 0, 0),
+             "home": "亚美尼亚", "away": "黑山"},
+            {"side": "亚美尼亚", "cold_hot": 41, "snapshot_time": datetime(2026, 9, 29, 15, 0, 0),
+             "home": "亚美尼亚", "away": "黑山"},
+            HEAT_ROWS[1],                       # 黑山快照1：-30（away 唯一有效值）
+            dict(HEAT_ROWS[4], cold_hot=None),  # 黑山快照2：热度未计算
+        ]
+        patch_mysql_connect([rows])
+        drift = _make_source({"1398605": 2635}).query_heat_drift("1398605")
+        assert drift == {"home_pp": 32.0, "away_pp": 0.0}
+
+    def test_全部快照热度未计算时该侧为None(self, patch_mysql_connect):
+        # BUG-FA-102 边界：该侧有行但全部 cold_hot=None → 无有效快照 → None
+        # （区别于"队名匹配不上"：此处行存在，仅热度维度缺失）
+        rows = [
+            dict(HEAT_ROWS[0], cold_hot=None),
+            dict(HEAT_ROWS[3], cold_hot=None),
+        ]
+        patch_mysql_connect([rows])
+        drift = _make_source({"1398605": 2635}).query_heat_drift("1398605")
+        assert drift == {"home_pp": None, "away_pp": None}
+
     def test_执行契约SQL且JOIN主客队名(self, patch_mysql_connect):
         conn = patch_mysql_connect([[]])
         _make_source({"1398605": 2635}).query_heat_drift("1398605")
