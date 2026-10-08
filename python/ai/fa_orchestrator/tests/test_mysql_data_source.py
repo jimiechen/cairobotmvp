@@ -74,7 +74,9 @@ class TestQ1MatchList:
         assert rows[0]["match_no"] == "周一003"
         sql, params = conn.cursor_obj.executed[0]
         assert sql == SQL_Q1_MATCH_LIST.strip()
-        assert params == ("2026-09-29",)
+        # 窗口口径（[D 12:00, D+1 12:00) 左闭右开）内置于契约 SQL：
+        # 当日分支与次日分支两个 %s 传同一竞彩日
+        assert params == ("2026-09-29", "2026-09-29")
 
     def test_日期与fid归一为字符串(self, patch_mysql_connect):
         patch_mysql_connect([[dict(Q1_ROWS[0], match_date=date(2026, 9, 29), fid=1398605)]])

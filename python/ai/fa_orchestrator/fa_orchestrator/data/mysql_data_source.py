@@ -121,14 +121,16 @@ class MySqlDataSource:
         )
 
     def query_match_list(self, match_date: str) -> list:
-        """Q1（D1 比赛清单）：契约 SQL 原样执行，仅参数化日期。
+        """Q1（D1 比赛清单）：契约 SQL 原样执行，两个 %s 传同一竞彩日。
 
+        窗口口径（PRD-12 §12.3：[D 12:00, D+1 12:00) 左闭右开）内置于契约
+        SQL——当日 12:00 起或次日 12:00 前开球的场次归属竞彩日，调用方无法绕过。
         输出：{internal_id, match_no, home_team, away_team, match_date, fid}
         （match_date/fid 归一为字符串，与 fixture 行结构对齐）。
         失败行为：连接/执行异常向上抛出，不吞掉。
         """
         with self._connect() as conn, conn.cursor() as cur:
-            cur.execute(SQL_Q1_MATCH_LIST.strip(), (match_date,))
+            cur.execute(SQL_Q1_MATCH_LIST.strip(), (match_date, match_date))
             rows = list(cur)
         return [
             {

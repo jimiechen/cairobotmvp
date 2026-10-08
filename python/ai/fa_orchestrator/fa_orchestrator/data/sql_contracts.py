@@ -23,15 +23,19 @@ INTEGRITY_MODULES = {
     "intel": "intelligence_text",
 }
 
-# Q1：当日比赛清单（500com 活跃映射，按编号排序）
-# 窗口口径（12:00 → 次日 12:00 左闭右开）与跨日归属由调用方保证
+# Q1：竞彩日比赛清单（500com 活跃映射，按编号排序）
+# 窗口口径（PRD-12 §12.3）：竞彩日 D = 开球窗口 [D 12:00, D+1 12:00) 左闭右开，
+# match_date 归属开球日——当日 12:00 起（含）或次日 12:00 前（不含）开球的
+# 场次归属竞彩日 D。两个 %s 传同一竞彩日；match_time 为 'HH:MM' 零填充字符串
+# （2026-10-08 workbench 探测口径），字典序比较与时间序一致。
 SQL_Q1_MATCH_LIST = """
 SELECT m.internal_id, m.match_no, m.home_team, m.away_team, m.match_date,
        s.site_match_id AS fid
 FROM matches m
 JOIN site_id_mappings s ON s.internal_id = m.internal_id
   AND s.site_code = '500com' AND s.is_active = 1
-WHERE m.match_date = %s
+WHERE (m.match_date = %s AND m.match_time >= '12:00')
+   OR (m.match_date = DATE_ADD(%s, INTERVAL 1 DAY) AND m.match_time < '12:00')
 ORDER BY m.match_no, m.internal_id;
 """
 

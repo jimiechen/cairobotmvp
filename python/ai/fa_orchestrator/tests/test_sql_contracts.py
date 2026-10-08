@@ -2,7 +2,8 @@
 """SQL 契约测试（PRD-12 F-06）：Q1/Q2b SQL 与需求文档 §四 逐字对齐，六模块表名映射正确。
 
 契约要点（需求文档硬性规则）：
-- Q1 固定 site_code='500com' + is_active=1 + 参数化 %s
+- Q1 固定 site_code='500com' + is_active=1 + 参数化竞彩日跨日窗口
+  （PRD-12 §12.3：[D 12:00, D+1 12:00) 左闭右开，由契约 SQL 内置保证）
 - Q2b 六模块：ouzhi/yazhi/daxiao/vote/stats/intel 同构替换表名
 - `match` 是 MySQL 保留字，SQL 中必须反引号
 - 分析类契约（Q3/Q5/Q9~Q12/D9/D10/D12）以 workbench 真实库为准
@@ -37,6 +38,19 @@ class TestQ1MatchList:
         assert "m.match_date = %s" in SQL_Q1_MATCH_LIST
         # 禁止任何字面量日期写死进契约 SQL
         assert "2026" not in SQL_Q1_MATCH_LIST
+
+    def test_开球窗口当日12点起含(self):
+        # PRD-12 §12.3：当日 12:00 起（含）开球的场次归属竞彩日 D
+        assert "m.match_time >= '12:00'" in SQL_Q1_MATCH_LIST
+
+    def test_开球窗口次日12点前含(self):
+        # 次日 0:00~11:59 开球的场次同样归属竞彩日 D（跨日窗口右端为 D+1 12:00 不含）
+        assert "DATE_ADD(%s, INTERVAL 1 DAY)" in SQL_Q1_MATCH_LIST
+        assert "m.match_time < '12:00'" in SQL_Q1_MATCH_LIST
+
+    def test_日期参数为同值二元组(self):
+        # 当日分支与次日分支各占一个 %s，调用方对两个占位符传同一竞彩日
+        assert SQL_Q1_MATCH_LIST.count("%s") == 2
 
     def test_按场次编号排序(self):
         assert "ORDER BY m.match_no" in SQL_Q1_MATCH_LIST

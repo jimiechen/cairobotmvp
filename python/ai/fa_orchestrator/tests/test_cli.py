@@ -37,6 +37,57 @@ class TestFixtureDataSource:
         assert any(r["id"] == 9001 for r in rows)
 
 
+class TestFixtureDayWindow:
+    """Q1 竞彩日跨日窗口（PRD-12 §12.3）：[D 12:00, D+1 12:00) 左闭右开。
+
+    fixture 通道与 Q1 SQL 契约口径一致，行 match_time 为 'HH:MM' 零填充字符串。
+    """
+
+    def _row(self, internal_id, match_date, match_time=None):
+        row = {
+            "internal_id": internal_id, "match_no": f"测试{internal_id:03d}",
+            "home_team": "甲队", "away_team": "乙队",
+            "match_date": match_date, "fid": str(1489000 + internal_id),
+        }
+        if match_time is not None:
+            row["match_time"] = match_time
+        return row
+
+    def _query(self, tmp_path, rows):
+        payload = {
+            "match_date": "2026-10-08", "q1_matches": rows,
+            "jc_match_rows": [], "q2b_counts": {},
+        }
+        path = tmp_path / "window_fixture.json"
+        path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        return FixtureDataSource(path).query_match_list("2026-10-08")
+
+    def test_当日1159排除_1200含(self, tmp_path):
+        rows = [self._row(1, "2026-10-08", "11:59"), self._row(2, "2026-10-08", "12:00")]
+        matches = self._query(tmp_path, rows)
+        assert [m["internal_id"] for m in matches] == [2]
+
+    def test_次日1159含_1200排除(self, tmp_path):
+        rows = [self._row(3, "2026-10-09", "11:59"), self._row(4, "2026-10-09", "12:00")]
+        matches = self._query(tmp_path, rows)
+        assert [m["internal_id"] for m in matches] == [3]
+
+    def test_当日晚间场次含窗口(self, tmp_path):
+        # 真实形态锚点：周四001 类当日 23:00 开球场次必须落入当日窗口
+        rows = [self._row(5, "2026-10-08", "23:00")]
+        matches = self._query(tmp_path, rows)
+        assert [m["internal_id"] for m in matches] == [5]
+
+    def test_窗口外日期排除且缺match_time不臆测(self, tmp_path):
+        # D+2 / D-1 不落窗口；缺 match_time 的行判不在窗口（禁止静默放宽口径）
+        rows = [
+            self._row(6, "2026-10-10", "03:00"),
+            self._row(7, "2026-10-07", "23:00"),
+            self._row(8, "2026-10-08"),
+        ]
+        assert self._query(tmp_path, rows) == []
+
+
 class TestDataAgentPrepare:
     def test_产出日级就绪率报告(self):
         source = FixtureDataSource(_FIXTURE)

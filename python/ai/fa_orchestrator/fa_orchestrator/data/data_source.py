@@ -13,7 +13,7 @@
 analysis fixture 为可选配置：未配置时分析类查询返回 None/空 dict（向后兼容）。
 """
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
@@ -21,6 +21,10 @@ from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_M
 # 数据通道标识（F-09 溯源快照必填）
 CHANNEL_FIXTURE = "fixture"
 CHANNEL_MYSQL = "mysql"
+
+# 竞彩日窗口起点（PRD-12 §12.3：[D 12:00, D+1 12:00) 左闭右开）；
+# match_time 为 'HH:MM' 零填充字符串，字典序比较与时间序一致
+DAY_WINDOW_START_TIME = "12:00"
 
 # 溯源快照涉及的数据块编号（需求文档 §三）
 BLOCK_D1_MATCH_LIST = "D1"
@@ -54,14 +58,18 @@ class FixtureDataSource:
             self.analysis = json.loads(Path(analysis_path).read_text(encoding="utf-8"))
 
     def query_match_list(self, match_date: str) -> list:
-        """Q1（D1 比赛清单）。
+        """Q1（D1 比赛清单）：按竞彩日跨日窗口过滤，与 Q1 SQL 契约口径一致。
 
-        fixture 本身即样本日数据集；真实窗口口径（12:00 → 次日 12:00，
-        跨日场次归属开球日）由调用方保证（对齐 Q1 SQL 契约注释）。
+        窗口口径（PRD-12 §12.3）：[D 12:00, D+1 12:00) 左闭右开——当日 12:00
+        起（含）或次日 12:00 前（不含）开球的场次归属竞彩日 match_date；
+        fixture 行 match_time 为 'HH:MM' 零填充开球时间（对齐 matches 表口径）。
         """
         if match_date != self.match_date:
             return []
-        return list(self.fixture.get("q1_matches", []))
+        return [
+            row for row in self.fixture.get("q1_matches", [])
+            if self._in_day_window(row, match_date)
+        ]
 
     def query_q2b_counts(self, fids: list, match_ids: dict = None) -> dict:
         """Q2b（六模块行数）：按 fid 过滤返回 {fid: {模块: 行数}}。
@@ -113,5 +121,18 @@ class FixtureDataSource:
 
     @staticmethod
     def _in_day_window(row: dict, match_date: str) -> bool:
-        """竞彩日窗口判定：跨日场次按开球日归属（fixture 简化：同月即命中）。"""
-        return str(row.get("match_date", "")).startswith(match_date[:7])
+        """竞彩日窗口判定（PRD-12 §12.3）：[D 12:00, D+1 12:00) 左闭右开。
+
+        输入：row（match_date=开球日、match_time='HH:MM' 零填充）、
+        match_date=竞彩日。
+        输出：该场是否落入竞彩日 D 的开球窗口。
+        失败行为：开球日或开球时间缺失判不在窗口——不臆测、不静默放宽口径。
+        """
+        kickoff_day = str(row.get("match_date") or "")
+        kickoff_time = str(row.get("match_time") or "")
+        if not kickoff_day or not kickoff_time:
+            return False
+        if kickoff_day == match_date:
+            return kickoff_time >= DAY_WINDOW_START_TIME
+        next_day = (date.fromisoformat(match_date) + timedelta(days=1)).isoformat()
+        return kickoff_day == next_day and kickoff_time < DAY_WINDOW_START_TIME
