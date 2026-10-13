@@ -17,7 +17,6 @@ from pathlib import Path
 from langgraph.types import Command
 
 from fa_orchestrator.graph.config import load_orchestration_config
-from fa_orchestrator.data.data_source import CHANNEL_MYSQL
 from fa_orchestrator.graph.graph_builder import build_graph, export_mermaid, mermaid_matches_config
 from fa_orchestrator.graph.graph_nodes import GraphNodes
 from fa_orchestrator.infra.sqlite_checkpointer import SQLiteCheckpointer
@@ -115,10 +114,11 @@ def _build_graph(args, data_source):
 
 
 def _run_graph(args, data_source) -> int:
-    """run 图驱动模式：--checkpoint-db 首跑（manual 中断退出 3）+ --resume 续跑。"""
-    if args.source == CHANNEL_MYSQL:
-        print("错误：MySQL 通道暂不支持图驱动分析（分析类 SQL 契约未归档）", file=sys.stderr)
-        return _USAGE_EXIT
+    """run 图驱动模式：--checkpoint-db 首跑（manual 中断退出 3）+ --resume 续跑。
+
+    mysql 通道与 fixture 通道同构放行：分析类 SQL 契约已归档
+    （ANALYSIS_CONTRACTS 14 契约）并经 2026-10-08 批次 v4 真库验证。
+    """
     graph = _build_graph(args, data_source)
     invoke_config = {"configurable": {"thread_id": args.date}}
     if args.resume:

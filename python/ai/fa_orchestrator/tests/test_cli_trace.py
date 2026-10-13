@@ -100,6 +100,37 @@ class TestReplayAndShow:
 
 
 class TestRunGraphDriven:
+    @staticmethod
+    def _mysql_env(monkeypatch):
+        """mysql 通道数据源构造所需环境变量（Fake 语义，不真实连库）。"""
+        for key, val in (("FA_MYSQL_HOST", "db-host"), ("FA_MYSQL_PORT", "3306"),
+                         ("FA_MYSQL_USER", "tester"), ("FA_MYSQL_PASSWORD", "secret"),
+                         ("FA_MYSQL_DB", "workbench")):
+            monkeypatch.setenv(key, val)
+
+    def test_run图驱动mysql通道放行(self, tmp_path, monkeypatch, capsys):
+        # 分析类 SQL 契约已归档并经 v4 真库验证，mysql 通道图驱动不再拦截；
+        # 图构建与 invoke 以 Fake 探针验证（真实连库走 e2e 演示）
+        import fa_orchestrator.cli_trace as cli_trace
+
+        self._mysql_env(monkeypatch)
+        calls = []
+
+        class FakeGraph:
+            def invoke(self, *a, **k):
+                calls.append(a)
+                return {"phase_conclusion": {"total_matches": 0}, "reports": {}}
+
+        monkeypatch.setattr(cli_trace, "_build_graph", lambda args, ds: FakeGraph())
+        code = main([
+            "run", "--date", _DATE, "--source", "mysql",
+            "--checkpoint-db", str(tmp_path / "ckpt.db"),
+        ])
+        out = capsys.readouterr().out
+        assert code == 0
+        assert calls, "mysql 通道应构建并 invoke 图"
+        assert "暂不支持" not in out
+
     def test_run图驱动中断时提示人工裁决(self, tmp_path, capsys):
         db = tmp_path / "ckpt.db"
         code = main([
