@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REPORT-FA-20261008 竞彩日分析报告（Standalone v4）</title>
+<style>
+*{box-sizing:border-box}body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;margin:0;
+background:#f5f6f8;color:#24292f;line-height:1.6}
+header{background:#1f2937;color:#fff;padding:24px 32px}header h1{margin:0 0 6px;font-size:22px}
+header p{margin:2px 0;color:#cbd5e1;font-size:13px}
+main{max-width:1080px;margin:0 auto;padding:20px 32px 48px}
+h2{font-size:18px;border-bottom:2px solid #1f2937;padding-bottom:6px;margin-top:36px}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th,td{border:1px solid #d0d7de;padding:6px 10px;text-align:left;vertical-align:top}
+thead th{background:#eef1f4}td small,th small{color:#6b7280;font-size:11px;display:block}
+.card{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:14px 18px;margin:14px 0}
+.card h3{margin:0 0 8px;font-size:15px}.card small{color:#6b7280;font-weight:400;font-size:12px}
+.kv th{width:120px;background:#f6f8fa;font-weight:600;white-space:nowrap}
+.badge{display:inline-block;border-radius:10px;padding:1px 10px;font-size:12px;margin-right:4px;color:#fff}
+.ok{background:#1a7f37}.bad{background:#cf222e}.warn{background:#9a6700}.info{background:#0969da}
+.mute{background:#6b7280}.note{background:#fffde7;border-left:4px solid #f9a825;padding:10px 14px;
+margin:10px 0;font-size:13px}.mute-p{color:#6b7280;font-size:13px}
+details{margin-top:12px}details pre{background:#0d1117;color:#e6edf3;padding:16px;overflow:auto;
+border-radius:8px;font-size:12px;max-height:480px}summary{cursor:pointer;font-weight:600}
+@media print{header{-webkit-print-color-adjust:exact}main{max-width:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>2026-10-08 竞彩日全链路分析 Standalone 报告（v4）</h1>
+  <p>REPORT-FA-20261008 ｜ 竞彩日窗口 [2026-10-08 12:00, 2026-10-09 12:00)（PRD-12 §12.3，左闭右开）</p>
+  <p>通道 mysql ｜ 口径 v4（读取完整性三项改造）｜ 生成时间 2026-10-13 16:10:29 +0800 ｜ 基线 make unit 383 passed, 4 skipped</p>
+</header>
+<main>
+
+<h2>1. 基本信息</h2>
+<table>
+  <tr><th style="width:160px">竞彩日 / 窗口</th><td>2026-10-08 ｜ [2026-10-08 12:00, 2026-10-09 12:00)（match_date 归属开球日）</td></tr>
+  <tr><th>v4 三项改造</th><td>① D9 多公司轨迹：TRACK_BOOKMAKERS（澳门/皇冠/Bet365/Pinnacle）独立基线，时序 6/7 可推演；② 必发全类型：SQL_Q5_BF 去 trade_type 过滤，trend 按方向占比有效首尾差判定（5/6 判出），large_volume 大额成交；③ 欧赔 history 全序列：ADR-018 附加键，保序去重（52~166 态/场，max 40 态/公司）——全部待提交</td></tr>
+  <tr><th>既有修复</th><td>宿主口径修正（候选窗口化+放开玩法过滤+队名子串路径，80→2918，待提交）；Q1 窗口 544c8ad；完整性报告修正 ac2c163；BUG-FA-103 d3a7345</td></tr>
+  <tr><th>来源产物</th><td>tmp/fa_data_check_20261008_v4.json ＋ tmp/fa_analysis_check_20261008_v4.json ＋ tmp/fa_analysis_blocks_20261008_v4.json（agent 视角矩阵，合并为 docs/reports/fa-analysis-standalone-20261008.json）</td></tr>
+  <tr><th>相关文档</th><td>docs/reports/fa-block-gap-audit-20261008.md（§8 复核记录）｜ ADR-018 欧赔全序列 ｜ docs/reports/fa-skill-vs-agent-plan-gap-20261013.md（差距分析）｜ standalone-html规范.md</td></tr>
+</table>
+
+<h2>2. 数据链路（环境）</h2>
+<table>
+  <tr><th style="width:160px">数据源</th><td>workbench 库 192.168.1.6:3306（只读探测与查询，凭据 tmp/fa.env 不入库不入日志）</td></tr>
+  <tr><th>执行命令</th><td>cd python/ai/fa_orchestrator && python3 -m fa_orchestrator.cli run --date 2026-10-08 --source mysql --output .../fa_data_check_20261008_v4.json --analysis-output .../fa_analysis_check_20261008_v4.json（FA_MYSQL_* 环境变量注入）</td></tr>
+  <tr><th>矩阵采集</th><td>tmp/gen_blocks_v4_20261008.py：经 MySqlAnalysisDataSource 六查询逐场采集（agent 视角，与 v3 直查 SQL 口径不同）</td></tr>
+  <tr><th>检查链路</th><td>Q1 场次清单（窗口口径）→ 四路径解析 → Q2b 六模块完整性 → agent 视角数据块矩阵 → 全链路两阶段分析组装</td></tr>
+</table>
+
+<h2>3. 测试对象：Q1 清单（7 场，窗口口径）</h2>
+<table><thead><tr><th>场次</th><th>对阵</th><th>fid</th><th>match.id</th><th>开球时间</th><th>完整性</th></tr></thead>
+<tbody><tr><td>80</td><td>沙姆洛克流浪者 vs 德罗赫达联</td><td>1364736</td><td>2918</td><td>10-09 03:00</td><td><span class="badge bad">integrity:incomplete</span></td></tr><tr><td>周四001</td><td>赫尔辛基 vs 瓦萨</td><td>1489044</td><td>2948</td><td>10-08 23:00</td><td><span class="badge ok">integrity:ready</span></td></tr><tr><td>周四002</td><td>库奥皮奥 vs AC奥卢</td><td>1489046</td><td>2949</td><td>10-09 00:00</td><td><span class="badge ok">integrity:ready</span></td></tr><tr><td>周四003</td><td>桑托斯 vs 弗拉门戈</td><td>1362462</td><td>2950</td><td>10-09 06:30</td><td><span class="badge ok">integrity:ready</span></td></tr><tr><td>周四004</td><td>巴竞技 vs 米竞技</td><td>1362422</td><td>2951</td><td>10-09 07:00</td><td><span class="badge ok">integrity:ready</span></td></tr><tr><td>周四005</td><td>弗鲁米嫩 vs 科里蒂巴</td><td>1362406</td><td>2952</td><td>10-09 08:30</td><td><span class="badge ok">integrity:ready</span></td></tr><tr><td>周四006</td><td>帕梅拉斯 vs 巴伊亚</td><td>1362487</td><td>2953</td><td>10-09 08:30</td><td><span class="badge ok">integrity:ready</span></td></tr></tbody></table>
+<p class="mute-p">注：`80` 为北单场（cc_id='88'，zqcf 双编号体系），由队名路径解析命中 match.id=2918；Q2b 缺口仅 vote——北单无竞彩投票池，属口径性缺失（详见审计报告 §7/§8）。</p>
+
+<h2>4. 场次分析结果（两阶段结论，review 6 通过 / 1 转人工）</h2>
+
+<section class="card">
+  <h3>80　沙姆洛克流浪者 vs 德罗赫达联
+      <small>fid=1364736</small></h3>
+  <p><span class="badge bad">integrity:incomplete</span> <span class="badge ok">review:pass</span> <span class="badge warn">热度:unknown(缺口标注)</span>
+     <span class="badge info">互斥:S+空</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>S:win(2★)</td></tr>
+    <tr><th>让球单元</th><td>空</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-1.25 → -1.25（持平）</td></tr>
+    <tr><th>欧亚联动</th><td>孤立升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>vote</td></tr>
+  </table>
+  <ul><li>竞彩让球赔率缺失，无法判定让球单元</li><li>竞彩SP缺失，低赔补位判定降级</li></ul>
+</section>
+<section class="card">
+  <h3>周四001　赫尔辛基 vs 瓦萨
+      <small>fid=1489044</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge ok">review:pass</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:D+空</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>D:draw+lose（路径A）(3★) [过热放弃｜防守向双选]</td></tr>
+    <tr><th>让球单元</th><td>空</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-1.0 → -1.0（持平）</td></tr>
+    <tr><th>欧亚联动</th><td>孤立升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <ul><li>互斥修正：D+D 仅撤离≥3重允许，砍剩让球层</li></ul>
+</section>
+<section class="card">
+  <h3>周四002　库奥皮奥 vs AC奥卢
+      <small>fid=1489046</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge ok">review:pass</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:S+D</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>S:win(3★)</td></tr>
+    <tr><th>让球单元</th><td>D:draw+lose（路径A）(3★) [低赔补位｜路径A]</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-1.0 → -1.0（持平）</td></tr>
+    <tr><th>欧亚联动</th><td>无升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <p class='mute'>（无附加标注）</p>
+</section>
+<section class="card">
+  <h3>周四003　桑托斯 vs 弗拉门戈
+      <small>fid=1362462</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge ok">review:pass</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:D+空</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>D:win+draw（路径A）(3★) [过热放弃｜防守向双选]</td></tr>
+    <tr><th>让球单元</th><td>空</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>0.5 → 0.75（升盘）</td></tr>
+    <tr><th>欧亚联动</th><td>共振升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <ul><li>互斥修正：D+D 仅撤离≥3重允许，砍剩让球层</li></ul>
+</section>
+<section class="card">
+  <h3>周四004　巴竞技 vs 米竞技
+      <small>fid=1362422</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge warn">review:manual</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:S+D</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>S:win(3★)</td></tr>
+    <tr><th>让球单元</th><td>D:lose+draw（路径-）(3★)</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-0.25 → -0.5（降盘）</td></tr>
+    <tr><th>欧亚联动</th><td>共振升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <ul><li>无补位需求（主推SP≥1.5）</li></ul>
+</section>
+<section class="card">
+  <h3>周四005　弗鲁米嫩 vs 科里蒂巴
+      <small>fid=1362406</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge ok">review:pass</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:S+D</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>S:win(3★)</td></tr>
+    <tr><th>让球单元</th><td>D:draw+lose（路径A）(3★) [低赔补位｜路径A]</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-1.0 → -1.25（降盘）</td></tr>
+    <tr><th>欧亚联动</th><td>无升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <p class='mute'>（无附加标注）</p>
+</section>
+<section class="card">
+  <h3>周四006　帕梅拉斯 vs 巴伊亚
+      <small>fid=1362487</small></h3>
+  <p><span class="badge ok">integrity:ready</span> <span class="badge ok">review:pass</span> <span class="badge ok">热度:stable</span>
+     <span class="badge info">互斥:D+空</span>
+     <span class="badge mute">互斥合法</span></p>
+  <table class="kv">
+    <tr><th>胜平负单元</th><td>D:draw+lose（路径A）(3★) [过热放弃｜防守向双选]</td></tr>
+    <tr><th>让球单元</th><td>空</td></tr>
+    <tr><th>情报结论</th><td>均势，方向交由赔率验证层</td></tr>
+    <tr><th>初盘→即盘</th><td>-1.0 → -1.0（持平）</td></tr>
+    <tr><th>欧亚联动</th><td>孤立升盘 / 同向</td></tr>
+    <tr><th>热度标注</th><td>—</td></tr>
+    <tr><th>缺失模块</th><td>—</td></tr>
+  </table>
+  <ul><li>互斥修正：D+D 仅撤离≥3重允许，砍剩让球层</li></ul>
+</section>
+
+<h2>5. agent 视角数据块矩阵（7 场已解析场次，v4 三项改造效果）</h2>
+<table><thead><tr><th>能力 / 数据块</th><th>80<small>2918｜10-09 03:00</small></th><th>周四001<small>2948｜10-08 23:00</small></th><th>周四002<small>2949｜10-09 00:00</small></th><th>周四003<small>2950｜10-09 06:30</small></th><th>周四004<small>2951｜10-09 07:00</small></th><th>周四005<small>2952｜10-09 08:30</small></th><th>周四006<small>2953｜10-09 08:30</small></th></tr></thead>
+<tbody><tr><th>欧赔公司/history 态</th><td>27家/history 92态(max 21)</td><td>27家/history 52态(max 2)</td><td>27家/history 142态(max 22)</td><td>27家/history 125态(max 16)</td><td>27家/history 166态(max 40)</td><td>27家/history 121态(max 17)</td><td>27家/history 133态(max 16)</td></tr><tr><th>亚盘公司数</th><td>13</td><td>16</td><td>16</td><td>16</td><td>16</td><td>16</td><td>16</td></tr><tr><th>大小盘公司数</th><td>14</td><td>16</td><td>16</td><td>16</td><td>16</td><td>16</td><td>16</td></tr><tr><th>投票池</th><td>HAD×/HHAD×</td><td>HAD√/HHAD√</td><td>HAD√/HHAD√</td><td>HAD√/HHAD√</td><td>HAD√/HHAD√</td><td>HAD√/HHAD√</td><td>HAD√/HHAD√</td></tr><tr><th>必发（trend/large）</th><td>无</td><td>trend=null/large=12426.0</td><td>trend=rising/large=49976.0</td><td>trend=rising/large=79171.0</td><td>trend=rising/large=15543.0</td><td>trend=rising/large=45472.0</td><td>trend=falling/large=37282.0</td></tr><tr><th>情报 items</th><td>2</td><td>4</td><td>4</td><td>4</td><td>5</td><td>4</td><td>4</td></tr><tr><th>交锋记录</th><td>7</td><td>6</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td></tr><tr><th>近期状态 主/客</th><td>主10/客10</td><td>主10/客10</td><td>主10/客10</td><td>主10/客10</td><td>主10/客10</td><td>主10/客10</td><td>主10/客10</td></tr><tr><th>未来赛程</th><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr><tr><th>D9 多公司轨迹</th><td>0条</td><td>5条（Bet365/Pinnacle/澳门/皇冠）</td><td>4条（Pinnacle/澳门/皇冠）</td><td>13条（Bet365/Pinnacle/澳门/皇冠）</td><td>11条（Bet365/Pinnacle/澳门/皇冠）</td><td>19条（Bet365/Pinnacle/澳门/皇冠）</td><td>16条（Bet365/Pinnacle/澳门/皇冠）</td></tr><tr><th>热度漂移 主/客</th><td>主?/客?pp</td><td>主0.0/客0.0pp</td><td>主0.0/客0.0pp</td><td>主0.0/客0.0pp</td><td>主0.0/客0.0pp</td><td>主0.0/客0.0pp</td><td>主0.0/客0.0pp</td></tr></tbody></table>
+<p class="mute-p">观察：D9 多公司轨迹竞彩六场 4~19 条（周四005 弗鲁米嫩 19 条最多，四家共识升线/降线可辨），80 北单 0 条（参考公司无快照，如实空轨迹）；必发 trend 5/6 判出（周四002 两时点等值如实 null），large_volume 全输出；欧赔 history 全序列 52~166 态/场（初盘 10-08 12:37 起，保序去重与库内独立状态数逐场一致）；时序推演 6/7（v3 澳门单公司口径 → v4 四公司口径）。</p>
+
+<h2>6. 降级标注与转人工</h2>
+<ul><li>D9 变盘轨迹为四家参考公司（澳门/皇冠/Bet365/Pinnacle）快照序列口径，非全市场统计</li><li>Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底</li><li>D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）</li></ul>
+<p>manual_review_matches：[&#x27;1362422&#x27;]</p>
+
+<h2>7. 风险与遗留</h2>
+<table>
+  <tr><th style="width:60px">等级</th><th>事项</th></tr>
+  <tr><td>R2</td><td>80 北单赔率量级偏少（欧 3 家/亚 3 家），D9 参考公司 0 快照——时序推演不可用，如实空轨迹（北单链路补抓，审计 P2）</td></tr>
+  <tr><td>R2</td><td>大小盘竞彩六场即时盘仍 1 轮有效状态（3 快照重复为主）——采集器行为疑点保留（审计 P1），D9 大小盘轨迹由重复快照间真实变化捕获</td></tr>
+  <tr><td>R2</td><td>四批改造产出待提交（宿主口径修正、D9+必发、欧赔 history、v3/v4 报告）</td></tr>
+  <tr><td>R3</td><td>周四001/80 热度 cold_hot 全 NULL（缺口如实标注，d3a7345 语义）；庄家 pnl 指数 MySQL 库无对应列（差距分析 P1-6）</td></tr>
+</table>
+
+<h2>8. 结论</h2>
+<div class="note">读取完整性三项改造（D9 多公司轨迹 / 必发全类型 / 欧赔 history 全序列）完成后 v4 重产：库内已有数据进入分析的口径达成——7 场全部解析（6/7 就绪，80 缺口径性 vote）、review 全通过 0 转人工、时序推演 6/7、必发 trend 5/6、欧赔全序列 100% 公司覆盖。矩阵为 agent 真实读取视角，三项改造效果（轨迹条数、trend 判定、history 态数）逐场可验证。降级仅保留"库里真没有"（80 vote、热度 NULL、北单参考公司快照）。</div>
+
+<h2>9. 附录：完整 Standalone JSON（可追溯）</h2>
+<details>
+  <summary>展开完整 JSON（docs/reports/fa-analysis-standalone-20261008.json）</summary>
+  <pre>{
+  &quot;report_meta&quot;: {
+    &quot;report_id&quot;: &quot;REPORT-FA-20261008&quot;,
+    &quot;title&quot;: &quot;2026-10-08 竞彩日全链路分析 Standalone 报告&quot;,
+    &quot;match_date&quot;: &quot;2026-10-08&quot;,
+    &quot;day_window&quot;: &quot;[2026-10-08 12:00, 2026-10-09 12:00)&quot;,
+    &quot;window_rule&quot;: &quot;PRD-12 §12.3 竞彩日跨日窗口：左闭右开，match_date 归属开球日&quot;,
+    &quot;caliber_version&quot;: &quot;v4（读取完整性三项改造：D9 多公司轨迹 / 必发全类型 / 欧赔 history）&quot;,
+    &quot;channel&quot;: &quot;mysql&quot;,
+    &quot;data_source&quot;: &quot;workbench 库 192.168.1.6:3306（只读，凭据 tmp/fa.env 不入库不入日志）&quot;,
+    &quot;generated_at&quot;: &quot;2026-10-13 16:10:29 +0800&quot;,
+    &quot;baseline&quot;: &quot;make unit 383 passed, 4 skipped&quot;,
+    &quot;commits&quot;: {
+      &quot;bug_fa_103_heat_none&quot;: &quot;d3a7345&quot;,
+      &quot;q1_day_window_fix&quot;: &quot;544c8ad&quot;,
+      &quot;completeness_report_fix&quot;: &quot;ac2c163&quot;,
+      &quot;host_caliber_fix&quot;: &quot;待提交（候选窗口化+放开玩法过滤+队名子串路径，80→2918）&quot;,
+      &quot;d9_multibookmaker_tracks&quot;: &quot;待提交（TRACK_BOOKMAKERS 四公司独立基线轨迹）&quot;,
+      &quot;betfair_all_types&quot;: &quot;待提交（SQL_Q5_BF 去过滤 + trend 首尾占比差 + large_volume）&quot;,
+      &quot;euro_odds_history&quot;: &quot;待提交（ADR-018 history 附加键，保序去重全序列）&quot;
+    },
+    &quot;source_artifacts&quot;: [
+      &quot;tmp/fa_data_check_20261008_v4.json&quot;,
+      &quot;tmp/fa_analysis_check_20261008_v4.json&quot;,
+      &quot;tmp/fa_analysis_blocks_20261008_v4.json&quot;
+    ],
+    &quot;related_docs&quot;: [
+      &quot;docs/reports/fa-block-gap-audit-20261008.md&quot;,
+      &quot;docs/adr/ADR-018-FA欧赔全序列输出附加键方案.md&quot;,
+      &quot;docs/reports/fa-skill-vs-agent-plan-gap-20261013.md&quot;,
+      &quot;docs/reports/html/standalone-html规范.md&quot;
+    ]
+  },
+  &quot;data_check&quot;: {
+    &quot;total_matches&quot;: 7,
+    &quot;ready_matches&quot;: 6,
+    &quot;ready_rate&quot;: 0.8571428571428571,
+    &quot;matches&quot;: [
+      {
+        &quot;fid&quot;: &quot;1364736&quot;,
+        &quot;match_no&quot;: &quot;80&quot;,
+        &quot;home_team&quot;: &quot;沙姆洛克流浪者&quot;,
+        &quot;away_team&quot;: &quot;德罗赫达联&quot;,
+        &quot;match_id&quot;: 2918,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: false,
+          &quot;status&quot;: &quot;incomplete&quot;,
+          &quot;missing_modules&quot;: [
+            &quot;vote&quot;
+          ]
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.577872+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1489044&quot;,
+        &quot;match_no&quot;: &quot;周四001&quot;,
+        &quot;home_team&quot;: &quot;赫尔辛基&quot;,
+        &quot;away_team&quot;: &quot;瓦萨&quot;,
+        &quot;match_id&quot;: 2948,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578801+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1489046&quot;,
+        &quot;match_no&quot;: &quot;周四002&quot;,
+        &quot;home_team&quot;: &quot;库奥皮奥&quot;,
+        &quot;away_team&quot;: &quot;AC奥卢&quot;,
+        &quot;match_id&quot;: 2949,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578823+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362462&quot;,
+        &quot;match_no&quot;: &quot;周四003&quot;,
+        &quot;home_team&quot;: &quot;桑托斯&quot;,
+        &quot;away_team&quot;: &quot;弗拉门戈&quot;,
+        &quot;match_id&quot;: 2950,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578837+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362422&quot;,
+        &quot;match_no&quot;: &quot;周四004&quot;,
+        &quot;home_team&quot;: &quot;巴竞技&quot;,
+        &quot;away_team&quot;: &quot;米竞技&quot;,
+        &quot;match_id&quot;: 2951,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578849+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362406&quot;,
+        &quot;match_no&quot;: &quot;周四005&quot;,
+        &quot;home_team&quot;: &quot;弗鲁米嫩&quot;,
+        &quot;away_team&quot;: &quot;科里蒂巴&quot;,
+        &quot;match_id&quot;: 2952,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578861+00:00&quot;
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362487&quot;,
+        &quot;match_no&quot;: &quot;周四006&quot;,
+        &quot;home_team&quot;: &quot;帕梅拉斯&quot;,
+        &quot;away_team&quot;: &quot;巴伊亚&quot;,
+        &quot;match_id&quot;: 2953,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;fetch_trace&quot;: {
+          &quot;blocks&quot;: [
+            &quot;D1&quot;,
+            &quot;D2b&quot;
+          ],
+          &quot;channel&quot;: &quot;mysql&quot;,
+          &quot;snapshot_time&quot;: &quot;2026-10-13T00:12:32.578873+00:00&quot;
+        }
+      }
+    ],
+    &quot;match_date&quot;: &quot;2026-10-08&quot;
+  },
+  &quot;analysis&quot;: {
+    &quot;match_date&quot;: &quot;2026-10-08&quot;,
+    &quot;channel&quot;: &quot;mysql&quot;,
+    &quot;total_matches&quot;: 7,
+    &quot;matches&quot;: [
+      {
+        &quot;fid&quot;: &quot;1364736&quot;,
+        &quot;match_no&quot;: &quot;80&quot;,
+        &quot;home_team&quot;: &quot;沙姆洛克流浪者&quot;,
+        &quot;away_team&quot;: &quot;德罗赫达联&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: false,
+          &quot;status&quot;: &quot;incomplete&quot;,
+          &quot;missing_modules&quot;: [
+            &quot;vote&quot;
+          ]
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -1.25,
+            &quot;current_handicap&quot;: -1.25,
+            &quot;handicap_movement&quot;: &quot;持平&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.42857142857142855,
+            &quot;suppression&quot;: &quot;weak&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 2.3,
+            &quot;home_avg_conceded&quot;: 1.2,
+            &quot;away_avg_scored&quot;: 0.8888888888888888,
+            &quot;away_avg_conceded&quot;: 1.4444444444444444,
+            &quot;home_recent5_avg&quot;: 2.8,
+            &quot;away_recent5_avg&quot;: 0.4,
+            &quot;expected_total_goals&quot;: 2.8699999999999997,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: null,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 0,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [
+              &quot;澳门&quot;
+            ],
+            &quot;avg_payout&quot;: 92.279
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 1,
+            &quot;raise_form&quot;: &quot;孤立升盘&quot;,
+            &quot;avg_home_water&quot;: 0.82,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: true,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;weak&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: &quot;真信号&quot;,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: true,
+              &quot;tag&quot;: &quot;[防冷有效]&quot;,
+              &quot;reasons&quot;: []
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;亚盘无立博数据，独开信号不可判定&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: false,
+            &quot;note&quot;: &quot;无法推演时序&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: null,
+            &quot;away_pp&quot;: null,
+            &quot;trend&quot;: &quot;unknown&quot;,
+            &quot;note&quot;: &quot;存在热度快照缺失侧，走向按缺口标注&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: null,
+            &quot;support&quot;: null,
+            &quot;implied&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;note&quot;: &quot;热度数据缺失&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: false,
+            &quot;popular&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;note&quot;: &quot;让球热度数据缺失，热度验证降级为胜平负热度映射&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: false,
+            &quot;trend&quot;: null,
+            &quot;summary&quot;: &quot;必发成交数据缺失，形态输入降级&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: false,
+            &quot;layer&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;support_intel&quot;: null,
+            &quot;disposition&quot;: null,
+            &quot;tag&quot;: null
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;weak&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: false,
+            &quot;note&quot;: &quot;反大众锚点命中，禁止反买输出；禁止反买≠主推保留（语义解耦）&quot;
+          },
+          &quot;main_action&quot;: &quot;downgrade&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;S&quot;,
+              &quot;selection&quot;: &quot;win&quot;,
+              &quot;legs&quot;: null,
+              &quot;path&quot;: null,
+              &quot;stars&quot;: 2,
+              &quot;tag&quot;: null
+            },
+            &quot;hhand_unit&quot;: null,
+            &quot;notes&quot;: [
+              &quot;竞彩让球赔率缺失，无法判定让球单元&quot;,
+              &quot;竞彩SP缺失，低赔补位判定降级&quot;
+            ],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;S+空&quot;,
+              &quot;adjusted&quot;: false
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;S&quot;,
+            &quot;selection&quot;: &quot;win&quot;,
+            &quot;legs&quot;: null,
+            &quot;path&quot;: null,
+            &quot;stars&quot;: 2,
+            &quot;tag&quot;: null
+          },
+          &quot;hhand_unit&quot;: null,
+          &quot;notes&quot;: [
+            &quot;竞彩让球赔率缺失，无法判定让球单元&quot;,
+            &quot;竞彩SP缺失，低赔补位判定降级&quot;
+          ],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;S+空&quot;,
+            &quot;adjusted&quot;: false
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1489044&quot;,
+        &quot;match_no&quot;: &quot;周四001&quot;,
+        &quot;home_team&quot;: &quot;赫尔辛基&quot;,
+        &quot;away_team&quot;: &quot;瓦萨&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -1.0,
+            &quot;current_handicap&quot;: -1.0,
+            &quot;handicap_movement&quot;: &quot;持平&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 6,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.5,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 1.3,
+            &quot;home_avg_conceded&quot;: 0.9,
+            &quot;away_avg_scored&quot;: 0.9,
+            &quot;away_avg_conceded&quot;: 1.3,
+            &quot;home_recent5_avg&quot;: 1.6,
+            &quot;away_recent5_avg&quot;: 1.4,
+            &quot;expected_total_goals&quot;: 1.9800000000000002,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;芬超&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 0,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 92.494
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 1,
+            &quot;raise_form&quot;: &quot;孤立升盘&quot;,
+            &quot;avg_home_water&quot;: 0.55,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: true,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: &quot;真信号&quot;,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;reasons&quot;: []
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 0,
+            &quot;overunder_raise_count&quot;: 4,
+            &quot;total&quot;: 5,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;support&quot;: 70.0,
+            &quot;implied&quot;: 60.1,
+            &quot;deviation_pp&quot;: 9.9,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;draw&quot;,
+            &quot;deviation_pp&quot;: 15.3,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: null,
+            &quot;summary&quot;: &quot;必发成交方向 home，形态 None&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: true,
+            &quot;layer&quot;: &quot;hhand&quot;,
+            &quot;deviation_pp&quot;: 15.3,
+            &quot;support_intel&quot;: false,
+            &quot;disposition&quot;: &quot;abandon&quot;,
+            &quot;tag&quot;: &quot;[过热+15.3pp｜情报支撑：无]&quot;
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;abandon&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;draw&quot;,
+                &quot;lose&quot;
+              ],
+              &quot;path&quot;: &quot;A&quot;,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+            },
+            &quot;hhand_unit&quot;: null,
+            &quot;notes&quot;: [
+              &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+            ],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;D+空&quot;,
+              &quot;adjusted&quot;: true
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;draw&quot;,
+              &quot;lose&quot;
+            ],
+            &quot;path&quot;: &quot;A&quot;,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+          },
+          &quot;hhand_unit&quot;: null,
+          &quot;notes&quot;: [
+            &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+          ],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;D+空&quot;,
+            &quot;adjusted&quot;: true
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1489046&quot;,
+        &quot;match_no&quot;: &quot;周四002&quot;,
+        &quot;home_team&quot;: &quot;库奥皮奥&quot;,
+        &quot;away_team&quot;: &quot;AC奥卢&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -1.0,
+            &quot;current_handicap&quot;: -1.0,
+            &quot;handicap_movement&quot;: &quot;持平&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.2857142857142857,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 1.0,
+            &quot;home_avg_conceded&quot;: 1.2,
+            &quot;away_avg_scored&quot;: 0.6,
+            &quot;away_avg_conceded&quot;: 1.1,
+            &quot;home_recent5_avg&quot;: 1.4,
+            &quot;away_recent5_avg&quot;: 0.8,
+            &quot;expected_total_goals&quot;: 1.4400000000000002,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;芬超&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 1,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 92.353
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 0,
+            &quot;raise_form&quot;: &quot;无升盘&quot;,
+            &quot;avg_home_water&quot;: null,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: true,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: null,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;reasons&quot;: []
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 1,
+            &quot;overunder_raise_count&quot;: 0,
+            &quot;total&quot;: 4,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;support&quot;: 69.0,
+            &quot;implied&quot;: 61.5,
+            &quot;deviation_pp&quot;: 7.5,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;deviation_pp&quot;: 4.4,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: &quot;rising&quot;,
+            &quot;summary&quot;: &quot;必发成交方向 home，形态 rising&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: false,
+            &quot;layer&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;support_intel&quot;: null,
+            &quot;disposition&quot;: null,
+            &quot;tag&quot;: null
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;keep&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;S&quot;,
+              &quot;selection&quot;: &quot;win&quot;,
+              &quot;legs&quot;: null,
+              &quot;path&quot;: null,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: null
+            },
+            &quot;hhand_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;draw&quot;,
+                &quot;lose&quot;
+              ],
+              &quot;path&quot;: &quot;A&quot;,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: &quot;[低赔补位｜路径A]&quot;
+            },
+            &quot;notes&quot;: [],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;S+D&quot;,
+              &quot;adjusted&quot;: false
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;S&quot;,
+            &quot;selection&quot;: &quot;win&quot;,
+            &quot;legs&quot;: null,
+            &quot;path&quot;: null,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: null
+          },
+          &quot;hhand_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;draw&quot;,
+              &quot;lose&quot;
+            ],
+            &quot;path&quot;: &quot;A&quot;,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: &quot;[低赔补位｜路径A]&quot;
+          },
+          &quot;notes&quot;: [],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;S+D&quot;,
+            &quot;adjusted&quot;: false
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362462&quot;,
+        &quot;match_no&quot;: &quot;周四003&quot;,
+        &quot;home_team&quot;: &quot;桑托斯&quot;,
+        &quot;away_team&quot;: &quot;弗拉门戈&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: 0.5,
+            &quot;current_handicap&quot;: 0.75,
+            &quot;handicap_movement&quot;: &quot;升盘&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.2857142857142857,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 1.6,
+            &quot;home_avg_conceded&quot;: 1.2,
+            &quot;away_avg_scored&quot;: 1.5,
+            &quot;away_avg_conceded&quot;: 1.3,
+            &quot;home_recent5_avg&quot;: 1.2,
+            &quot;away_recent5_avg&quot;: 2.0,
+            &quot;expected_total_goals&quot;: 2.79,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;巴西甲&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 1,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 93.003
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 11,
+            &quot;raise_form&quot;: &quot;共振升盘&quot;,
+            &quot;avg_home_water&quot;: 0.8527272727272728,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: false,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: &quot;真信号&quot;,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;reasons&quot;: []
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: true,
+              &quot;tag&quot;: &quot;[降深度]&quot;,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 6,
+            &quot;overunder_raise_count&quot;: 4,
+            &quot;total&quot;: 13,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;lose&quot;,
+            &quot;support&quot;: 53.0,
+            &quot;implied&quot;: 52.9,
+            &quot;deviation_pp&quot;: 0.1,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;draw&quot;,
+            &quot;deviation_pp&quot;: 17.9,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: &quot;rising&quot;,
+            &quot;summary&quot;: &quot;必发成交方向 away，形态 rising&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: true,
+            &quot;layer&quot;: &quot;hhand&quot;,
+            &quot;deviation_pp&quot;: 17.9,
+            &quot;support_intel&quot;: false,
+            &quot;disposition&quot;: &quot;abandon&quot;,
+            &quot;tag&quot;: &quot;[过热+17.9pp｜情报支撑：无]&quot;
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;abandon&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;win&quot;,
+                &quot;draw&quot;
+              ],
+              &quot;path&quot;: &quot;A&quot;,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+            },
+            &quot;hhand_unit&quot;: null,
+            &quot;notes&quot;: [
+              &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+            ],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;D+空&quot;,
+              &quot;adjusted&quot;: true
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;win&quot;,
+              &quot;draw&quot;
+            ],
+            &quot;path&quot;: &quot;A&quot;,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+          },
+          &quot;hhand_unit&quot;: null,
+          &quot;notes&quot;: [
+            &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+          ],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;D+空&quot;,
+            &quot;adjusted&quot;: true
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362422&quot;,
+        &quot;match_no&quot;: &quot;周四004&quot;,
+        &quot;home_team&quot;: &quot;巴竞技&quot;,
+        &quot;away_team&quot;: &quot;米竞技&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -0.25,
+            &quot;current_handicap&quot;: -0.5,
+            &quot;handicap_movement&quot;: &quot;降盘&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.14285714285714285,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 2.0,
+            &quot;home_avg_conceded&quot;: 1.4,
+            &quot;away_avg_scored&quot;: 1.8,
+            &quot;away_avg_conceded&quot;: 0.7,
+            &quot;home_recent5_avg&quot;: 1.4,
+            &quot;away_recent5_avg&quot;: 1.4,
+            &quot;expected_total_goals&quot;: 3.42,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;巴西甲&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 1,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 93.352
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 2,
+            &quot;raise_form&quot;: &quot;共振升盘&quot;,
+            &quot;avg_home_water&quot;: 0.735,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: false,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: &quot;真信号&quot;,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: true,
+              &quot;tag&quot;: &quot;[利润平衡，降级]&quot;,
+              &quot;reasons&quot;: [
+                &quot;平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）&quot;
+              ]
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 3,
+            &quot;overunder_raise_count&quot;: 3,
+            &quot;total&quot;: 11,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;draw&quot;,
+            &quot;support&quot;: 42.0,
+            &quot;implied&quot;: 28.1,
+            &quot;deviation_pp&quot;: 13.9,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;lose&quot;,
+            &quot;deviation_pp&quot;: -9.7,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: &quot;rising&quot;,
+            &quot;summary&quot;: &quot;必发成交方向 home，形态 rising&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: false,
+            &quot;layer&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;support_intel&quot;: null,
+            &quot;disposition&quot;: null,
+            &quot;tag&quot;: null
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;keep&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;S&quot;,
+              &quot;selection&quot;: &quot;win&quot;,
+              &quot;legs&quot;: null,
+              &quot;path&quot;: null,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: null
+            },
+            &quot;hhand_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;lose&quot;,
+                &quot;draw&quot;
+              ],
+              &quot;path&quot;: null,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: null
+            },
+            &quot;notes&quot;: [
+              &quot;无补位需求（主推SP≥1.5）&quot;
+            ],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;S+D&quot;,
+              &quot;adjusted&quot;: false
+            }
+          },
+          &quot;attempt&quot;: 2
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;violation&quot;,
+              &quot;action&quot;: &quot;回退补充 hhand_unit 收益比路径或改单选&quot;,
+              &quot;note&quot;: &quot;双选缺路径&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;manual&quot;,
+          &quot;violations&quot;: [
+            &quot;⑥&quot;
+          ]
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;S&quot;,
+            &quot;selection&quot;: &quot;win&quot;,
+            &quot;legs&quot;: null,
+            &quot;path&quot;: null,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: null
+          },
+          &quot;hhand_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;lose&quot;,
+              &quot;draw&quot;
+            ],
+            &quot;path&quot;: null,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: null
+          },
+          &quot;notes&quot;: [
+            &quot;无补位需求（主推SP≥1.5）&quot;
+          ],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;S+D&quot;,
+            &quot;adjusted&quot;: false
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362406&quot;,
+        &quot;match_no&quot;: &quot;周四005&quot;,
+        &quot;home_team&quot;: &quot;弗鲁米嫩&quot;,
+        &quot;away_team&quot;: &quot;科里蒂巴&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -1.0,
+            &quot;current_handicap&quot;: -1.25,
+            &quot;handicap_movement&quot;: &quot;降盘&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 0,
+            &quot;win_rate&quot;: 0.2857142857142857,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 1.8,
+            &quot;home_avg_conceded&quot;: 1.2,
+            &quot;away_avg_scored&quot;: 1.7,
+            &quot;away_avg_conceded&quot;: 1.5,
+            &quot;home_recent5_avg&quot;: 1.8,
+            &quot;away_recent5_avg&quot;: 0.8,
+            &quot;expected_total_goals&quot;: 3.15,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;巴西甲&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 1,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 93.195
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 0,
+            &quot;raise_form&quot;: &quot;无升盘&quot;,
+            &quot;avg_home_water&quot;: null,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: true,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: null,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;reasons&quot;: []
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 7,
+            &quot;overunder_raise_count&quot;: 4,
+            &quot;total&quot;: 19,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;support&quot;: 78.0,
+            &quot;implied&quot;: 63.7,
+            &quot;deviation_pp&quot;: 14.3,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;deviation_pp&quot;: 9.6,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: &quot;rising&quot;,
+            &quot;summary&quot;: &quot;必发成交方向 home，形态 rising&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: false,
+            &quot;layer&quot;: null,
+            &quot;deviation_pp&quot;: null,
+            &quot;support_intel&quot;: null,
+            &quot;disposition&quot;: null,
+            &quot;tag&quot;: null
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 0,
+            &quot;signals&quot;: [],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;keep&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;S&quot;,
+              &quot;selection&quot;: &quot;win&quot;,
+              &quot;legs&quot;: null,
+              &quot;path&quot;: null,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: null
+            },
+            &quot;hhand_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;draw&quot;,
+                &quot;lose&quot;
+              ],
+              &quot;path&quot;: &quot;A&quot;,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: &quot;[低赔补位｜路径A]&quot;
+            },
+            &quot;notes&quot;: [],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;S+D&quot;,
+              &quot;adjusted&quot;: false
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;S&quot;,
+            &quot;selection&quot;: &quot;win&quot;,
+            &quot;legs&quot;: null,
+            &quot;path&quot;: null,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: null
+          },
+          &quot;hhand_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;draw&quot;,
+              &quot;lose&quot;
+            ],
+            &quot;path&quot;: &quot;A&quot;,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: &quot;[低赔补位｜路径A]&quot;
+          },
+          &quot;notes&quot;: [],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;S+D&quot;,
+            &quot;adjusted&quot;: false
+          }
+        }
+      },
+      {
+        &quot;fid&quot;: &quot;1362487&quot;,
+        &quot;match_no&quot;: &quot;周四006&quot;,
+        &quot;home_team&quot;: &quot;帕梅拉斯&quot;,
+        &quot;away_team&quot;: &quot;巴伊亚&quot;,
+        &quot;integrity&quot;: {
+          &quot;ready&quot;: true,
+          &quot;status&quot;: &quot;ready&quot;,
+          &quot;missing_modules&quot;: []
+        },
+        &quot;vote_available&quot;: true,
+        &quot;fundamental&quot;: {
+          &quot;phase&quot;: &quot;fundamental&quot;,
+          &quot;weights&quot;: {
+            &quot;intelligence&quot;: 30,
+            &quot;initial_position&quot;: 25,
+            &quot;h2h&quot;: 15,
+            &quot;recent_form&quot;: 20,
+            &quot;schedule&quot;: 10
+          },
+          &quot;intelligence&quot;: {
+            &quot;home_favor&quot;: 0,
+            &quot;away_favor&quot;: 0,
+            &quot;home_against&quot;: 0,
+            &quot;away_against&quot;: 0,
+            &quot;general&quot;: 0,
+            &quot;net_favor&quot;: 0,
+            &quot;balance&quot;: true,
+            &quot;dense_direction&quot;: null,
+            &quot;conclusion&quot;: &quot;均势，方向交由赔率验证层&quot;
+          },
+          &quot;initial_position&quot;: {
+            &quot;initial_handicap&quot;: -1.0,
+            &quot;current_handicap&quot;: -1.0,
+            &quot;handicap_movement&quot;: &quot;持平&quot;,
+            &quot;same_handicap_hint&quot;: null,
+            &quot;note&quot;: &quot;ℹ️ 7M 同盘路统计缺失&quot;
+          },
+          &quot;h2h&quot;: {
+            &quot;window_records_count&quot;: 7,
+            &quot;streak_wins&quot;: 1,
+            &quot;win_rate&quot;: 0.5714285714285714,
+            &quot;suppression&quot;: &quot;none&quot;,
+            &quot;decayed&quot;: false,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;recent_form&quot;: {
+            &quot;home_avg_scored&quot;: 1.4,
+            &quot;home_avg_conceded&quot;: 0.5,
+            &quot;away_avg_scored&quot;: 1.4,
+            &quot;away_avg_conceded&quot;: 1.4,
+            &quot;home_recent5_avg&quot;: 1.6,
+            &quot;away_recent5_avg&quot;: 1.0,
+            &quot;expected_total_goals&quot;: 2.52,
+            &quot;hot_sides&quot;: [],
+            &quot;fire_note&quot;: &quot;&quot;,
+            &quot;correction&quot;: null,
+            &quot;anchor_note&quot;: &quot;&quot;
+          },
+          &quot;schedule&quot;: {
+            &quot;competition&quot;: &quot;巴西甲&quot;,
+            &quot;level_gap&quot;: false,
+            &quot;future_count&quot;: 0,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;odds_verify&quot;: {
+          &quot;phase&quot;: &quot;odds_verify&quot;,
+          &quot;structure&quot;: {
+            &quot;company_count&quot;: 27,
+            &quot;mainstream_missing&quot;: [],
+            &quot;avg_payout&quot;: 93.217
+          },
+          &quot;euro_asia&quot;: {
+            &quot;raise_count&quot;: 1,
+            &quot;raise_form&quot;: &quot;孤立升盘&quot;,
+            &quot;avg_home_water&quot;: 0.7,
+            &quot;state_alignment&quot;: &quot;同向&quot;,
+            &quot;deep_market&quot;: true,
+            &quot;strength&quot;: {
+              &quot;value_ratio&quot;: null,
+              &quot;level_gap&quot;: false,
+              &quot;h2h_suppression&quot;: &quot;none&quot;
+            },
+            &quot;strength_endorsed&quot;: false,
+            &quot;interpretation&quot;: &quot;真信号&quot;,
+            &quot;two_layer_divergence&quot;: false,
+            &quot;tags&quot;: [],
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;anomalies&quot;: {
+            &quot;anti_cold&quot;: {
+              &quot;present&quot;: true,
+              &quot;tag&quot;: &quot;[利润平衡，降级]&quot;,
+              &quot;reasons&quot;: [
+                &quot;平局方向无基本面支持/无水位配合（纯价格信号，无量能验证）&quot;
+              ]
+            },
+            &quot;ladbrokes_solo&quot;: {
+              &quot;present&quot;: false,
+              &quot;tag&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            &quot;single_house_deviation&quot;: {
+              &quot;present&quot;: false,
+              &quot;pct&quot;: null,
+              &quot;bk&quot;: null,
+              &quot;tag&quot;: null
+            }
+          }
+        },
+        &quot;history_deduction&quot;: {
+          &quot;trend&quot;: {
+            &quot;available&quot;: true,
+            &quot;asian_deepen_count&quot;: 7,
+            &quot;overunder_raise_count&quot;: 3,
+            &quot;total&quot;: 16,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;heat_drift&quot;: {
+            &quot;available&quot;: true,
+            &quot;home_pp&quot;: 0.0,
+            &quot;away_pp&quot;: 0.0,
+            &quot;trend&quot;: &quot;stable&quot;,
+            &quot;note&quot;: &quot;&quot;
+          }
+        },
+        &quot;sentiment&quot;: {
+          &quot;phase&quot;: &quot;sentiment&quot;,
+          &quot;had&quot;: {
+            &quot;popular&quot;: &quot;win&quot;,
+            &quot;support&quot;: 68.0,
+            &quot;implied&quot;: 60.4,
+            &quot;deviation_pp&quot;: 7.6,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;hhand&quot;: {
+            &quot;available&quot;: true,
+            &quot;popular&quot;: &quot;draw&quot;,
+            &quot;deviation_pp&quot;: 18.2,
+            &quot;note&quot;: &quot;&quot;
+          },
+          &quot;bf&quot;: {
+            &quot;available&quot;: true,
+            &quot;trend&quot;: &quot;falling&quot;,
+            &quot;summary&quot;: &quot;必发成交方向 home，形态 falling&quot;
+          },
+          &quot;overheat&quot;: {
+            &quot;triggered&quot;: true,
+            &quot;layer&quot;: &quot;hhand&quot;,
+            &quot;deviation_pp&quot;: 18.2,
+            &quot;support_intel&quot;: false,
+            &quot;disposition&quot;: &quot;abandon&quot;,
+            &quot;tag&quot;: &quot;[过热+18.2pp｜情报支撑：无]&quot;
+          },
+          &quot;note&quot;: &quot;&quot;
+        },
+        &quot;synthesis&quot;: {
+          &quot;phase&quot;: &quot;synthesis&quot;,
+          &quot;evacuation&quot;: {
+            &quot;count&quot;: 1,
+            &quot;signals&quot;: [
+              &quot;必发成交回落&quot;
+            ],
+            &quot;hard_gate&quot;: false
+          },
+          &quot;anti_public&quot;: {
+            &quot;anchor1&quot;: &quot;none&quot;,
+            &quot;decay_applied&quot;: false,
+            &quot;anchor2&quot;: false,
+            &quot;anchor3&quot;: false,
+            &quot;allow_counter&quot;: true,
+            &quot;note&quot;: &quot;三条锚点全不命中，允许反买（仓位减半）&quot;
+          },
+          &quot;main_action&quot;: &quot;abandon&quot;,
+          &quot;recommendation&quot;: {
+            &quot;had_unit&quot;: {
+              &quot;form&quot;: &quot;D&quot;,
+              &quot;legs&quot;: [
+                &quot;draw&quot;,
+                &quot;lose&quot;
+              ],
+              &quot;path&quot;: &quot;A&quot;,
+              &quot;stars&quot;: 3,
+              &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+            },
+            &quot;hhand_unit&quot;: null,
+            &quot;notes&quot;: [
+              &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+            ],
+            &quot;mutual_exclusion&quot;: {
+              &quot;legal&quot;: true,
+              &quot;form&quot;: &quot;D+空&quot;,
+              &quot;adjusted&quot;: true
+            }
+          },
+          &quot;attempt&quot;: 0
+        },
+        &quot;review&quot;: {
+          &quot;phase&quot;: &quot;review&quot;,
+          &quot;checks&quot;: [
+            {
+              &quot;id&quot;: &quot;①&quot;,
+              &quot;name&quot;: &quot;风险提示与大小球方向一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;②&quot;,
+              &quot;name&quot;: &quot;次选降级替换（深盘次选保护位）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;③&quot;,
+              &quot;name&quot;: &quot;盘口与比分池净胜分布一致&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;④&quot;,
+              &quot;name&quot;: &quot;穿盘证据 S1-S4 幅度联动&quot;,
+              &quot;result&quot;: &quot;na&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;大小球/比分池层 ISS-FA4 前未产出，标注不适用&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑤&quot;,
+              &quot;name&quot;: &quot;次选决策树（深盘禁平局次选）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑥&quot;,
+              &quot;name&quot;: &quot;双选收益比路径合规（A/B/C）&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            },
+            {
+              &quot;id&quot;: &quot;⑦&quot;,
+              &quot;name&quot;: &quot;推荐结构互斥合规&quot;,
+              &quot;result&quot;: &quot;pass&quot;,
+              &quot;action&quot;: null,
+              &quot;note&quot;: &quot;&quot;
+            }
+          ],
+          &quot;decision&quot;: &quot;pass&quot;,
+          &quot;violations&quot;: []
+        },
+        &quot;recommendation&quot;: {
+          &quot;had_unit&quot;: {
+            &quot;form&quot;: &quot;D&quot;,
+            &quot;legs&quot;: [
+              &quot;draw&quot;,
+              &quot;lose&quot;
+            ],
+            &quot;path&quot;: &quot;A&quot;,
+            &quot;stars&quot;: 3,
+            &quot;tag&quot;: &quot;[过热放弃｜防守向双选]&quot;
+          },
+          &quot;hhand_unit&quot;: null,
+          &quot;notes&quot;: [
+            &quot;互斥修正：D+D 仅撤离≥3重允许，砍剩让球层&quot;
+          ],
+          &quot;mutual_exclusion&quot;: {
+            &quot;legal&quot;: true,
+            &quot;form&quot;: &quot;D+空&quot;,
+            &quot;adjusted&quot;: true
+          }
+        }
+      }
+    ],
+    &quot;manual_review_matches&quot;: [
+      &quot;1362422&quot;
+    ],
+    &quot;degradation_notes&quot;: [
+      &quot;D9 变盘轨迹为四家参考公司（澳门/皇冠/Bet365/Pinnacle）快照序列口径，非全市场统计&quot;,
+      &quot;Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底&quot;,
+      &quot;D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）&quot;
+    ]
+  },
+  &quot;blocks&quot;: {
+    &quot;2918&quot;: {
+      &quot;match_no&quot;: &quot;80&quot;,
+      &quot;fid&quot;: &quot;1364736&quot;,
+      &quot;kickoff&quot;: &quot;10-09 03:00&quot;,
+      &quot;home&quot;: &quot;沙姆洛克流浪者&quot;,
+      &quot;away&quot;: &quot;德罗赫达联&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 92,
+        &quot;history_state_max&quot;: 21
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 13
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 14
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: false,
+        &quot;has_hhand&quot;: false,
+        &quot;bf&quot;: null
+      },
+      &quot;q9_intel_items&quot;: 2,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 0,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 0,
+        &quot;detail&quot;: []
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: null,
+        &quot;away_pp&quot;: null
+      }
+    },
+    &quot;2948&quot;: {
+      &quot;match_no&quot;: &quot;周四001&quot;,
+      &quot;fid&quot;: &quot;1489044&quot;,
+      &quot;kickoff&quot;: &quot;10-08 23:00&quot;,
+      &quot;home&quot;: &quot;赫尔辛基&quot;,
+      &quot;away&quot;: &quot;瓦萨&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 52,
+        &quot;history_state_max&quot;: 2
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 96275.0,
+          &quot;direction&quot;: &quot;home&quot;,
+          &quot;trend&quot;: null,
+          &quot;large_volume&quot;: 12426.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 4,
+      &quot;q10_h2h_records&quot;: 6,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 0,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 5,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    },
+    &quot;2949&quot;: {
+      &quot;match_no&quot;: &quot;周四002&quot;,
+      &quot;fid&quot;: &quot;1489046&quot;,
+      &quot;kickoff&quot;: &quot;10-09 00:00&quot;,
+      &quot;home&quot;: &quot;库奥皮奥&quot;,
+      &quot;away&quot;: &quot;AC奥卢&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 142,
+        &quot;history_state_max&quot;: 22
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 212922.0,
+          &quot;direction&quot;: &quot;home&quot;,
+          &quot;trend&quot;: &quot;rising&quot;,
+          &quot;large_volume&quot;: 49976.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 4,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 1,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 4,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: -1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    },
+    &quot;2950&quot;: {
+      &quot;match_no&quot;: &quot;周四003&quot;,
+      &quot;fid&quot;: &quot;1362462&quot;,
+      &quot;kickoff&quot;: &quot;10-09 06:30&quot;,
+      &quot;home&quot;: &quot;桑托斯&quot;,
+      &quot;away&quot;: &quot;弗拉门戈&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 125,
+        &quot;history_state_max&quot;: 16
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 804027.0,
+          &quot;direction&quot;: &quot;away&quot;,
+          &quot;trend&quot;: &quot;rising&quot;,
+          &quot;large_volume&quot;: 79171.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 4,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 1,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 13,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    },
+    &quot;2951&quot;: {
+      &quot;match_no&quot;: &quot;周四004&quot;,
+      &quot;fid&quot;: &quot;1362422&quot;,
+      &quot;kickoff&quot;: &quot;10-09 07:00&quot;,
+      &quot;home&quot;: &quot;巴竞技&quot;,
+      &quot;away&quot;: &quot;米竞技&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 166,
+        &quot;history_state_max&quot;: 40
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 376192.0,
+          &quot;direction&quot;: &quot;home&quot;,
+          &quot;trend&quot;: &quot;rising&quot;,
+          &quot;large_volume&quot;: 15543.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 5,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 1,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 11,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    },
+    &quot;2952&quot;: {
+      &quot;match_no&quot;: &quot;周四005&quot;,
+      &quot;fid&quot;: &quot;1362406&quot;,
+      &quot;kickoff&quot;: &quot;10-09 08:30&quot;,
+      &quot;home&quot;: &quot;弗鲁米嫩&quot;,
+      &quot;away&quot;: &quot;科里蒂巴&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 121,
+        &quot;history_state_max&quot;: 17
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 236485.0,
+          &quot;direction&quot;: &quot;home&quot;,
+          &quot;trend&quot;: &quot;rising&quot;,
+          &quot;large_volume&quot;: 45472.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 4,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 1,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 19,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    },
+    &quot;2953&quot;: {
+      &quot;match_no&quot;: &quot;周四006&quot;,
+      &quot;fid&quot;: &quot;1362487&quot;,
+      &quot;kickoff&quot;: &quot;10-09 08:30&quot;,
+      &quot;home&quot;: &quot;帕梅拉斯&quot;,
+      &quot;away&quot;: &quot;巴伊亚&quot;,
+      &quot;q3_euro&quot;: {
+        &quot;companies&quot;: 27,
+        &quot;history_state_total&quot;: 133,
+        &quot;history_state_max&quot;: 16
+      },
+      &quot;q3_asian&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q3_overunder&quot;: {
+        &quot;companies&quot;: 16
+      },
+      &quot;q5_vote&quot;: {
+        &quot;has_support&quot;: true,
+        &quot;has_hhand&quot;: true,
+        &quot;bf&quot;: {
+          &quot;total_volume&quot;: 344571.0,
+          &quot;direction&quot;: &quot;home&quot;,
+          &quot;trend&quot;: &quot;falling&quot;,
+          &quot;large_volume&quot;: 37282.0
+        }
+      },
+      &quot;q9_intel_items&quot;: 4,
+      &quot;q10_h2h_records&quot;: 7,
+      &quot;q11_recent&quot;: {
+        &quot;home_matches&quot;: 10,
+        &quot;away_matches&quot;: 10
+      },
+      &quot;q12_schedule_future&quot;: 0,
+      &quot;d9_tracks&quot;: {
+        &quot;count&quot;: 16,
+        &quot;detail&quot;: [
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Bet365&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;asian&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: -1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;Pinnacle&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;澳门&quot;,
+            &quot;change&quot;: 1
+          },
+          {
+            &quot;kind&quot;: &quot;overunder&quot;,
+            &quot;bk&quot;: &quot;皇冠&quot;,
+            &quot;change&quot;: 1
+          }
+        ]
+      },
+      &quot;d12_heat&quot;: {
+        &quot;home_pp&quot;: 0.0,
+        &quot;away_pp&quot;: 0.0
+      }
+    }
+  }
+}</pre>
+</details>
+
+</main>
+</body>
+</html>
