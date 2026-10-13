@@ -17,11 +17,13 @@ class TestLoadOrchestrationConfig:
         assert config.entry_point == "planner"
         node_names = [n.name for n in config.nodes]
         # ISS-FA2 追加分析链路；ISS-FA3 追加质检链路；
-        # ISS-FA4 追加人工裁决（human_review）与报告（report_agent）节点
+        # ISS-FA4 追加人工裁决（human_review）与报告（report_agent）节点；
+        # 立项三（ISS-FA5）追加贪婪恐惧（greed_fear_agent）节点
         assert node_names == [
             "planner", "data_agent", "ready_report",
             "fundamental_agent", "odds_verify_agent",
-            "sentiment_agent", "synthesis_agent", "review_agent",
+            "sentiment_agent", "greed_fear_agent",
+            "synthesis_agent", "review_agent",
             "human_review", "report_agent", "phase_report",
         ]
 
@@ -33,7 +35,8 @@ class TestLoadOrchestrationConfig:
         assert ("ready_report", "fundamental_agent") in edge_pairs
         assert ("fundamental_agent", "odds_verify_agent") in edge_pairs
         assert ("odds_verify_agent", "sentiment_agent") in edge_pairs
-        assert ("sentiment_agent", "synthesis_agent") in edge_pairs
+        assert ("sentiment_agent", "greed_fear_agent") in edge_pairs
+        assert ("greed_fear_agent", "synthesis_agent") in edge_pairs
         assert ("synthesis_agent", "review_agent") in edge_pairs
         # review_agent 条件边：pass/report_agent、manual/human_review（F-20）
         assert ("review_agent", "phase_report") in edge_pairs

@@ -64,6 +64,16 @@ def _make_input(**overrides):
     return base
 
 
+def _greed_fear(greed_level="无", fear_level="无", combination=None):
+    """构造 GreedFearAgent 结论：默认无陷阱（合成层消费为可选输入）。"""
+    return {
+        "phase": "greed_fear",
+        "greed": {"score": 0, "level": greed_level, "signals": {}},
+        "fear": {"score": 0, "level": fear_level, "signals": {}},
+        "trap_combination": combination or f"{greed_level}贪婪+{fear_level}恐惧",
+    }
+
+
 def _agent():
     return SynthesisAgent()
 
@@ -232,3 +242,26 @@ class TestMutualExclusion:
         assert outcome["legal"] is True
         assert outcome["form"] == expect_form
         assert outcome["adjusted"] is expect_adjusted
+
+
+class TestGreedFearConsumption:
+    """贪婪恐惧层消费（立项三 Issue 2）：强陷阱组合警示 + 透传，不改变推荐结构。"""
+
+    def test_强贪婪强恐惧组合追加警示并透传陷阱组合(self):
+        result = _agent().analyze(_make_input(
+            greed_fear=_greed_fear("强", "强", "强贪婪+强恐惧")))
+        assert result["trap_combination"] == "强贪婪+强恐惧"
+        assert any("贪婪恐惧" in note and "陷阱" in note
+                   for note in result["recommendation"]["notes"])
+
+    def test_无贪婪恐惧输入不透传不追加警示(self):
+        result = _agent().analyze(_make_input())
+        assert "trap_combination" not in result
+        assert not any("贪婪恐惧" in note for note in result["recommendation"]["notes"])
+
+    def test_弱陷阱组合透传但不追加警示(self):
+        # 最小闭环口径：仅双侧强陷阱警示，弱/中陷阱只透传给报告层
+        result = _agent().analyze(_make_input(
+            greed_fear=_greed_fear("弱", "无", "弱贪婪+无恐惧")))
+        assert result["trap_combination"] == "弱贪婪+无恐惧"
+        assert not any("贪婪恐惧" in note for note in result["recommendation"]["notes"])

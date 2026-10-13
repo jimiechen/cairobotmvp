@@ -123,17 +123,31 @@ class TestAnalysisRunner:
             assert "score_pool" in goal_layer and "ou_unit" in goal_layer
             assert goal_layer["penetration"]["hits"] >= 0
 
-    def test_图驱动与runner结论均携带大小球层(self):
+    def test_每场产出贪婪恐惧评分与陷阱组合_ISS_FA5(self):
+        conclusion = AnalysisRunner(_make_source()).run("2026-09-29")
+        for item in conclusion["matches"]:
+            greed_fear = item["greed_fear"]
+            assert greed_fear["phase"] == "greed_fear"
+            assert "market_tendency" in greed_fear
+            assert "trap_combination" in greed_fear
+            assert {"score", "level"} <= set(greed_fear["greed"])
+            assert {"score", "level"} <= set(greed_fear["fear"])
+
+    def test_图驱动与runner结论均携带大小球层_ISS_FA4(self):
         from fa_orchestrator.graph.graph_nodes import GraphNodes
         nodes = GraphNodes(_make_source())
         state = {"match_date": "2026-09-29"}
         for node in ("planner_agent", "data_agent", "ready_report",
                      "fundamental_agent", "odds_verify_agent",
-                     "sentiment_agent", "synthesis_agent", "review_agent"):
+                     "sentiment_agent", "greed_fear_agent",
+                     "synthesis_agent", "review_agent"):
             state.update(nodes.registry()[node](state))
         by_fid = state.get("goal_layer") or {}
         assert by_fid, "图驱动 synthesis 节点应产出 goal_layer map"
         assert all(v["phase"] == "goal_layer" for v in by_fid.values())
+        greed_map = state.get("greed_fear") or {}
+        assert greed_map, "图驱动 greed_fear 节点应产出贪婪恐惧 map"
+        assert all(v["phase"] == "greed_fear" for v in greed_map.values())
 
 
 class TestCliAnalysisOutput:

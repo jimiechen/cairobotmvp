@@ -6,6 +6,8 @@
 #   未知决策值兜底 manual（有界终止），branches 必须含 manual 分支（config.py 校验）
 # ISS-FA4 追加：manual → human_review（F-20 人工裁决 interrupt）→ report_agent
 #   （F-15 报告产出）→ phase_report；pass 分支同步改道 report_agent
+# 立项三（ISS-FA5）追加：sentiment → greed_fear_agent（人性贪婪恐惧分析，F-21）
+#   → synthesis_agent（陷阱组合作为警示输入透传）
 graph:
   entry_point: planner
   nodes:
@@ -21,6 +23,8 @@ graph:
       agent: odds_verify_agent  # OddsVerifyAgent：第二阶段赔率验证（F-11）
     - name: sentiment_agent
       agent: sentiment_agent    # SentimentAgent：投票热度偏差与过热判定（F-12）
+    - name: greed_fear_agent
+      agent: greed_fear_agent   # GreedFearAgent：市场倾向+贪婪/恐惧8信号+陷阱组合（F-21，立项三）
     - name: synthesis_agent
       agent: synthesis_agent    # SynthesisAgent：撤离门槛/反大众/让球单选/互斥（F-13）
     - name: review_agent
@@ -43,6 +47,8 @@ graph:
     - from: odds_verify_agent
       to: sentiment_agent
     - from: sentiment_agent
+      to: greed_fear_agent
+    - from: greed_fear_agent
       to: synthesis_agent
     - from: synthesis_agent
       to: review_agent

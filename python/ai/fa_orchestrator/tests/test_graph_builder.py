@@ -43,6 +43,7 @@ def registry():
         "fundamental_agent": _make_trace_agent("fundamental_agent"),
         "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
         "sentiment_agent": _make_trace_agent("sentiment_agent"),
+        "greed_fear_agent": _make_trace_agent("greed_fear_agent"),
         "synthesis_agent": _make_trace_agent("synthesis_agent"),
         "review_agent": _pass_review_agent,
         "human_review": _make_trace_agent("human_review"),
@@ -85,12 +86,12 @@ class TestBuildGraph:
             {"match_date": "2026-09-29", "trace": []}, config=RunnableConfig()
         )
         # planner → data_agent → ready_report → fundamental_agent → odds_verify_agent
-        # → sentiment_agent → synthesis_agent → review_agent（pass）
-        # → report_agent → phase_report（F-12/F-13/F-14/F-15）
+        # → sentiment_agent → greed_fear_agent（立项三）→ synthesis_agent
+        # → review_agent（pass）→ report_agent → phase_report（F-12/F-13/F-14/F-15）
         assert result["trace"] == [
             "planner", "data_agent", "ready_report",
             "fundamental_agent", "odds_verify_agent",
-            "sentiment_agent", "synthesis_agent", "review_agent",
+            "sentiment_agent", "greed_fear_agent", "synthesis_agent", "review_agent",
             "report_agent", "phase_report",
         ]
 
@@ -130,6 +131,7 @@ class TestConditionalEdge:
             "fundamental_agent": _make_trace_agent("fundamental_agent"),
             "odds_verify_agent": _make_trace_agent("odds_verify_agent"),
             "sentiment_agent": _make_trace_agent("sentiment_agent"),
+            "greed_fear_agent": _make_trace_agent("greed_fear_agent"),
             "synthesis_agent": _make_trace_agent("synthesis_agent"),
             "review_agent": self._review_agent(decisions),
             "human_review": _make_trace_agent("human_review"),

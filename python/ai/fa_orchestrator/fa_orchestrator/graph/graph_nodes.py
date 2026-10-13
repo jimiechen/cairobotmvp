@@ -20,7 +20,8 @@ from fa_orchestrator.agents.data_agent import CHANNEL_FIXTURE, DataAgent
 from fa_orchestrator.report.report_agent import ReportAgent
 
 # 本地静态计划阶段（fixture 模式无 LLM 依赖；联调时可注入 LLM 版 planner）
-_LOCAL_PLAN_STAGES = ("fundamental", "odds_verify", "sentiment", "synthesis", "review")
+_LOCAL_PLAN_STAGES = ("fundamental", "odds_verify", "sentiment", "greed_fear",
+                      "synthesis", "review")
 
 
 class GraphNodes:
@@ -33,14 +34,15 @@ class GraphNodes:
 
     def __init__(self, data_source, fundamental_agent=None, odds_agent=None,
                  sentiment_agent=None, synthesis_agent=None, review_agent=None,
-                 report_agent=None, planner_fn=None, channel=CHANNEL_FIXTURE):
+                 report_agent=None, planner_fn=None, channel=CHANNEL_FIXTURE,
+                 greed_fear_agent=None):
         self.data_source = data_source
         self.channel = channel
         self._runner = AnalysisRunner(
             data_source, channel=channel,
             fundamental_agent=fundamental_agent, odds_agent=odds_agent,
             sentiment_agent=sentiment_agent, synthesis_agent=synthesis_agent,
-            review_agent=review_agent,
+            review_agent=review_agent, greed_fear_agent=greed_fear_agent,
         )
         self._report_agent = report_agent or ReportAgent()
         self._planner_fn = planner_fn or self._local_plan
@@ -54,6 +56,7 @@ class GraphNodes:
             "fundamental_agent": self._traced(self._fundamental, "fundamental_agent"),
             "odds_verify_agent": self._traced(self._odds_verify, "odds_verify_agent"),
             "sentiment_agent": self._traced(self._sentiment, "sentiment_agent"),
+            "greed_fear_agent": self._traced(self._greed_fear, "greed_fear_agent"),
             "synthesis_agent": self._traced(self._synthesis, "synthesis_agent"),
             "review_agent": self._traced(self._review, "review_agent"),
             "human_review": self._traced(self._human_review, "human_review"),
@@ -142,6 +145,25 @@ class GraphNodes:
                 "fundamental": (state.get("fundamentals") or {}).get(fid) or {},
             })
         return {"sentiment": sentiment_map, "vote_availability": vote_available}
+
+    def _greed_fear(self, state: dict) -> dict:
+        """贪婪恐惧节点（立项三）：sentiment 后逐场产出贪婪/恐惧评分与陷阱组合。
+
+        输入复用 runner 口径（sentiment/fundamental/odds_verify/欧亚盘）；
+        结论只作为 synthesis 警示输入，不参与重试环重算。
+        """
+        greed_map = {}
+        for row in state.get("matches") or []:
+            fid = row["fid"]
+            odds_data = self.data_source.query_match_odds(fid) or {}
+            greed_map[fid] = self._runner.greed_fear_agent.analyze({
+                "sentiment": (state.get("sentiment") or {}).get(fid) or {},
+                "fundamental": (state.get("fundamentals") or {}).get(fid) or {},
+                "odds_verify": (state.get("odds_verification") or {}).get(fid) or {},
+                "euro": odds_data.get("euro") or [],
+                "asian": odds_data.get("asian") or [],
+            })
+        return {"greed_fear": greed_map}
 
     def _synthesis(self, state: dict) -> dict:
         """综合判定节点：synthesis 后即时产出大小球/比分池层（ISS-FA4）。
@@ -276,6 +298,7 @@ class GraphNodes:
             "market_direction": self._runner._market_direction(
                 odds_data.get("euro") or []
             ),
+            "greed_fear": (state.get("greed_fear") or {}).get(fid) or {},
         }
 
     def _assemble(self, state: dict, row: dict, odds_data: dict) -> dict:
@@ -293,6 +316,7 @@ class GraphNodes:
             "odds_verify": (state.get("odds_verification") or {}).get(fid) or {},
             "history_deduction": (state.get("history_deduction") or {}).get(fid) or {},
             "sentiment": (state.get("sentiment") or {}).get(fid) or {},
+            "greed_fear": (state.get("greed_fear") or {}).get(fid) or {},
             "synthesis": synthesis,
             "goal_layer": (state.get("goal_layer") or {}).get(fid) or {},
             "review": (state.get("review") or {}).get(fid) or {},

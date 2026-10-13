@@ -61,8 +61,10 @@ class SynthesisAgent:
     def analyze(self, data: dict, attempt: int = 0) -> dict:
         """产出单场推荐结构。
 
-        输入：{"fundamental","odds","sentiment","vote","market_direction"}。
-        输出：{"phase","evacuation","anti_public","main_action","recommendation","attempt"}。
+        输入：{"fundamental","odds","sentiment","vote","market_direction",
+        "greed_fear"(可选，立项三贪婪恐惧层结论)}。
+        输出：{"phase","evacuation","anti_public","main_action","recommendation",
+        "attempt"[,"trap_combination"]}（贪婪恐惧输入存在时透传陷阱组合）。
         失败行为：数据块缺失按降级标注保留结构，不抛异常。
         """
         fundamental = data.get("fundamental") or {}
@@ -70,6 +72,7 @@ class SynthesisAgent:
         sentiment = data.get("sentiment") or {}
         vote = data.get("vote")
         market_direction = data.get("market_direction") or "win"
+        greed_fear = data.get("greed_fear") or {}
 
         evacuation = self._collect_evacuation(odds, sentiment)
         anti_public = self._anti_public(fundamental, odds, market_direction)
@@ -79,6 +82,7 @@ class SynthesisAgent:
         had_unit = self._build_had_unit(market_direction, main_action, sentiment, vote)
         hhand_unit, notes = self._build_hhand_unit(vote, sentiment, anti_public, market_direction)
         notes.extend(self._cover_note(had_unit, vote, market_direction))
+        notes.extend(self._greed_fear_note(greed_fear))
         mutual = self.enforce_mutual_exclusion(had_unit, hhand_unit, evacuation["hard_gate"])
         if mutual["adjusted"]:
             hhand_unit = None
@@ -89,8 +93,12 @@ class SynthesisAgent:
             "notes": notes,
             "mutual_exclusion": mutual,
         }
-        return {"phase": "synthesis", "evacuation": evacuation, "anti_public": anti_public,
-                "main_action": main_action, "recommendation": recommendation, "attempt": attempt}
+        result = {"phase": "synthesis", "evacuation": evacuation, "anti_public": anti_public,
+                  "main_action": main_action, "recommendation": recommendation, "attempt": attempt}
+        if greed_fear:
+            # 陷阱组合透传给报告层；警示口径见 _greed_fear_note（待主控确认）
+            result["trap_combination"] = greed_fear.get("trap_combination")
+        return result
 
     # ------------------------------------------------------------------ 撤离
     @staticmethod
@@ -255,6 +263,24 @@ class SynthesisAgent:
             return ["竞彩SP缺失，低赔补位判定降级"]
         if sp_main >= LOW_SP_THRESHOLD:
             return ["无补位需求（主推SP≥1.5）"]
+        return []
+
+    # ------------------------------------------------- 贪婪恐惧消费（立项三）
+    @staticmethod
+    def _greed_fear_note(greed_fear: dict) -> list:
+        """贪婪恐惧陷阱警示（立项三最小闭环）：仅双侧强陷阱追加警示备注。
+
+        口径约束：强贪婪（诱多）+ 强恐惧（诱空）并存提示双向诱盘风险；
+        只写警示不改推荐结构（调整口径待主控确认，PRD-12 §8.3 F-21）。
+        输入为空（上游缺失/未接入）返回空列表，行为向后兼容。
+        """
+        if not greed_fear:
+            return []
+        greed_level = (greed_fear.get("greed") or {}).get("level")
+        fear_level = (greed_fear.get("fear") or {}).get("level")
+        if greed_level == "强" and fear_level == "强":
+            combination = greed_fear.get("trap_combination") or ""
+            return [f"贪婪恐惧陷阱警示：{combination}，警惕双向诱盘"]
         return []
 
     # ---------------------------------------------------------------- 互斥

@@ -43,6 +43,7 @@ def _registry(review_decisions: list, human_review_fn) -> dict:
         "fundamental_agent": _trace_agent("fundamental_agent"),
         "odds_verify_agent": _trace_agent("odds_verify_agent"),
         "sentiment_agent": _trace_agent("sentiment_agent"),
+        "greed_fear_agent": _trace_agent("greed_fear_agent"),
         "synthesis_agent": _trace_agent("synthesis_agent"),
         "report_agent": _trace_agent("report_agent"),
         "phase_report": _trace_agent("phase_report"),

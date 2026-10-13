@@ -15,6 +15,7 @@ from fa_orchestrator.agents.data_agent import DataAgent
 from fa_orchestrator.data.data_source import CHANNEL_FIXTURE
 from fa_orchestrator.agents.fundamental_agent import FundamentalAgent
 from fa_orchestrator.agents.goal_layer_agent import GoalLayerAgent
+from fa_orchestrator.agents.greed_fear_agent import GreedFearAgent
 from fa_orchestrator.analysis.history_deduction import deduce_heat_drift, deduce_trend
 from fa_orchestrator.analysis.odds_math import implied_probabilities
 from fa_orchestrator.agents.odds_verify_agent import OddsVerifyAgent
@@ -34,7 +35,7 @@ class AnalysisRunner:
 
     def __init__(self, data_source, channel: str = CHANNEL_FIXTURE, fundamental_agent=None,
                  odds_agent=None, sentiment_agent=None, synthesis_agent=None, review_agent=None,
-                 goal_layer_agent=None):
+                 goal_layer_agent=None, greed_fear_agent=None):
         self.data_source = data_source
         self.channel = channel
         self.fundamental_agent = fundamental_agent or FundamentalAgent()
@@ -43,6 +44,7 @@ class AnalysisRunner:
         self.synthesis_agent = synthesis_agent or SynthesisAgent()
         self.review_agent = review_agent or ReviewAgent()
         self.goal_layer_agent = goal_layer_agent or GoalLayerAgent()
+        self.greed_fear_agent = greed_fear_agent or GreedFearAgent()
 
     def run(self, match_date: str) -> dict:
         """执行日级分析并产出全场次结论（两阶段 + 热度/综合判定/矛盾检查）。
@@ -90,8 +92,16 @@ class AnalysisRunner:
             "euro": odds_data.get("euro") or [],
             "fundamental": fundamental,
         })
+        # 贪婪恐惧层（立项三）：依赖 sentiment（热度偏差）与三盘赔率，重试环不重算
+        greed_fear = self.greed_fear_agent.analyze({
+            "sentiment": sentiment,
+            "fundamental": fundamental,
+            "odds_verify": odds_verify,
+            "euro": odds_data.get("euro") or [],
+            "asian": odds_data.get("asian") or [],
+        })
         synthesis, review, goal_layer = self._synthesize_with_review(
-            fundamental, odds_verify, sentiment, vote, odds_data
+            fundamental, odds_verify, sentiment, vote, odds_data, greed_fear
         )
         return {
             "fid": fid,
@@ -104,6 +114,7 @@ class AnalysisRunner:
             "odds_verify": odds_verify,
             "history_deduction": self._deduce_history(fid),
             "sentiment": sentiment,
+            "greed_fear": greed_fear,
             "synthesis": synthesis,
             "goal_layer": goal_layer,
             "review": review,
@@ -112,12 +123,13 @@ class AnalysisRunner:
 
     def _synthesize_with_review(self, fundamental: dict, odds_verify: dict,
                                 sentiment: dict, vote: dict | None,
-                                odds_data: dict) -> tuple:
+                                odds_data: dict, greed_fear: dict) -> tuple:
         """综合判定 + 大小球/比分池层 + 矛盾检查条件回退环（F-14，ISS-FA4）。
 
         retry 决策时重跑 SynthesisAgent 与 GoalLayerAgent（attempt 递增），
         最多 MAX_REVIEW_RETRIES 次；预算耗尽仍不通过 → 转人工裁决（manual），
-        由 run() 登记 manual_review_matches。
+        由 run() 登记 manual_review_matches。贪婪恐惧层结论随重试透传不重算
+        （其输入 sentiment/odds 在重试间不变）。
         """
         synthesis_input = {
             "fundamental": fundamental,
@@ -125,6 +137,7 @@ class AnalysisRunner:
             "sentiment": sentiment,
             "vote": vote,
             "market_direction": self._market_direction(odds_data.get("euro") or []),
+            "greed_fear": greed_fear,
         }
         goal_layer_input = self._goal_layer_input(
             fundamental, odds_verify, odds_data, synthesis_input["market_direction"]
