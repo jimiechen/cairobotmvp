@@ -96,6 +96,22 @@ class TestBetfairInput:
         assert result["bf"]["available"] is False
         assert "必发" in result["bf"]["summary"]
 
+    def test_庄家pnl与价位聚集透传且summary含描述(self):
+        # 立项四：pnl/价位聚集为输入记录（skill 未定义判定口径，语义解读待主控确认）
+        bf = {"total_volume": 120000.0, "direction": "home", "trend": "falling",
+              "bookmaker_pnl": -123.45,
+              "ladder": {"top_price": 2.0, "top_ratio": 0.7273, "levels": 2}}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert result["bf"]["bookmaker_pnl"] == -123.45
+        assert result["bf"]["ladder"]["top_ratio"] == 0.7273
+        assert "庄家pnl" in result["bf"]["summary"]
+
+    def test_pnl缺失时summary不含pnl片段(self):
+        bf = {"total_volume": 120000.0, "direction": "home", "trend": "rising"}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert result["bf"]["bookmaker_pnl"] is None
+        assert "庄家pnl" not in result["bf"]["summary"]
+
 
 class TestOverheatDisposition:
     def test_独立利多情报达标时降星保方向(self):

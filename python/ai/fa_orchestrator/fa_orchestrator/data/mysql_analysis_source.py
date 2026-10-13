@@ -19,12 +19,17 @@
 
 单元测试一律 Fake 连接；真实联调走 tests/integration（FA_MYSQL_INTEGRATION 门控）。
 """
+import logging
+
+import pymysql
+
 from fa_orchestrator.data.mysql_analysis_parse import (
     FRIENDLY_KEYWORD,
     bf_block,
     drift_of,
     fmt_time,
     had_block,
+    ladder_concentration,
     num,
     pair_odds,
     split_intel_items,
@@ -49,10 +54,14 @@ from fa_orchestrator.data.sql_contracts import (
     SQL_Q3_KICKOFF,
     SQL_Q3_OVERUNDER,
     SQL_Q5_BF,
+    SQL_Q5_BF_PNL,
+    SQL_Q5_LADDER,
     SQL_Q5_VOTE,
     SQL_Q9_INTEL,
     TRACK_BOOKMAKERS,
 )
+
+logger = logging.getLogger(__name__)
 
 # mysql 通道降级标注（缺口如实透出，随结论落盘，禁止编造补齐）
 DEGRADATION_NOTES = (
@@ -123,7 +132,9 @@ class MySqlAnalysisDataSource(MySqlDataSource):
 
         输出：{support, sp, hhand, bf}；缺池/无映射时对应块 None；
         bf.trend 按 direction 方向占比有效首尾差判定，单时点为 None
-        （缺口标注）；large_volume 为大额成交量（large 占比列库内恒空）。
+        （缺口标注）；large_volume 为大额成交量（large 占比列库内恒空）；
+        bf.bookmaker_pnl / bf.ladder 为立项四扩展（宿主入库后生效，
+        未入库降级 None）。
         """
         match_id = self._resolve(fid)
         if match_id is None:
@@ -135,6 +146,9 @@ class MySqlAnalysisDataSource(MySqlDataSource):
             latest[row["pool_code"]] = row
         had = latest.get(POOL_HAD)
         hhad = latest.get(POOL_HHAD)
+        bf = bf_block(bf_rows) if bf_rows else None
+        if bf is not None:
+            bf.update(self._bf_pnl_ext(match_id))
         return {
             "support": had_block(had, "support_rate") if had else None,
             "sp": had_block(had, "odds") if had else None,
@@ -143,8 +157,38 @@ class MySqlAnalysisDataSource(MySqlDataSource):
                 "odds": had_block(hhad, "odds"),
                 "support": had_block(hhad, "support_rate"),
             } if hhad else None),
-            "bf": bf_block(bf_rows) if bf_rows else None,
+            "bf": bf,
         }
+
+    def _bf_pnl_ext(self, match_id) -> dict:
+        """立项四扩展：庄家 pnl 与价位聚集（宿主建列/建表后生效）。
+
+        输出：{"bookmaker_pnl": 最新快照非 None pnl（全 None → None）,
+               "ladder": ladder_concentration 摘要（空表/未建 → None）}。
+        降级口径：pnl 列未建报 OperationalError(1054)、价位表未建报
+        ProgrammingError(1146)（2026-10-13 真库实测）——均为已知的宿主
+        未入库状态而非查询缺陷，记录 warning 后按缺口返回 None（对齐
+        "库内已有数据 100% 进入分析，缺口如实标注"口径）；其余异常向上
+        抛出不吞。
+        """
+        not_ready = (pymysql.err.OperationalError, pymysql.err.ProgrammingError)
+        bookmaker_pnl = None
+        try:
+            pnl_rows = self._fetch(SQL_Q5_BF_PNL.strip(), (match_id,))
+            pnls = [num(r["bookmaker_pnl"]) for r in pnl_rows]
+            pnls = [v for v in pnls if v is not None]
+            bookmaker_pnl = pnls[-1] if pnls else None
+        except not_ready as exc:
+            logger.warning("betfair pnl 扩展降级（宿主未入库?）match_id=%s: %s",
+                           match_id, exc)
+        ladder = None
+        try:
+            ladder = ladder_concentration(
+                self._fetch(SQL_Q5_LADDER.strip(), (match_id, match_id)))
+        except not_ready as exc:
+            logger.warning("betfair 价位聚集降级（宿主未入库?）match_id=%s: %s",
+                           match_id, exc)
+        return {"bookmaker_pnl": bookmaker_pnl, "ladder": ladder}
 
     def query_fundamentals(self, fid: str) -> dict:
         """Q9~Q12（基本面四块）：情报/历史交锋/近期状态/赛程。

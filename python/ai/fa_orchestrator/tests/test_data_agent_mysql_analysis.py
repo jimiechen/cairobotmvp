@@ -87,6 +87,11 @@ VOTE_ROWS = [
 BF_ROWS = [{"trade_type": "standard", "total_volume": 86000, "home_pct": 58.0,
             "draw_pct": 24.0, "away_pct": 18.0,
             "snapshot_time": datetime(2026, 9, 29, 10, 0, 0)}]
+# 立项四扩展结果集：query_vote 在 BF_ROWS 后追加 pnl/ladder 两次查询，
+# E2E 序列必须同步插入（否则后续 D9/D12 结果集错位）
+BF_PNL_ROWS = [{"trade_type": "standard", "bookmaker_pnl": -88.0,
+                "snapshot_time": datetime(2026, 9, 29, 10, 0, 0)}]
+LADDER_ROWS = [{"price": 2.3, "back_volume": 70.0, "lay_volume": 30.0}]
 TRACK_ASIAN_ROWS = [{"bk": "澳门", "handicap": 0.0, "is_initial": 1},
                     {"bk": "澳门", "handicap": 0.25, "is_initial": 0}]
 TRACK_OU_ROWS = [{"bk": "澳门", "line": 2.5, "is_initial": 1}]
@@ -186,7 +191,8 @@ class TestMysqlAnalysisE2E:
             + [_module_rows(n) for n in (231, 272, 32, 20, 6, 4)]
             + [KICKOFF_ROWS, EUROPE_ROWS, ASIAN_ROWS, OVERUNDER_ROWS,
                INTEL_ROWS, H2H_ROWS, FORM_ROWS, SCHEDULE_ROWS,
-               VOTE_ROWS, BF_ROWS, TRACK_ASIAN_ROWS, TRACK_OU_ROWS, HEAT_ROWS]
+               VOTE_ROWS, BF_ROWS, BF_PNL_ROWS, LADDER_ROWS,
+               TRACK_ASIAN_ROWS, TRACK_OU_ROWS, HEAT_ROWS]
         )
         source = _make_source()
         conclusion = AnalysisRunner(source, channel=CHANNEL_MYSQL).run(MATCH_DATE)
@@ -201,6 +207,8 @@ class TestMysqlAnalysisE2E:
         assert item["fundamental"]["h2h"]["suppression"] == "weak"
         assert item["fundamental"]["intelligence"]["balance"] is True  # sentiment 无库维度→均势
         assert item["vote_available"] is True
+        assert item["sentiment"]["bf"]["bookmaker_pnl"] == -88.0  # 立项四端到端透传
+        assert item["sentiment"]["bf"]["ladder"]["top_price"] == 2.3
         assert item["history_deduction"]["trend"]["available"] is True
         assert item["history_deduction"]["trend"]["asian_deepen_count"] == 1
         assert item["history_deduction"]["trend"]["total"] == 1

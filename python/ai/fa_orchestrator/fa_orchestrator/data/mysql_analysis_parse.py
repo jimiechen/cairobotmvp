@@ -150,6 +150,27 @@ def bf_block(rows) -> dict:
             "large_volume": num(large[-1]["total_volume"]) if large else None}
 
 
+def ladder_concentration(rows) -> dict | None:
+    """必发价位档序列 → 聚集度摘要 {top_price, top_ratio, levels}（立项四）。
+
+    口径假设（skill 未定义精确判定规则，2026-10-13 主控确认契约假设先行，
+    阈值/语义解读待主控确认）：top 档 = back+lay 合计成交量最大的价位档，
+    top_ratio = 该档合计量 / 全档合计量（四舍五入 4 位）。
+    空行/全档无量 → None（缺口标注，不臆造）。
+    """
+    laddered = [(num(r["price"]),
+                 (num(r["back_volume"]) or 0.0) + (num(r["lay_volume"]) or 0.0))
+                for r in rows]
+    laddered = [(p, v) for p, v in laddered if p is not None]
+    total = sum(v for _, v in laddered)
+    if not laddered or total <= 0:
+        return None
+    top_price, top_volume = max(laddered, key=lambda pair: pair[1])
+    return {"top_price": top_price,
+            "top_ratio": round(top_volume / total, 4),
+            "levels": len(laddered)}
+
+
 def split_intel_items(content, home_team=None, away_team=None) -> list:
     """Q9 前瞻正文 → items（按【主队】/【客队】/【真队名】标记切段 + 关键词利弊判读）。
 

@@ -115,6 +115,70 @@ class TestQ5Vote:
         assert vote["support"] is None and vote["sp"] is None
 
 
+# 立项四扩展：betfair_trading.bookmaker_pnl 列 + betfair_price_ladder 表
+# （宿主侧执行 migrations/betfair_pnl_expand/up.sql 后生效）
+BF_PNL_ROWS = [
+    {"trade_type": "standard", "bookmaker_pnl": -50.0,
+     "snapshot_time": "2026-09-28 12:00:00"},
+    {"trade_type": "standard", "bookmaker_pnl": -123.45,
+     "snapshot_time": "2026-09-29 21:47:08"},
+]
+LADDER_ROWS = [
+    {"price": 1.98, "back_volume": 40.0, "lay_volume": 20.0},
+    {"price": 2.0, "back_volume": 100.0, "lay_volume": 60.0},
+]
+
+
+class TestQ5BetfairPnlExt:
+    def test_pnl取最新非None值且价位聚集随bf块输出(self, patch_mysql_connect):
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS,
+                             BF_PNL_ROWS, LADDER_ROWS])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["bookmaker_pnl"] == -123.45
+        assert vote["bf"]["ladder"]["top_price"] == 2.0
+        assert vote["bf"]["ladder"]["top_ratio"] == round(160.0 / 220.0, 4)
+        assert vote["bf"]["ladder"]["levels"] == 2
+
+    def test_宿主未入库时扩展字段降级None(self, patch_mysql_connect):
+        # 现有库无 pnl 列/ladder 表：扩展查询返回空 → 降级，不破坏原 bf 块
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["bookmaker_pnl"] is None
+        assert vote["bf"]["ladder"] is None
+        assert vote["bf"]["direction"] == "home"   # 原口径不受影响
+
+    def test_表不存在ProgrammingError1146同样降级(self, patch_mysql_connect, monkeypatch):
+        # 2026-10-13 真库实测：表不存在报 ProgrammingError(1146)，
+        # 与列不存在 OperationalError(1054) 同属宿主未入库信号，须一并降级
+        import pymysql
+
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS])
+        source = _make_source({"1398605": 2635})
+        real_fetch = source._fetch
+
+        def fake_fetch(sql, params):
+            if "bookmaker_pnl" in sql:
+                raise pymysql.err.ProgrammingError(
+                    1146, "Table 'workbench.betfair_price_ladder' doesn't exist")
+            return real_fetch(sql, params)
+
+        monkeypatch.setattr(source, "_fetch", fake_fetch)
+        vote = source.query_vote("1398605")
+        assert vote["bf"]["bookmaker_pnl"] is None
+        assert vote["bf"]["ladder"] is None
+        assert vote["bf"]["direction"] == "home"
+
+    def test_pnl全None时bookmaker_pnl为None(self, patch_mysql_connect):
+        rows = [dict(r, bookmaker_pnl=None) for r in BF_PNL_ROWS]
+        patch_mysql_connect([HAD_ROWS, BF_ROWS, rows, []])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["bookmaker_pnl"] is None
+
+    def test_无映射fid时扩展不触发(self, patch_mysql_connect):
+        vote = _make_source({}).query_vote("1398605")
+        assert vote is None
+
+
 INTEL_ROWS = [
     {"source": "qianzhan500", "status": "filled", "title": "500com前瞻",
      "home_team": "哥伦布机员", "away_team": "圣路易斯城",

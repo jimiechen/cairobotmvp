@@ -91,13 +91,28 @@ class SentimentAgent:
 
     @staticmethod
     def _analyze_bf(vote: dict | None) -> dict:
-        """必发成交形态输入（F-12）：记录方向与回落形态，缺失时标注降级。"""
+        """必发成交形态输入（F-12）：记录方向与回落形态，缺失时标注降级。
+
+        立项四扩展：透传 bookmaker_pnl（庄家 pnl 指数）与 ladder（价位
+        聚集摘要），仅作输入记录——skill 未定义二者判定口径，语义解读
+        待主控确认，不做臆测性结论；缺失时对应字段 None、summary 不提。
+        """
         bf = (vote or {}).get("bf") or {}
         if not bf:
-            return {"available": False, "trend": None,
+            return {"available": False, "trend": None, "bookmaker_pnl": None,
+                    "ladder": None,
                     "summary": "必发成交数据缺失，形态输入降级"}
+        bookmaker_pnl = bf.get("bookmaker_pnl")
+        ladder = bf.get("ladder")
+        summary = f"必发成交方向 {bf.get('direction')}，形态 {bf.get('trend')}"
+        if bookmaker_pnl is not None:
+            summary += f"，庄家pnl {bookmaker_pnl}"
+        if ladder:
+            summary += (f"，价位聚集 top@{ladder.get('top_price')}"
+                        f"（占比 {ladder.get('top_ratio')}）")
         return {"available": True, "trend": bf.get("trend"),
-                "summary": f"必发成交方向 {bf.get('direction')}，形态 {bf.get('trend')}"}
+                "bookmaker_pnl": bookmaker_pnl, "ladder": ladder,
+                "summary": summary}
 
     def _judge_overheat(self, had: dict, hhand: dict, fundamental: dict) -> dict:
         """过热判定与两档处置（SKILL v7.9）：胜平负 ≥+20pp / 让球 ≥+15pp。"""

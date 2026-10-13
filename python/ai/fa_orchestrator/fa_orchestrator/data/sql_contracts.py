@@ -134,6 +134,28 @@ WHERE match_id = %s
 ORDER BY snapshot_time, id;
 """
 
+# 立项四扩展：庄家 pnl 指数（bookmaker_pnl 列由宿主执行
+# migrations/betfair_pnl_expand/up.sql 后存在；列未建时本查询报
+# OperationalError，数据源层捕获降级 None，不破坏原 Q5_bf 口径）。
+# pnl 属 bf_trading（标准盘）属性，仅取 standard 行。
+SQL_Q5_BF_PNL = """
+SELECT trade_type, bookmaker_pnl, snapshot_time
+FROM betfair_trading
+WHERE match_id = %s AND trade_type = 'standard'
+ORDER BY snapshot_time, id;
+"""
+
+# 立项四扩展：必发价位聚集（betfair_price_ladder 表由宿主建表后生效；
+# 表未建时降级 None）。取最新快照全档，解析层出聚集度摘要。
+SQL_Q5_LADDER = """
+SELECT price, back_volume, lay_volume
+FROM betfair_price_ladder
+WHERE match_id = %s
+  AND snapshot_time = (SELECT MAX(snapshot_time) FROM betfair_price_ladder
+                       WHERE match_id = %s)
+ORDER BY price;
+"""
+
 # 情报：仅取已填充行；party 由正文【主队】/【客队】/【真队名】标记解析，
 # sentiment 由 parse 层关键词判读（立项二②）；JOIN match 取主客队名供真队名标记匹配
 # （match 表主客列为 home/away，别名对齐 parse 层参数命名）
@@ -222,6 +244,8 @@ ANALYSIS_CONTRACTS = {
     "Q3_overunder": SQL_Q3_OVERUNDER.strip(),
     "Q5_vote": SQL_Q5_VOTE.strip(),
     "Q5_bf": SQL_Q5_BF.strip(),
+    "Q5_bf_pnl": SQL_Q5_BF_PNL.strip(),
+    "Q5_ladder": SQL_Q5_LADDER.strip(),
     "Q9_intel": SQL_Q9_INTEL.strip(),
     "Q10_h2h": SQL_Q10_H2H.strip(),
     "Q11_recent": SQL_Q11_RECENT.strip(),
