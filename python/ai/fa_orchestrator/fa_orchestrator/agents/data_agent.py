@@ -51,7 +51,7 @@ class DataAgent:
 
     def _resolve_all(self, matches: list, match_date: str) -> dict:
         """批量四路径解析：fid → match.id；失败记 None（unresolved）。"""
-        candidates = self.data_source.query_jc_candidates()
+        candidates = self.data_source.query_jc_candidates(match_date)
         match_ids = {}
         for row in matches:
             try:

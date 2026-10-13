@@ -12,6 +12,9 @@
 窗口口径变更（2026-10-08）：Q1 契约 SQL 内置竞彩日跨日窗口
 [D 12:00, D+1 12:00) 左闭右开，返回集合与 match_date 等值口径不同，
 锚点若失效需按新口径重新探测。
+宿主口径修正（2026-10-09）：候选查询改为 kickoff_time 窗口直查并放开
+play_type 过滤（beidan 同入候选，cc_id 为 zqcf 编号体系与清单编号不同，
+队名简称包含路径兜底），锚点若失效需按宿主速览《MySQL 库内直查版》复核。
 """
 import os
 
@@ -60,7 +63,7 @@ class TestMySqlIntegration:
             match_date=SAMPLE_DATE,
             home_team=row["home_team"],
             away_team=row["away_team"],
-            rows=source.query_jc_candidates(),
+            rows=source.query_jc_candidates(SAMPLE_DATE),
         )
         assert isinstance(match_id, int)
         assert match_id > 0
@@ -75,7 +78,7 @@ class TestMySqlIntegration:
             match_date=SAMPLE_DATE,
             home_team=row["home_team"],
             away_team=row["away_team"],
-            rows=source.query_jc_candidates(),
+            rows=source.query_jc_candidates(SAMPLE_DATE),
         )
         counts = source.query_q2b_counts([SAMPLE_FID], match_ids={SAMPLE_FID: match_id})
         assert set(counts[SAMPLE_FID]) == {"ouzhi", "yazhi", "daxiao", "vote", "stats", "intel"}

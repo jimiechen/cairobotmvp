@@ -19,11 +19,13 @@
 真实联调走 tests/integration/test_mysql_integration.py（FA_MYSQL_INTEGRATION 门控）。
 """
 import os
+from datetime import date, timedelta
 
 import pymysql
 import pymysql.cursors
 
 from fa_orchestrator.data.sql_contracts import (
+    DAY_WINDOW_START_TIME,
     INTEGRITY_MODULES,
     SQL_JC_MATCH_CANDIDATES,
     SQL_Q1_MATCH_LIST,
@@ -44,11 +46,16 @@ DEFAULT_CONNECT_TIMEOUT_S = 5
 # 联调适配（R-04 探测发现）：需求文档契约 SQL_JC_MATCH_CANDIDATES 的列名
 # （cc/home_team/away_team）与 workbench 实际列（cc_id/home/away）不一致。
 # 契约文本保留原样供审计对照；本常量为实际执行版本，列名归一由
-# MySqlDataSource._adapt_candidate_row 完成。ORDER BY id：`match` 表存在
-# 同场次重复行且数据集中于小 id（联调探测 8 组），保证四路径解析确定性。
+# MySqlDataSource._adapt_candidate_row 完成。
+# 宿主速览口径（2026-10-09）：候选按 kickoff_time ∈ [D 12:00, D+1 12:00)
+# 窗口直查、不筛 play_type——beidan 同入候选（cc_id 为 zqcf 数字编号体系，
+# 与清单编号无对应关系，北单场次依赖队名路径兜底）；ORDER BY id：`match`
+# 表存在同场次重复行且数据集中于小 id（联调探测 8 组），保证四路径解析确定性。
 SQL_JC_CANDIDATES_MYSQL = (
     "SELECT id, cc_id, match_date, play_type, home, away "
-    "FROM `match` WHERE play_type = 'jingcai' ORDER BY id"
+    "FROM `match` "
+    "WHERE kickoff_time >= %s AND kickoff_time < %s "
+    "ORDER BY id"
 )
 
 
@@ -144,14 +151,21 @@ class MySqlDataSource:
             for row in rows
         ]
 
-    def query_jc_candidates(self) -> list:
-        """`match` 表候选行（四路径解析输入），列名归一为解析器口径。
+    def query_jc_candidates(self, match_date: str) -> list:
+        """`match` 表候选行（四路径解析输入），按竞彩日窗口直查。
 
+        窗口口径（PRD-12 §12.3 / 宿主速览 2026-10-09）：
+        kickoff_time ∈ [D 12:00, D+1 12:00) 左闭右开，参数化传参；
+        不筛 play_type（beidan 与 jingcai 同入候选，见 SQL 常量注释）。
         输出行结构：{id, cc, match_date, play_type, home_team, away_team}
         （alias 字段缺省：实际表无别名列，路径4 自然不触发）。
+        失败行为：连接/执行异常向上抛出，不吞掉。
         """
+        window_start = f"{match_date} {DAY_WINDOW_START_TIME}"
+        next_day = (date.fromisoformat(match_date) + timedelta(days=1)).isoformat()
+        window_end = f"{next_day} {DAY_WINDOW_START_TIME}"
         with self._connect() as conn, conn.cursor() as cur:
-            cur.execute(SQL_JC_CANDIDATES_MYSQL)
+            cur.execute(SQL_JC_CANDIDATES_MYSQL, (window_start, window_end))
             rows = list(cur)
         return [self._adapt_candidate_row(row) for row in rows]
 

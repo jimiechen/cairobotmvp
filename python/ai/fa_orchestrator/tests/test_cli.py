@@ -33,7 +33,7 @@ class TestFixtureDataSource:
 
     def test_候选行供四路径解析(self):
         source = FixtureDataSource(_FIXTURE)
-        rows = source.query_jc_candidates()
+        rows = source.query_jc_candidates("2026-09-29")
         assert any(r["id"] == 9001 for r in rows)
 
 

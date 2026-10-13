@@ -88,22 +88,25 @@ class TestQ1MatchList:
 class TestJcCandidates:
     def test_候选行列名适配为解析器口径(self, patch_mysql_connect):
         patch_mysql_connect([CAND_ROWS])
-        rows = _make_source().query_jc_candidates()
+        rows = _make_source().query_jc_candidates("2026-09-29")
         assert rows[0] == {
             "id": 2635, "cc": "周一003", "match_date": "2026-09-29",
             "play_type": "jingcai", "home_team": "亚美尼亚", "away_team": "黑山",
         }
         assert "cc_id" not in rows[0] and "home" not in rows[0]
 
-    def test_适配SQL常量且确定性排序(self, patch_mysql_connect):
+    def test_候选SQL窗口化且放开玩法过滤(self, patch_mysql_connect):
+        # 宿主速览口径（2026-10-09）：候选按 kickoff_time ∈ [D 12:00, D+1 12:00)
+        # 直查，beidan 与 jingcai 同入候选（编号体系不同靠队名路径兜底）
         conn = patch_mysql_connect([CAND_ROWS])
-        _make_source().query_jc_candidates()
+        _make_source().query_jc_candidates("2026-09-29")
         sql, params = conn.cursor_obj.executed[0]
         assert sql == SQL_JC_CANDIDATES_MYSQL
-        assert "ORDER BY id" in sql          # 重复场次下解析确定性（取小 id）
-        assert "play_type = 'jingcai'" in sql
-        assert "`match`" in sql              # 保留字反引号
-        assert params in (None, ())
+        assert "kickoff_time >= %s" in sql and "kickoff_time < %s" in sql
+        assert "WHERE play_type" not in sql    # 玩法过滤由解析路径承担，SQL 不再限制
+        assert "ORDER BY id" in sql            # 重复场次下解析确定性（取小 id）
+        assert "`match`" in sql                # 保留字反引号
+        assert params == ("2026-09-29 12:00", "2026-09-30 12:00")
 
     def test_契约文本保留原样供审计对照(self):
         # 需求文档契约不改写：差异由适配层消化，文本可对照审计
@@ -181,7 +184,7 @@ class StubSource:
         return [{"fid": "1398605", "match_no": "周一003",
                  "home_team": "亚美尼亚", "away_team": "黑山"}]
 
-    def query_jc_candidates(self):
+    def query_jc_candidates(self, match_date):
         return [{"id": 2635, "cc": "周一003", "match_date": "2026-09-29",
                  "play_type": "jingcai", "home_team": "亚美尼亚", "away_team": "黑山"}]
 

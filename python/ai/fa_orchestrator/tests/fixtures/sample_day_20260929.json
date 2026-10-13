@@ -1,5 +1,5 @@
 {
-  "_说明": "ISS-FA1 样本日 fixture：2026-09-29 竞彩日（周二008-014 七场）。队名为中性测试数据（真实对阵以生产库为准），结构对齐需求文档 §2.3/§四：Q1 行、`match` 表候选行、Q2b 六模块行数。Q1 行含 match_time（'HH:MM' 零填充开球时间，对齐 matches 表口径，供竞彩日跨日窗口 [D 12:00, D+1 12:00) 过滤）；跨日场次 match_date 归属开球日（周二014 当日 20:00 开球、其余次日晨间开球，对齐真实竞彩日形态）。",
+  "_说明": "ISS-FA1 样本日 fixture：2026-09-29 竞彩日（周二008-014 七场）。队名为中性测试数据（真实对阵以生产库为准），结构对齐需求文档 §2.3/§四：Q1 行、`match` 表候选行、Q2b 六模块行数。Q1 行与 `match` 表候选行均含 match_time（'HH:MM' 零填充开球时间，对齐 matches 表口径，供竞彩日跨日窗口 [D 12:00, D+1 12:00) 过滤——宿主速览口径 2026-10-09：候选集不筛玩法、按窗口限定，两条通道同口径）；跨日场次 match_date 归属开球日（周二014 当日 20:00 开球、其余次日晨间开球，对齐真实竞彩日形态）。9099 为历史干扰行（窗口外应被过滤，无解析依赖）。",
   "match_date": "2026-09-29",
   "q1_matches": [
     {"internal_id": 101, "match_no": "周二008", "home_team": "北城红鹰", "away_team": "南岭蓝鲨", "match_date": "2026-09-30", "match_time": "02:00", "fid": "1398594"},
@@ -11,13 +11,13 @@
     {"internal_id": 107, "match_no": "周二014", "home_team": "长风队", "away_team": "短雨队", "match_date": "2026-09-29", "match_time": "20:00", "fid": "1398600"}
   ],
   "jc_match_rows": [
-    {"id": 9001, "cc": "周二008", "match_date": "2026-09-30", "play_type": "jingcai", "home_team": "北城红鹰", "away_team": "南岭蓝鲨", "home_alias": ["红鹰"], "away_alias": ["蓝鲨"]},
-    {"id": 9002, "cc": "周二009", "match_date": "2026-10-05", "play_type": "jingcai", "home_team": "东川闪电", "away_team": "西湖巨浪", "home_alias": ["闪电"], "away_alias": ["巨浪"]},
-    {"id": 9003, "cc": "周六003", "match_date": "2026-09-30", "play_type": "jingcai", "home_team": "中原猛虎", "away_team": "滨海飞鱼", "home_alias": ["猛虎"], "away_alias": ["飞鱼"]},
-    {"id": 9004, "cc": "周二011", "match_date": "2026-09-30", "play_type": "jingcai", "home_team": "高原之鹰", "away_team": "平原野牛", "home_alias": ["高原雄鹰"], "away_alias": ["野牛"]},
-    {"id": 9005, "cc": "周二012", "match_date": "2026-09-30", "play_type": "jingcai", "home_team": "星城流星", "away_team": "月城潮汐", "home_alias": ["流星"], "away_alias": ["潮汐"]},
-    {"id": 9006, "cc": "周二013", "match_date": "2026-09-30", "play_type": "jingcai", "home_team": "火焰城", "away_team": "冰晶城", "home_alias": ["火焰"], "away_alias": ["冰晶"]},
-    {"id": 9007, "cc": "周二014", "match_date": "2026-09-29", "play_type": "jingcai", "home_team": "长风队", "away_team": "短雨队", "home_alias": ["长风"], "away_alias": ["短雨"]},
+    {"id": 9001, "cc": "周二008", "match_date": "2026-09-30", "match_time": "02:00", "play_type": "jingcai", "home_team": "北城红鹰", "away_team": "南岭蓝鲨", "home_alias": ["红鹰"], "away_alias": ["蓝鲨"]},
+    {"id": 9002, "cc": "周二009", "match_date": "2026-09-30", "match_time": "03:15", "play_type": "jingcai", "home_team": "东川闪电", "away_team": "西湖巨浪", "home_alias": ["闪电"], "away_alias": ["巨浪"]},
+    {"id": 9003, "cc": "周六003", "match_date": "2026-09-30", "match_time": "04:30", "play_type": "jingcai", "home_team": "中原猛虎", "away_team": "滨海飞鱼", "home_alias": ["猛虎"], "away_alias": ["飞鱼"]},
+    {"id": 9004, "cc": "周二011", "match_date": "2026-09-30", "match_time": "07:30", "play_type": "jingcai", "home_team": "高原之鹰", "away_team": "平原野牛", "home_alias": ["高原雄鹰"], "away_alias": ["野牛"]},
+    {"id": 9005, "cc": "周二012", "match_date": "2026-09-30", "match_time": "08:45", "play_type": "jingcai", "home_team": "星城流星", "away_team": "月城潮汐", "home_alias": ["流星"], "away_alias": ["潮汐"]},
+    {"id": 9006, "cc": "周二013", "match_date": "2026-09-30", "match_time": "09:45", "play_type": "jingcai", "home_team": "火焰城", "away_team": "冰晶城", "home_alias": ["火焰"], "away_alias": ["冰晶"]},
+    {"id": 9007, "cc": "周二014", "match_date": "2026-09-29", "match_time": "20:00", "play_type": "jingcai", "home_team": "长风队", "away_team": "短雨队", "home_alias": ["长风"], "away_alias": ["短雨"]},
     {"id": 9099, "cc": "周二008", "match_date": "2026-08-01", "play_type": "jingcai", "home_team": "旧例干扰队", "away_team": "历史干扰队", "home_alias": [], "away_alias": []}
   ],
   "q2b_counts": {

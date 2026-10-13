@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
-"""fid → match.id 四路径兜底解析（PRD-12 F-07，需求文档 §2.3）。
+"""fid → match.id 四路径兜底解析（PRD-12 F-07，需求文档 §2.3 + 宿主 2026-10-09 澄清）。
 
 解析链：fid → site_id_mappings → matches → `match` 表落点。
 本模块只负责纯内存的候选行匹配逻辑（四路径兜底），
 不负责数据库查询（由 data_source 提供 rows）。
 
+玩法口径（宿主速览《MySQL 库内直查版》2026-10-09 澄清）：beidan 与 jingcai
+同入分析范围，本层不再按 play_type 过滤——候选集范围由数据源窗口化限定；
+`match` 表 cc_id 为双编号体系（竞彩存 '周四001'、北单存 zqcf 数字编号），
+清单编号与北单 cc_id 无对应关系，北单场次依赖队名路径兜底。
+
 兜底顺序（与上游 resolve_match_id_by_500com 对齐）：
-1. 场次编号 + 日期窗口（match_date ±2 天，play_type='jingcai'）
+1. 场次编号 + 日期窗口（match_date ±2 天）
 2. 仅场次编号
-3. 队名归一（去空格 + 忽略大小写，双队同时匹配）
+3. 队名归一（去空格 + 忽略大小写；归一后互为子串即视为简称/异写命中，
+   双队同时匹配）
 4. 别名学习（home_alias / away_alias 命中）
 全部未命中抛 MatchResolveError，禁止返回 None 静默通过。
 """
@@ -16,9 +22,6 @@ from datetime import date
 
 # 路径1 日期窗口边界（需求文档 §2.3：match_date±2 天）
 DATE_WINDOW_DAYS = 2
-
-# 允许的玩法过滤（需求文档 §2.3：play_type='jingcai'）
-ALLOWED_PLAY_TYPE = "jingcai"
 
 
 class MatchResolveError(Exception):
@@ -28,6 +31,13 @@ class MatchResolveError(Exception):
 def _normalize_team_name(team_name: str) -> str:
     """队名归一：去首尾与内部空格、忽略大小写。"""
     return team_name.strip().replace(" ", "").casefold()
+
+
+def _names_match(want: str, got: str) -> bool:
+    """队名匹配判定：归一后全等，或互为子串（简称/异写，如 沙姆洛克 ⊂ 沙姆洛克流浪者）。"""
+    if not want or not got:
+        return False
+    return want == got or want in got or got in want
 
 
 def _parse_date(date_text: str) -> date:
@@ -40,7 +50,6 @@ def _by_cc_and_window(rows, match_no, match_date):
     hits = [
         row for row in rows
         if row.get("cc") == match_no
-        and row.get("play_type") == ALLOWED_PLAY_TYPE
         and abs((_parse_date(row["match_date"]) - window_center).days) <= DATE_WINDOW_DAYS
     ]
     if not hits:
@@ -50,23 +59,18 @@ def _by_cc_and_window(rows, match_no, match_date):
 
 def _by_cc_only(rows, match_no):
     """路径2：仅按场次编号匹配（无日期窗口约束）。"""
-    hits = [
-        row for row in rows
-        if row.get("cc") == match_no and row.get("play_type") == ALLOWED_PLAY_TYPE
-    ]
+    hits = [row for row in rows if row.get("cc") == match_no]
     return hits[0] if hits else None
 
 
 def _by_team_names(rows, home_team, away_team):
-    """路径3：队名归一后主客双队同时匹配。"""
+    """路径3：队名归一（含简称互含）后主客双队同时匹配。"""
     want_home = _normalize_team_name(home_team)
     want_away = _normalize_team_name(away_team)
     for row in rows:
-        if row.get("play_type") != ALLOWED_PLAY_TYPE:
-            continue
         got_home = _normalize_team_name(row.get("home_team", ""))
         got_away = _normalize_team_name(row.get("away_team", ""))
-        if got_home == want_home and got_away == want_away:
+        if _names_match(want_home, got_home) and _names_match(want_away, got_away):
             return row
     return None
 
@@ -76,8 +80,6 @@ def _by_alias(rows, home_team, away_team):
     want_home = _normalize_team_name(home_team)
     want_away = _normalize_team_name(away_team)
     for row in rows:
-        if row.get("play_type") != ALLOWED_PLAY_TYPE:
-            continue
         home_aliases = {_normalize_team_name(a) for a in row.get("home_alias", [])}
         away_aliases = {_normalize_team_name(a) for a in row.get("away_alias", [])}
         if want_home in home_aliases or want_away in away_aliases:

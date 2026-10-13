@@ -9,13 +9,14 @@ import pytest
 from fa_orchestrator.data.id_resolver import MatchResolveError, resolve_match_id
 
 
-def _row(row_id, cc, match_date, home, away, home_alias=None, away_alias=None):
-    """构造 `match` 表候选行。"""
+def _row(row_id, cc, match_date, home, away, home_alias=None, away_alias=None,
+         play_type="jingcai"):
+    """构造 `match` 表候选行（play_type 可指定，北单场景用 beidan）。"""
     return {
         "id": row_id,
         "cc": cc,
         "match_date": match_date,
-        "play_type": "jingcai",
+        "play_type": play_type,
         "home_team": home,
         "away_team": away,
         "home_alias": home_alias or [],
@@ -24,7 +25,7 @@ def _row(row_id, cc, match_date, home, away, home_alias=None, away_alias=None):
 
 
 class TestPath1CcAndDateWindow:
-    """路径1：cc（场次编号）+ match_date ±2 天窗口 + play_type='jingcai'。"""
+    """路径1：cc（场次编号）+ match_date ±2 天窗口（玩法不限，候选集由数据源窗口化）。"""
 
     def test_窗口内唯一命中(self):
         rows = [_row(1, "周二008", "2026-09-30", "北城红鹰", "南岭蓝鲨")]
@@ -62,16 +63,25 @@ class TestPath1CcAndDateWindow:
         )
         assert got == 12
 
-    def test_非竞彩玩法不参与命中(self):
-        rows = [{
-            "id": 1, "cc": "周二008", "match_date": "2026-09-30",
-            "play_type": "zqdc", "home_team": "北城红鹰", "away_team": "南岭蓝鲨",
-            "home_alias": [], "away_alias": [],
-        }]
+    def test_北单候选行经队名简称命中(self):
+        # 宿主速览澄清（2026-10-09）：北单 88（cc_id 为 zqcf 编号体系）同在
+        # 分析范围；清单编号 80 与库内 cc_id='88' 编号体系不同，只能靠队名命中。
+        # 真实形态：清单"沙姆洛克流浪者" vs 库内"沙姆洛克"（简称包含）。
+        rows = [_row(2918, "88", "2026-10-09", "沙姆洛克", "德罗赫达联",
+                     play_type="beidan")]
+        got = resolve_match_id(
+            match_no="80", match_date="2026-10-08",
+            home_team="沙姆洛克流浪者", away_team="德罗赫达联", rows=rows,
+        )
+        assert got == 2918
+
+    def test_全然无关队名不命中(self):
+        rows = [_row(2918, "88", "2026-10-09", "沙姆洛克", "德罗赫达联",
+                     play_type="beidan")]
         with pytest.raises(MatchResolveError):
             resolve_match_id(
-                match_no="周二008", match_date="2026-09-30",
-                home_team="北城红鹰", away_team="南岭蓝鲨", rows=rows,
+                match_no="80", match_date="2026-10-08",
+                home_team="某某联", away_team="德罗赫达联", rows=rows,
             )
 
 
@@ -97,6 +107,15 @@ class TestPath3TeamNormalize:
             home_team="中原猛虎", away_team="滨海飞鱼", rows=rows,
         )
         assert got == 3
+
+    def test_队名简称互含命中(self):
+        # 归一后互为子串即命中（简称/异写场景，如 达伽马 ⊂ 瓦斯科达伽马）
+        rows = [_row(6, "周二015", "2026-09-30", "瓦斯科达伽马", "米拉索")]
+        got = resolve_match_id(
+            match_no="周二015", match_date="2026-09-29",
+            home_team="达伽马", away_team="米拉索尔", rows=rows,
+        )
+        assert got == 6
 
     def test_仅主队匹配不通过(self):
         rows = [_row(3, "周六003", "2026-09-30", "中原猛虎", "另一队")]

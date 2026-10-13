@@ -16,15 +16,16 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from fa_orchestrator.data.sql_contracts import SQL_JC_MATCH_CANDIDATES, SQL_Q1_MATCH_LIST, build_q2b_sql
+from fa_orchestrator.data.sql_contracts import (
+    DAY_WINDOW_START_TIME,
+    SQL_JC_MATCH_CANDIDATES,
+    SQL_Q1_MATCH_LIST,
+    build_q2b_sql,
+)
 
 # 数据通道标识（F-09 溯源快照必填）
 CHANNEL_FIXTURE = "fixture"
 CHANNEL_MYSQL = "mysql"
-
-# 竞彩日窗口起点（PRD-12 §12.3：[D 12:00, D+1 12:00) 左闭右开）；
-# match_time 为 'HH:MM' 零填充字符串，字典序比较与时间序一致
-DAY_WINDOW_START_TIME = "12:00"
 
 # 溯源快照涉及的数据块编号（需求文档 §三）
 BLOCK_D1_MATCH_LIST = "D1"
@@ -80,9 +81,16 @@ class FixtureDataSource:
         all_counts = self.fixture.get("q2b_counts", {})
         return {fid: all_counts[fid] for fid in fids if fid in all_counts}
 
-    def query_jc_candidates(self) -> list:
-        """`match` 表候选行（四路径解析输入）。"""
-        return list(self.fixture.get("jc_match_rows", []))
+    def query_jc_candidates(self, match_date: str) -> list:
+        """`match` 表候选行（四路径解析输入），按竞彩日窗口过滤。
+
+        宿主速览口径（2026-10-09）：候选集不筛玩法、按竞彩日窗口限定范围，
+        与 mysql 通道 kickoff_time 参数化直查同口径（DAY_WINDOW_START_TIME 同源）。
+        """
+        return [
+            row for row in self.fixture.get("jc_match_rows", [])
+            if self._in_day_window(row, match_date)
+        ]
 
     def query_match_odds(self, fid: str):
         """Q3（单场三盘赔率明细）：欧赔/亚盘/大小球，is_final_snapshot 标注临场快照。"""
