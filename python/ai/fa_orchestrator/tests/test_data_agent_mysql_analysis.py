@@ -87,9 +87,9 @@ VOTE_ROWS = [
 BF_ROWS = [{"trade_type": "standard", "total_volume": 86000, "home_pct": 58.0,
             "draw_pct": 24.0, "away_pct": 18.0,
             "snapshot_time": datetime(2026, 9, 29, 10, 0, 0)}]
-TRACK_ASIAN_ROWS = [{"handicap": 0.0, "is_initial": 1},
-                    {"handicap": 0.25, "is_initial": 0}]
-TRACK_OU_ROWS = [{"line": 2.5, "is_initial": 1}]
+TRACK_ASIAN_ROWS = [{"bk": "澳门", "handicap": 0.0, "is_initial": 1},
+                    {"bk": "澳门", "handicap": 0.25, "is_initial": 0}]
+TRACK_OU_ROWS = [{"bk": "澳门", "line": 2.5, "is_initial": 1}]
 HEAT_ROWS = [
     {"side": "亚美尼亚", "cold_hot": 9, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0),
      "home": "亚美尼亚", "away": "黑山"},
@@ -141,7 +141,7 @@ class _StubSource:
     def query_match_list(self, match_date):
         return [dict(Q1_ROWS[0])]
 
-    def query_jc_candidates(self):
+    def query_jc_candidates(self, match_date):
         return [dict(CAND_ROWS[0], cc=CAND_ROWS[0]["cc_id"], home_team=CAND_ROWS[0]["home"],
                      away_team=CAND_ROWS[0]["away"])]
 

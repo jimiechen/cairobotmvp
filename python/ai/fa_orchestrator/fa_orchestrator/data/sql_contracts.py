@@ -23,6 +23,11 @@ INTEGRITY_MODULES = {
     "intel": "intelligence_text",
 }
 
+# 竞彩日窗口起点（PRD-12 §12.3：[D 12:00, D+1 12:00) 左闭右开）。
+# Q1 契约 SQL 内 '12:00' 字面量与本常量同源；代码侧候选窗口（mysql 通道
+# kickoff_time 参数化 / fixture 通道 match_time 过滤）统一引用本常量
+DAY_WINDOW_START_TIME = "12:00"
+
 # Q1：竞彩日比赛清单（500com 活跃映射，按编号排序）
 # 窗口口径（PRD-12 §12.3）：竞彩日 D = 开球窗口 [D 12:00, D+1 12:00) 左闭右开，
 # match_date 归属开球日——当日 12:00 起（含）或次日 12:00 前（不含）开球的
@@ -75,7 +80,9 @@ def build_q2b_sql(table: str, id_count: int) -> str:
 
 POOL_HAD = "HAD"          # 胜平负投票池（vote_snapshot.pool_code 取值）
 POOL_HHAD = "HHAD"        # 让球胜平负投票池
-TRACK_BOOKMAKER_NAME = "澳门"  # D9 变盘轨迹参考公司（降级口径，参数化传入）
+# D9 变盘轨迹参考公司集（多公司口径，参数化传入）：四家主流定价基准，
+# 库内均有 ≥2 快照（2026-10-12 探测：2948 皇冠 42/Bet365 25/澳门 3 轮）
+TRACK_BOOKMAKERS = ("澳门", "皇冠", "Bet365", "Pinnacle")
 
 SQL_Q3_KICKOFF = """
 SELECT kickoff_time FROM `match` WHERE id = %s;
@@ -117,11 +124,13 @@ WHERE match_id = %s AND pool_code IN (%s, %s)
 ORDER BY pool_code, snapshot_time, id;
 """
 
-# 必发交易：仅取 standard 类型（large 为大额口径，不用于方向判定）
+# 必发交易：全类型读取——standard 行出方向与占比趋势（多时点），large 行出
+# 大额成交量（2026-10-12 库内探查：large 与 standard 同频快照、占比列恒空，
+# 不用于方向判定）；trade_type 列保留供解析层分组
 SQL_Q5_BF = """
 SELECT trade_type, total_volume, home_pct, draw_pct, away_pct, snapshot_time
 FROM betfair_trading
-WHERE match_id = %s AND trade_type = 'standard'
+WHERE match_id = %s
 ORDER BY snapshot_time, id;
 """
 
@@ -174,21 +183,22 @@ WHERE h.match_id = %s
 ORDER BY h.snapshot_time, h.id;
 """
 
-# 变盘轨迹（D9 降级）：参考公司亚盘/大小盘快照序列，公司名参数化传入
+# 变盘轨迹（D9）：四家参考公司亚盘/大小盘快照序列，公司名参数化传入；
+# 输出 bk 列供按公司分组推演，公司内按快照时间升序（全局排序下相对序保持）
 SQL_D9_ASIAN_TRACKS = """
-SELECT a.handicap, a.is_initial
+SELECT b.name AS bk, a.handicap, a.is_initial
 FROM odds_asian a
 JOIN bookmaker b ON b.id = a.bookmaker_id
-WHERE a.match_id = %s AND b.name = %s
-ORDER BY a.snapshot_time, a.id;
+WHERE a.match_id = %s AND b.name IN (%s, %s, %s, %s)
+ORDER BY b.name, a.snapshot_time, a.id;
 """
 
 SQL_D9_OVERUNDER_TRACKS = """
-SELECT o.line, o.is_initial
+SELECT b.name AS bk, o.line, o.is_initial
 FROM odds_overunder o
 JOIN bookmaker b ON b.id = o.bookmaker_id
-WHERE o.match_id = %s AND b.name = %s
-ORDER BY o.snapshot_time, o.id;
+WHERE o.match_id = %s AND b.name IN (%s, %s, %s, %s)
+ORDER BY b.name, o.snapshot_time, o.id;
 """
 
 # D10 赛果：site_match_id == 500com fid 直连，取最新更新行

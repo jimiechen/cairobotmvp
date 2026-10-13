@@ -19,7 +19,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.1,
+       "draw": 3.25,
+       "lose": 3.4,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.02,
+       "draw": 3.3,
+       "lose": 3.55,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -35,7 +51,23 @@
      },
      "payout": 0.918,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.15,
+       "draw": 3.2,
+       "lose": 3.45,
+       "payout": 0.918,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.05,
+       "draw": 3.25,
+       "lose": 3.6,
+       "payout": 0.918,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -51,7 +83,23 @@
      },
      "payout": 0.911,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.12,
+       "draw": 3.28,
+       "lose": 3.42,
+       "payout": 0.911,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.04,
+       "draw": 3.3,
+       "lose": 3.5,
+       "payout": 0.911,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -67,7 +115,23 @@
      },
      "payout": 0.929,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.08,
+       "draw": 3.3,
+       "lose": 3.5,
+       "payout": 0.929,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.0,
+       "draw": 3.35,
+       "lose": 3.58,
+       "payout": 0.929,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -180,7 +244,23 @@
      },
      "payout": 0.9,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.55,
+       "draw": 3.15,
+       "lose": 2.75,
+       "payout": 0.9,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.58,
+       "draw": 3.2,
+       "lose": 2.7,
+       "payout": 0.9,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -196,7 +276,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.6,
+       "draw": 3.1,
+       "lose": 2.8,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.62,
+       "draw": 3.15,
+       "lose": 2.72,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -212,7 +308,23 @@
      },
      "payout": 0.902,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.52,
+       "draw": 3.18,
+       "lose": 2.78,
+       "payout": 0.902,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.55,
+       "draw": 3.22,
+       "lose": 2.68,
+       "payout": 0.902,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -228,7 +340,23 @@
      },
      "payout": 0.915,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.58,
+       "draw": 3.12,
+       "lose": 2.76,
+       "payout": 0.915,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.6,
+       "draw": 3.18,
+       "lose": 2.66,
+       "payout": 0.915,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -341,7 +469,23 @@
      },
      "payout": 0.912,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 3.1,
+       "draw": 3.45,
+       "lose": 2.1,
+       "payout": 0.912,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 3.2,
+       "draw": 3.5,
+       "lose": 2.05,
+       "payout": 0.912,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -357,7 +501,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 3.15,
+       "draw": 3.4,
+       "lose": 2.15,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 3.25,
+       "draw": 3.45,
+       "lose": 2.02,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -373,7 +533,23 @@
      },
      "payout": 0.908,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 3.08,
+       "draw": 3.42,
+       "lose": 2.12,
+       "payout": 0.908,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 3.18,
+       "draw": 3.48,
+       "lose": 2.06,
+       "payout": 0.908,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -389,7 +565,23 @@
      },
      "payout": 0.918,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 3.12,
+       "draw": 3.44,
+       "lose": 2.08,
+       "payout": 0.918,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 3.22,
+       "draw": 3.52,
+       "lose": 2.0,
+       "payout": 0.918,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -502,7 +694,23 @@
      },
      "payout": 0.903,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.3,
+       "draw": 3.2,
+       "lose": 3.0,
+       "payout": 0.903,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.28,
+       "draw": 3.25,
+       "lose": 3.02,
+       "payout": 0.903,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -518,7 +726,23 @@
      },
      "payout": 0.91,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.35,
+       "draw": 3.18,
+       "lose": 3.05,
+       "payout": 0.91,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.33,
+       "draw": 3.22,
+       "lose": 3.08,
+       "payout": 0.91,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -534,7 +758,23 @@
      },
      "payout": 0.906,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.32,
+       "draw": 3.22,
+       "lose": 3.01,
+       "payout": 0.906,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.3,
+       "draw": 3.26,
+       "lose": 3.04,
+       "payout": 0.906,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -550,7 +790,23 @@
      },
      "payout": 0.912,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.28,
+       "draw": 3.24,
+       "lose": 3.06,
+       "payout": 0.912,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.26,
+       "draw": 3.28,
+       "lose": 3.1,
+       "payout": 0.912,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -663,7 +919,23 @@
      },
      "payout": 0.902,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.05,
+       "draw": 3.3,
+       "lose": 3.55,
+       "payout": 0.902,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.02,
+       "draw": 3.05,
+       "lose": 3.7,
+       "payout": 0.902,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -679,7 +951,23 @@
      },
      "payout": 0.908,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.08,
+       "draw": 3.28,
+       "lose": 3.6,
+       "payout": 0.908,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.05,
+       "draw": 3.02,
+       "lose": 3.75,
+       "payout": 0.908,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -695,7 +983,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.06,
+       "draw": 3.32,
+       "lose": 3.52,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.03,
+       "draw": 3.08,
+       "lose": 3.66,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -711,7 +1015,23 @@
      },
      "payout": 0.915,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.03,
+       "draw": 3.34,
+       "lose": 3.58,
+       "payout": 0.915,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 2.0,
+       "draw": 3.06,
+       "lose": 3.72,
+       "payout": 0.915,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -824,7 +1144,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 1.85,
+       "draw": 3.4,
+       "lose": 4.2,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 1.82,
+       "draw": 3.45,
+       "lose": 4.3,
+       "payout": 0.905,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -840,7 +1176,23 @@
      },
      "payout": 0.91,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 1.88,
+       "draw": 3.38,
+       "lose": 4.25,
+       "payout": 0.91,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 1.85,
+       "draw": 3.42,
+       "lose": 4.35,
+       "payout": 0.91,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -856,7 +1208,23 @@
      },
      "payout": 0.906,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 1.86,
+       "draw": 3.42,
+       "lose": 4.18,
+       "payout": 0.906,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 1.83,
+       "draw": 3.46,
+       "lose": 4.28,
+       "payout": 0.906,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -872,7 +1240,23 @@
      },
      "payout": 0.913,
      "snapshot_time": "09-29 20:10",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 1.84,
+       "draw": 3.44,
+       "lose": 4.22,
+       "payout": 0.913,
+       "snapshot_time": "09-29 20:10"
+      },
+      {
+       "win": 1.81,
+       "draw": 3.48,
+       "lose": 4.32,
+       "payout": 0.913,
+       "snapshot_time": "09-29 20:10"
+      }
+     ]
     }
    ],
    "asian": [
@@ -985,7 +1369,23 @@
      },
      "payout": 0.905,
      "snapshot_time": "09-30 20:30",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.3,
+       "draw": 3.25,
+       "lose": 3.05,
+       "payout": 0.905,
+       "snapshot_time": "09-30 20:30"
+      },
+      {
+       "win": 2.29,
+       "draw": 3.26,
+       "lose": 3.06,
+       "payout": 0.905,
+       "snapshot_time": "09-30 20:30"
+      }
+     ]
     },
     {
      "bk": "立博",
@@ -1001,7 +1401,23 @@
      },
      "payout": 0.91,
      "snapshot_time": "09-30 20:30",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.33,
+       "draw": 3.22,
+       "lose": 3.08,
+       "payout": 0.91,
+       "snapshot_time": "09-30 20:30"
+      },
+      {
+       "win": 2.32,
+       "draw": 3.24,
+       "lose": 3.1,
+       "payout": 0.91,
+       "snapshot_time": "09-30 20:30"
+      }
+     ]
     },
     {
      "bk": "威廉希尔",
@@ -1017,7 +1433,23 @@
      },
      "payout": 0.906,
      "snapshot_time": "09-30 20:30",
-     "is_final_snapshot": false
+     "is_final_snapshot": false,
+     "history": [
+      {
+       "win": 2.31,
+       "draw": 3.26,
+       "lose": 3.03,
+       "payout": 0.906,
+       "snapshot_time": "09-30 20:30"
+      },
+      {
+       "win": 2.3,
+       "draw": 3.28,
+       "lose": 3.05,
+       "payout": 0.906,
+       "snapshot_time": "09-30 20:30"
+      }
+     ]
     },
     {
      "bk": "Bet365",
@@ -1033,7 +1465,23 @@
      },
      "payout": 0.912,
      "snapshot_time": "10-01 01:52",
-     "is_final_snapshot": true
+     "is_final_snapshot": true,
+     "history": [
+      {
+       "win": 2.25,
+       "draw": 3.3,
+       "lose": 3.15,
+       "payout": 0.912,
+       "snapshot_time": "10-01 01:52"
+      },
+      {
+       "win": 2.4,
+       "draw": 3.3,
+       "lose": 2.98,
+       "payout": 0.912,
+       "snapshot_time": "10-01 01:52"
+      }
+     ]
     }
    ],
    "asian": [
@@ -1139,15 +1587,15 @@
    },
    "sp": {
     "win": 1.45,
-    "draw": 4.20,
-    "lose": 6.00
+    "draw": 4.2,
+    "lose": 6.0
    },
    "hhand": {
     "line": -1.0,
     "odds": {
      "win": 1.83,
-     "draw": 3.50,
-     "lose": 4.00
+     "draw": 3.5,
+     "lose": 4.0
     },
     "support": {
      "win": 58.0,
@@ -1158,7 +1606,8 @@
    "bf": {
     "total_volume": 125000.0,
     "direction": "home",
-    "trend": "falling"
+    "trend": "falling",
+    "large_volume": 12500.0
    }
   },
   "1398595": {
@@ -1168,16 +1617,16 @@
     "lose": 29.5
    },
    "sp": {
-    "win": 2.10,
-    "draw": 3.30,
-    "lose": 3.40
+    "win": 2.1,
+    "draw": 3.3,
+    "lose": 3.4
    },
    "hhand": {
     "line": -0.5,
     "odds": {
      "win": 2.05,
-     "draw": 3.30,
-     "lose": 3.60
+     "draw": 3.3,
+     "lose": 3.6
     }
    }
   },
@@ -1188,16 +1637,16 @@
     "lose": 44.5
    },
    "sp": {
-    "win": 3.80,
-    "draw": 3.50,
-    "lose": 1.90
+    "win": 3.8,
+    "draw": 3.5,
+    "lose": 1.9
    },
    "hhand": {
     "line": 1.0,
     "odds": {
-     "win": 5.50,
-     "draw": 4.20,
-     "lose": 1.60
+     "win": 5.5,
+     "draw": 4.2,
+     "lose": 1.6
     },
     "support": {
      "win": 15.0,
@@ -1214,21 +1663,22 @@
    },
    "sp": {
     "win": 1.95,
-    "draw": 3.40,
-    "lose": 3.60
+    "draw": 3.4,
+    "lose": 3.6
    },
    "hhand": {
     "line": -1.0,
     "odds": {
      "win": 1.95,
-     "draw": 3.40,
-     "lose": 3.80
+     "draw": 3.4,
+     "lose": 3.8
     }
    },
    "bf": {
     "total_volume": 96000.0,
     "direction": "away",
-    "trend": "rising"
+    "trend": "rising",
+    "large_volume": 9600.0
    }
   },
   "1398598": {
@@ -1238,16 +1688,16 @@
     "lose": 22.0
    },
    "sp": {
-    "win": 1.70,
-    "draw": 3.60,
-    "lose": 4.80
+    "win": 1.7,
+    "draw": 3.6,
+    "lose": 4.8
    },
    "hhand": {
     "line": -1.0,
     "odds": {
      "win": 1.75,
-     "draw": 3.60,
-     "lose": 4.50
+     "draw": 3.6,
+     "lose": 4.5
     },
     "support": {
      "win": 70.0,
@@ -1264,15 +1714,15 @@
    },
    "sp": {
     "win": 1.75,
-    "draw": 3.50,
-    "lose": 4.60
+    "draw": 3.5,
+    "lose": 4.6
    },
    "hhand": {
     "line": -1.0,
     "odds": {
-     "win": 1.80,
-     "draw": 3.50,
-     "lose": 4.40
+     "win": 1.8,
+     "draw": 3.5,
+     "lose": 4.4
     }
    }
   }

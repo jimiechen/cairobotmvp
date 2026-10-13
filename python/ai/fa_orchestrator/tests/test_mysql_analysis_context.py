@@ -39,9 +39,16 @@ HHAD_ROWS = [
      "a_support_rate": 62.0, "snapshot_time": "2026-09-29 20:10:00"},
 ]
 BF_ROWS = [
-    # 模拟 SQL standard 过滤后的返回（large 类型不进入结果集）
+    # 模拟 SQL 全类型返回（不再过滤 trade_type）：standard 多时点出方向/趋势，
+    # large 行占比列库内恒空、仅大额成交量有值（2026-10-12 真库探查口径）
     {"trade_type": "standard", "total_volume": 10266.0, "home_pct": 61.36,
-     "draw_pct": 1.44, "away_pct": 37.2, "snapshot_time": "2026-09-29 21:47:08"},
+     "draw_pct": 1.44, "away_pct": 37.2, "snapshot_time": "2026-09-28 12:00:00"},
+    {"trade_type": "large", "total_volume": 3000.0, "home_pct": None,
+     "draw_pct": None, "away_pct": None, "snapshot_time": "2026-09-28 12:00:00"},
+    {"trade_type": "standard", "total_volume": 10266.0, "home_pct": 55.0,
+     "draw_pct": 5.0, "away_pct": 40.0, "snapshot_time": "2026-09-29 21:47:08"},
+    {"trade_type": "large", "total_volume": 9000.0, "home_pct": None,
+     "draw_pct": None, "away_pct": None, "snapshot_time": "2026-09-29 21:47:08"},
 ]
 
 
@@ -59,12 +66,42 @@ class TestQ5Vote:
         assert vote["hhand"]["odds"] == {"win": 4.6, "draw": 3.75, "lose": 1.55}
         assert vote["hhand"]["support"] == {"win": 16.0, "draw": 22.0, "lose": 62.0}
 
-    def test_必发取standard类型且direction按最大占比(self, patch_mysql_connect):
+    def test_必发direction按最新占比且trend按方向占比首尾差(self, patch_mysql_connect):
+        # 2026-10-12 库内探查：standard 多时点占比可判趋势（2949 home 68.50→79.18）
         patch_mysql_connect([HAD_ROWS, BF_ROWS])
         vote = _make_source({"1398605": 2635}).query_vote("1398605")
         assert vote["bf"]["total_volume"] == 10266.0
+        assert vote["bf"]["direction"] == "home"      # 最新占比最大者
+        assert vote["bf"]["trend"] == "falling"       # home 占比 61.36→55.0 回落
+        assert vote["bf"]["large_volume"] == 9000.0   # large 大额成交量（占比列恒空）
+
+    def test_必发trend按方向占比走高rising(self, patch_mysql_connect):
+        rows = [
+            dict(BF_ROWS[0], home_pct=40.0, draw_pct=10.0, away_pct=50.0),
+            dict(BF_ROWS[2], home_pct=55.0, draw_pct=10.0, away_pct=35.0),
+        ]
+        patch_mysql_connect([HAD_ROWS, rows])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
         assert vote["bf"]["direction"] == "home"
-        assert vote["bf"]["trend"] is None   # 库内单时点快照，趋势不可判（缺口标注）
+        assert vote["bf"]["trend"] == "rising"
+
+    def test_必发单时点trend为None(self, patch_mysql_connect):
+        patch_mysql_connect([HAD_ROWS, [BF_ROWS[0]]])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["trend"] is None   # 单时点快照，趋势不可判（缺口标注）
+
+    def test_必发首尾等值trend为None(self, patch_mysql_connect):
+        # 真实库 2948 两时点占比完全相同：无趋势变化，不臆造方向
+        rows = [BF_ROWS[0], dict(BF_ROWS[2], home_pct=61.36,
+                                 draw_pct=1.44, away_pct=37.2)]
+        patch_mysql_connect([HAD_ROWS, rows])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["trend"] is None
+
+    def test_必发无large行时large_volume为None(self, patch_mysql_connect):
+        patch_mysql_connect([HAD_ROWS, [BF_ROWS[0], BF_ROWS[2]]])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["large_volume"] is None
 
     def test_缺HHAD池时hhand为None(self, patch_mysql_connect):
         patch_mysql_connect([HAD_ROWS, []])

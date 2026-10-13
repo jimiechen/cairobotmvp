@@ -10,8 +10,8 @@
 字段口径与降级标注（2026-10-08 workbench 只读探测校准，R-04）：
 - bk 用 bookmaker.name 原名（与 fixture 口径一致；name_alias 为脱敏名）
 - 库内无对应维度、禁止臆造的字段由调用方输出恒值并注明缺口：
-  Q5 bf.trend 恒 None（单时点快照）、Q10 decay_flags 恒 []、
-  Q12 level_gap 恒 False、Q3 is_final_snapshot 恒 False（无终盘标志）
+  Q10 decay_flags 恒 []、Q12 level_gap 恒 False、
+  Q3 is_final_snapshot 恒 False（无终盘标志）
 """
 import re
 from datetime import date, datetime
@@ -58,12 +58,13 @@ def split_score(score):
         return None, None
 
 
-def pair_odds(rows, fields, final_flag) -> list:
+def pair_odds(rows, fields, final_flag, history=False) -> list:
     """按公司归并初盘（is_initial=1 首行）与即时盘（最新非初盘行）。
 
     输入 rows 已按公司、快照时间排序（契约 ORDER BY 保证）；
     payout/snapshot_time 取 current 优先（回退 initial）；无初盘或
     无即时盘时对应块 None；final_flag=True 时补 is_final_snapshot 恒 False。
+    history=True（仅欧赔，ADR-018）时附全状态序列键。
     """
     by_bookmaker = {}
     for row in rows:
@@ -82,10 +83,31 @@ def pair_odds(rows, fields, final_flag) -> list:
             if "payout" in ref:
                 item["payout"] = num(ref["payout"])
             item["snapshot_time"] = fmt_time(ref["snapshot_time"])
+        if history:
+            item["history"] = history_states(snapshots, fields)
         if final_flag:
             item["is_final_snapshot"] = False   # 库无终盘标志（缺口标注）
         paired.append(item)
     return paired
+
+
+def history_states(snapshots, fields) -> list:
+    """欧赔全状态序列（ADR-018）：按赔率值元组保序去重，每态取末次行。
+
+    首态=初盘；序按各态**首次出现**定序，末态=最后新增态——若最新赔率
+    回摆历史态（真实库 2951 澳门存在），current 对应 history 中间项
+    （该态 payout/快照时间仍取末次行）；时间口径 fmt_time 对齐 fixture。
+    """
+    states = {}
+    for row in snapshots:
+        key = tuple(num(row[f]) for f in fields)
+        states[key] = row   # dict 保插入序：首现定序、末次覆盖取值
+    return [
+        {**{f: num(row[f]) for f in fields},
+         "payout": num(row["payout"]),
+         "snapshot_time": fmt_time(row["snapshot_time"])}
+        for row in states.values()
+    ]
 
 
 def had_block(row, suffix):
@@ -95,18 +117,32 @@ def had_block(row, suffix):
             "lose": num(row[f"a_{suffix}"])}
 
 
-def bf_block(row):
-    """必发最新 standard 快照 → {total_volume, direction, trend}。
+def bf_block(rows) -> dict:
+    """必发全行序列 → {total_volume, direction, trend, large_volume}。
 
-    direction 按三大占比最大者判定（占比缺失视为 0）；trend 需多时点快照，
-    库内单时点恒 None（缺口标注，由调用方输出）。
+    standard 组：direction 按最新占比最大者（缺失视为 0）；trend 按
+    direction 方向占比的有效首尾差（升 rising / 降 falling / 单时点或
+    等值 None，口径对齐 D12 首尾差，None 为缺口标注不臆造）；total_volume
+    取最新快照。large 组：占比列库内恒空（2026-10-12 探查），仅大额成交量
+    有值，large_volume 取最新，无 large 行时为 None。
     """
-    pcts = {"home": num(row["home_pct"]) or 0,
-            "draw": num(row["draw_pct"]) or 0,
-            "away": num(row["away_pct"]) or 0}
-    return {"total_volume": num(row["total_volume"]),
-            "direction": max(pcts, key=pcts.get),
-            "trend": None}
+    standard = [r for r in rows if r["trade_type"] == "standard"]
+    large = [r for r in rows if r["trade_type"] == "large"]
+    latest = standard[-1]
+    pcts = {"home": num(latest["home_pct"]) or 0,
+            "draw": num(latest["draw_pct"]) or 0,
+            "away": num(latest["away_pct"]) or 0}
+    direction = max(pcts, key=pcts.get)
+    values = [v for r in standard
+              for v in [num(r[f"{direction}_pct"])] if v is not None]
+    if len(values) >= 2 and values[-1] != values[0]:
+        trend = "rising" if values[-1] > values[0] else "falling"
+    else:
+        trend = None
+    return {"total_volume": num(latest["total_volume"]),
+            "direction": direction,
+            "trend": trend,
+            "large_volume": num(large[-1]["total_volume"]) if large else None}
 
 
 def split_intel_items(content) -> list:
@@ -126,16 +162,26 @@ def split_intel_items(content) -> list:
 
 
 def track_changes(kind, field, rows) -> list:
-    """D9 变盘轨迹：初盘为基准遍历快照，盘口变化记 {kind, change:±1}（等值不计）。"""
+    """D9 变盘轨迹：按参考公司分组，各以自身初盘为基线，盘口变化记 {kind, bk, change:±1}。
+
+    多公司口径（四家参考公司）：分组保证公司间基线互不串扰；
+    行需按公司内快照时间升序（SQL 已排序）；等值不计、基线跟随最近一次变化。
+    """
     tracks = []
-    baseline = next((num(row[field]) for row in rows if row["is_initial"]), None)
+    baselines = {}
     for row in rows:
+        bk = row.get("bk")
         value = num(row[field])
-        if row["is_initial"] or value is None or baseline is None:
+        if row["is_initial"]:
+            baselines[bk] = value
+            continue
+        baseline = baselines.get(bk)
+        if value is None or baseline is None:
             continue
         if value != baseline:
-            tracks.append({"kind": kind, "change": 1 if value > baseline else -1})
-            baseline = value
+            tracks.append({"kind": kind, "bk": bk,
+                           "change": 1 if value > baseline else -1})
+            baselines[bk] = value
     return tracks
 
 

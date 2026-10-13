@@ -11,10 +11,11 @@
 
 字段口径与降级标注（2026-10-08 workbench 只读探测校准，R-04）：
 - 数据域：模块表 match_id 域 = `match`.id；D10 赛果例外（site_match_id == fid 直连）
-- D9 变盘轨迹为降级实现：仅按参考公司（TRACK_BOOKMAKER_NAME）快照序列推演变盘
-  方向，非全市场口径；参考公司无快照返回 []（对齐 F-16 无法推演时序标注）
+- D9 变盘轨迹为多公司口径：按四家参考公司（TRACK_BOOKMAKERS）快照序列各自推演
+  变盘方向，非全市场口径；参考公司均无快照返回 []（对齐 F-16 无法推演时序标注）
 - D12 热度漂移 = 首尾快照 cold_hot 差；side 为队名，经 JOIN `match` 匹配主客
-- 库内无对应维度的恒值字段（bf.trend/decay_flags/level_gap 等）见 parse 层说明
+- 库内无对应维度的恒值字段（decay_flags/level_gap 等）见 parse 层说明；
+  bf.trend 为多时点判定（direction 方向占比首尾差），large_volume 出大额成交量
 
 单元测试一律 Fake 连接；真实联调走 tests/integration（FA_MYSQL_INTEGRATION 门控）。
 """
@@ -50,12 +51,12 @@ from fa_orchestrator.data.sql_contracts import (
     SQL_Q5_BF,
     SQL_Q5_VOTE,
     SQL_Q9_INTEL,
-    TRACK_BOOKMAKER_NAME,
+    TRACK_BOOKMAKERS,
 )
 
 # mysql 通道降级标注（缺口如实透出，随结论落盘，禁止编造补齐）
 DEGRADATION_NOTES = (
-    "D9 变盘轨迹为参考公司（澳门）快照序列降级口径，非全市场统计",
+    "D9 变盘轨迹为四家参考公司（澳门/皇冠/Bet365/Pinnacle）快照序列口径，非全市场统计",
     "Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底",
     "D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）",
 )
@@ -98,7 +99,8 @@ class MySqlAnalysisDataSource(MySqlDataSource):
 
         输出：{kickoff_time, euro[], asian[], overunder[]}；无映射返回 None；
         无数据行返回结构完整空集。euro/asian 行含 is_final_snapshot（缺口恒
-        False）；overunder 行无该字段（对齐 fixture）。
+        False）；overunder 行无该字段（对齐 fixture）；euro 行附 history
+        全状态序列（ADR-018，去重保序），asian/overunder 不启用。
         """
         match_id = self._resolve(fid)
         if match_id is None:
@@ -108,7 +110,8 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         return {
             "kickoff_time": fmt_time(kickoff),
             "euro": pair_odds(self._fetch(SQL_Q3_EUROPE.strip(), (match_id,)),
-                              ("win", "draw", "lose"), final_flag=True),
+                              ("win", "draw", "lose"), final_flag=True,
+                              history=True),
             "asian": pair_odds(self._fetch(SQL_Q3_ASIAN.strip(), (match_id,)),
                                ("home_water", "handicap", "away_water"), final_flag=True),
             "overunder": pair_odds(self._fetch(SQL_Q3_OVERUNDER.strip(), (match_id,)),
@@ -119,7 +122,8 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         """Q5（投票支持率）：HAD 出支持率与 SP，HHAD 出让球块，必发出方向。
 
         输出：{support, sp, hhand, bf}；缺池/无映射时对应块 None；
-        bf.trend 需多时点快照，库内单时点恒 None（缺口标注）。
+        bf.trend 按 direction 方向占比有效首尾差判定，单时点为 None
+        （缺口标注）；large_volume 为大额成交量（large 占比列库内恒空）。
         """
         match_id = self._resolve(fid)
         if match_id is None:
@@ -139,7 +143,7 @@ class MySqlAnalysisDataSource(MySqlDataSource):
                 "odds": had_block(hhad, "odds"),
                 "support": had_block(hhad, "support_rate"),
             } if hhad else None),
-            "bf": bf_block(bf_rows[-1]) if bf_rows else None,
+            "bf": bf_block(bf_rows) if bf_rows else None,
         }
 
     def query_fundamentals(self, fid: str) -> dict:
@@ -219,9 +223,10 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         return {"competition": competition, "level_gap": False, "future": future}
 
     def query_history_tracks(self, fid: str):
-        """D9 降级（变盘轨迹）：按参考公司快照序列推演亚盘/大小盘变盘方向。
+        """D9（变盘轨迹）：按四家参考公司快照序列各自推演亚盘/大小盘变盘方向。
 
-        change：+1 盘口升 / -1 盘口降；参考公司无快照返回 []（无法推演时序，
+        多公司口径（澳门/皇冠/Bet365/Pinnacle，参数化传入）：每公司以自身初盘
+        为基线，输出行含 bk 供追溯；全部参考公司无快照返回 []（无法推演时序，
         调用方对齐 F-16 缺口标注）；无映射返回 None。
         """
         match_id = self._resolve(fid)
@@ -230,7 +235,7 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         tracks = []
         for kind, sql, field in (("asian", SQL_D9_ASIAN_TRACKS, "handicap"),
                                  ("overunder", SQL_D9_OVERUNDER_TRACKS, "line")):
-            rows = self._fetch(sql.strip(), (match_id, TRACK_BOOKMAKER_NAME))
+            rows = self._fetch(sql.strip(), (match_id, *TRACK_BOOKMAKERS))
             tracks.extend(track_changes(kind, field, rows))
         return tracks
 

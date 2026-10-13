@@ -22,7 +22,7 @@ from fa_orchestrator.data.sql_contracts import (
     SQL_Q3_ASIAN,
     SQL_Q3_KICKOFF,
     SQL_JC_MATCH_CANDIDATES,
-    TRACK_BOOKMAKER_NAME,
+    TRACK_BOOKMAKERS,
     build_q2b_sql,
 )
 
@@ -139,10 +139,20 @@ class TestAnalysisContractSql:
         assert "IN (%s, %s)" in sql
         assert (POOL_HAD, POOL_HHAD) == ("HAD", "HHAD")
 
+    def test_必发契约不过滤trade_type且保留时点排序(self):
+        # 2026-10-12 库内探查：large 与 standard 同频快照且占比列恒空（仅
+        # 大额成交量有值）——契约不过滤 trade_type：standard 出方向/趋势，
+        # large 出大额成交量；trade_type 列保留作解析分组依据
+        sql = ANALYSIS_CONTRACTS["Q5_bf"]
+        assert "trade_type" in sql
+        assert "= 'standard'" not in sql
+        assert "ORDER BY snapshot_time" in sql
+
     def test_变盘轨迹公司名参数化(self):
-        assert ANALYSIS_CONTRACTS["D9_asian_tracks"].count("%s") == 2
+        assert ANALYSIS_CONTRACTS["D9_asian_tracks"].count("%s") == 5
+        assert "b.name AS bk" in ANALYSIS_CONTRACTS["D9_asian_tracks"]
         assert "澳门" not in ANALYSIS_CONTRACTS["D9_asian_tracks"]
-        assert TRACK_BOOKMAKER_NAME == "澳门"
+        assert TRACK_BOOKMAKERS == ("澳门", "皇冠", "Bet365", "Pinnacle")
 
     def test_D10按site_match_id直连(self):
         sql = ANALYSIS_CONTRACTS["D10_result"]

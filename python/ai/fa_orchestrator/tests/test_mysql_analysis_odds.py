@@ -35,10 +35,14 @@ def _make_source(match_ids=None, **overrides):
 
 KICKOFF_ROWS = [{"kickoff_time": datetime(2026, 9, 29, 18, 0, 0)}]
 
-# 同一公司（澳门）初盘 + 两次即时盘快照
+# 同一公司（澳门）初盘 + 三次即时盘快照（含回摆初盘值的重复态，用于去重断言）
 EUROPE_ROWS = [
     {"bk": "澳门", "win": 2.1, "draw": 3.25, "lose": 3.4, "payout": 0.9,
      "is_initial": 1, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0)},
+    {"bk": "澳门", "win": 2.1, "draw": 3.25, "lose": 3.4, "payout": 0.901,
+     "is_initial": 0, "snapshot_time": datetime(2026, 9, 29, 8, 0, 0)},
+    {"bk": "澳门", "win": 2.05, "draw": 3.3, "lose": 3.5, "payout": 0.902,
+     "is_initial": 0, "snapshot_time": datetime(2026, 9, 29, 10, 0, 0)},
     {"bk": "澳门", "win": 2.02, "draw": 3.3, "lose": 3.55, "payout": 0.905,
      "is_initial": 0, "snapshot_time": datetime(2026, 9, 29, 20, 10, 0)},
     {"bk": "立博", "win": 2.15, "draw": 3.2, "lose": 3.45, "payout": 0.918,
@@ -125,6 +129,55 @@ class TestQ3Odds:
         assert SQL_Q3_ASIAN.strip() in sqls
         assert SQL_Q3_OVERUNDER.strip() in sqls
 
+    def test_欧赔行附history去重保序(self, patch_mysql_connect):
+        # ADR-018（方案 B）：库内全部快照去重保序，仅 euro 启用；初盘行在内，
+        # 重复态合并取末次行的 payout/时间（态1 payout 0.901 而非初盘 0.9）；
+        # 序按各态首次出现定序（回摆态见 history_states docstring）
+        patch_mysql_connect([KICKOFF_ROWS, EUROPE_ROWS, [], []])
+        data = _make_source({"1398605": 2635}).query_match_odds("1398605")
+        hist = data["euro"][0]["history"]
+        assert len(hist) == 3
+        assert hist[0] == {"win": 2.1, "draw": 3.25, "lose": 3.4,
+                           "payout": 0.901, "snapshot_time": "09-29 08:00"}
+        assert hist[1] == {"win": 2.05, "draw": 3.3, "lose": 3.5,
+                           "payout": 0.902, "snapshot_time": "09-29 10:00"}
+        assert hist[2] == {"win": 2.02, "draw": 3.3, "lose": 3.55,
+                           "payout": 0.905, "snapshot_time": "09-29 20:10"}
+
+    def test_仅初盘行时history为单态(self, patch_mysql_connect):
+        # 立博仅初盘：history=[初盘态]，无即时盘不臆造
+        patch_mysql_connect([KICKOFF_ROWS, EUROPE_ROWS, [], []])
+        data = _make_source({"1398605": 2635}).query_match_odds("1398605")
+        hist = data["euro"][1]["history"]
+        assert hist == [{"win": 2.15, "draw": 3.2, "lose": 3.45,
+                         "payout": 0.918, "snapshot_time": "09-28 12:00"}]
+
+    def test_亚盘与大小盘无history键(self, patch_mysql_connect):
+        # history 仅 euro 启用（ADR-018 口径），其余盘口契约结构不变
+        patch_mysql_connect([KICKOFF_ROWS, [], ASIAN_ROWS, OVERUNDER_ROWS])
+        data = _make_source({"1398605": 2635}).query_match_odds("1398605")
+        assert "history" not in data["asian"][0]
+        assert "history" not in data["overunder"][0]
+
+    def test_最新赔率回摆历史态时current对应中间项(self, patch_mysql_connect):
+        # 真实库 2951 澳门行为：最新行赔率回摆到已出现过的状态——
+        # 保序按首现定序，末态为最后新增态，回摆态 payout/时间取末次行
+        rows = [
+            {"bk": "澳门", "win": 2.0, "draw": 3.0, "lose": 3.2, "payout": 0.9,
+             "is_initial": 1, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0)},
+            {"bk": "澳门", "win": 2.1, "draw": 3.1, "lose": 3.0, "payout": 0.902,
+             "is_initial": 0, "snapshot_time": datetime(2026, 9, 29, 10, 0, 0)},
+            {"bk": "澳门", "win": 2.0, "draw": 3.0, "lose": 3.2, "payout": 0.901,
+             "is_initial": 0, "snapshot_time": datetime(2026, 9, 29, 20, 10, 0)},
+        ]
+        patch_mysql_connect([KICKOFF_ROWS, rows, [], []])
+        data = _make_source({"1398605": 2635}).query_match_odds("1398605")
+        euro = data["euro"][0]
+        assert euro["history"][0]["payout"] == 0.901            # 回摆态取末次行
+        assert euro["history"][0]["snapshot_time"] == "09-29 20:10"
+        assert euro["history"][-1]["win"] == 2.1                # 末态=最后新增态
+        assert euro["current"] == {"win": 2.0, "draw": 3.0, "lose": 3.2}
+
 
 HEAT_ROWS = [
     {"side": "亚美尼亚", "cold_hot": 9, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0),
@@ -205,40 +258,57 @@ class TestD12HeatDrift:
 
 
 class TestD9Tracks:
-    """变盘轨迹（降级口径：单一公司快照序列推演变盘方向）。"""
+    """变盘轨迹（多公司口径：四家参考公司快照序列各自独立推演变盘方向）。"""
 
     def test_亚盘盘口升降记轨迹(self, patch_mysql_connect):
         rows = [
-            {"handicap": 0.0, "is_initial": 1},
-            {"handicap": 0.25, "is_initial": 0},
-            {"handicap": 0.0, "is_initial": 0},
-            {"handicap": -0.25, "is_initial": 0},
+            {"bk": "澳门", "handicap": 0.0, "is_initial": 1},
+            {"bk": "澳门", "handicap": 0.25, "is_initial": 0},
+            {"bk": "澳门", "handicap": 0.0, "is_initial": 0},
+            {"bk": "澳门", "handicap": -0.25, "is_initial": 0},
         ]
         patch_mysql_connect([rows, []])
         tracks = _make_source({"1398605": 2635}).query_history_tracks("1398605")
-        assert tracks == [{"kind": "asian", "change": 1},
-                          {"kind": "asian", "change": -1},
-                          {"kind": "asian", "change": -1}]
+        assert tracks == [{"kind": "asian", "bk": "澳门", "change": 1},
+                          {"kind": "asian", "bk": "澳门", "change": -1},
+                          {"kind": "asian", "bk": "澳门", "change": -1}]
+
+    def test_多公司分组独立基线记轨迹(self, patch_mysql_connect):
+        # 澳门 0→0.25 升盘、皇冠 0.5→0.25 降盘：各公司以自身初盘为基线，互不串扰
+        rows = [
+            {"bk": "澳门", "handicap": 0.0, "is_initial": 1},
+            {"bk": "澳门", "handicap": 0.25, "is_initial": 0},
+            {"bk": "皇冠", "handicap": 0.5, "is_initial": 1},
+            {"bk": "皇冠", "handicap": 0.25, "is_initial": 0},
+            {"bk": "Bet365", "handicap": 0.25, "is_initial": 1},
+            {"bk": "Bet365", "handicap": 0.25, "is_initial": 0},
+        ]
+        patch_mysql_connect([rows, []])
+        tracks = _make_source({"1398605": 2635}).query_history_tracks("1398605")
+        assert {"kind": "asian", "bk": "澳门", "change": 1} in tracks
+        assert {"kind": "asian", "bk": "皇冠", "change": -1} in tracks
+        assert all(t["bk"] != "Bet365" for t in tracks)   # 盘口未变不记
 
     def test_大小盘球线变化记轨迹(self, patch_mysql_connect):
-        rows = [{"line": 2.5, "is_initial": 1}, {"line": 3.0, "is_initial": 0}]
+        rows = [{"bk": "澳门", "line": 2.5, "is_initial": 1},
+                {"bk": "澳门", "line": 3.0, "is_initial": 0}]
         patch_mysql_connect([[], rows])
         tracks = _make_source({"1398605": 2635}).query_history_tracks("1398605")
-        assert {"kind": "overunder", "change": 1} in tracks
+        assert {"kind": "overunder", "bk": "澳门", "change": 1} in tracks
 
     def test_盘口无变化时轨迹为空(self, patch_mysql_connect):
-        rows = [{"handicap": 0.25, "is_initial": 1}, {"handicap": 0.25, "is_initial": 0}]
+        rows = [{"bk": "澳门", "handicap": 0.25, "is_initial": 1},
+                {"bk": "澳门", "handicap": 0.25, "is_initial": 0}]
         patch_mysql_connect([rows, []])
         assert _make_source({"1398605": 2635}).query_history_tracks("1398605") == []
 
-    def test_执行契约SQL且公司名参数化(self, patch_mysql_connect):
+    def test_执行契约SQL且参考公司集参数化(self, patch_mysql_connect):
         conn = patch_mysql_connect([[], []])
         _make_source({"1398605": 2635}).query_history_tracks("1398605")
-        sqls = [sql for sql, _ in conn.cursor_obj.executed]
-        assert SQL_D9_ASIAN_TRACKS.strip() in sqls
-        assert SQL_D9_OVERUNDER_TRACKS.strip() in sqls
-        # 轨迹公司名不得写死进 SQL，必须参数化传入
-        assert all("澳门" not in sql for sql in sqls)
+        for sql, params in conn.cursor_obj.executed:
+            assert sql in (SQL_D9_ASIAN_TRACKS.strip(), SQL_D9_OVERUNDER_TRACKS.strip())
+            # 轨迹公司集不得写死进 SQL，必须参数化传入（match_id + 四家参考公司）
+            assert params == (2635, "澳门", "皇冠", "Bet365", "Pinnacle")
 
 
 class TestAnalysisContracts:
