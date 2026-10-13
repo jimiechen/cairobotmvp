@@ -146,3 +146,66 @@ class TestCompetitionCorrection:
     def test_联赛场不触发修正仓位(self):
         result = GoalLayerAgent().analyze(_data(expected=3.2, line=2.5))
         assert _ou(result)["stake"] == 0.5
+        assert not result["n4_triggered"]
+
+
+class TestPenetration:
+    def test_S1_基准去水概率达64命中(self):
+        result = GoalLayerAgent().analyze(
+            _data(expected=2.0, line=2.5, baseline={"win": 0.66, "draw": 0.2, "lose": 0.14}))
+        assert result["penetration"]["S1"] is True
+
+    def test_S2_反大众实力差透传命中(self):
+        result = GoalLayerAgent().analyze(_data(expected=2.0, line=2.5, anchor2=True))
+        assert result["penetration"]["S2"] is True
+
+    def test_S3_备注与情报幅度词命中(self):
+        result = GoalLayerAgent().analyze(
+            _data(expected=2.0, line=2.5, notes=["0.75 盘口被击穿风险"],
+                  items=[{"party": "home", "sentiment": "favor", "text": "客队恐崩盘"}]))
+        assert result["penetration"]["S3"] is True
+
+    def test_S4_大球方向或外推三球命中(self):
+        result = GoalLayerAgent().analyze(_data(expected=3.2, line=2.5))
+        assert result["penetration"]["S4"] is True
+
+    def test_S1加S2双命中比分池追加净胜三与反向保护(self):
+        # 外推 2.8 → mid 档基础池无净胜 3+，S1+S2 双命中强制追加并标注
+        result = GoalLayerAgent().analyze(
+            _data(expected=2.8, line=2.5, direction="win",
+                  baseline={"win": 0.66, "draw": 0.2, "lose": 0.14}, anchor2=True))
+        scores = [item["score"] for item in result["score_pool"]]
+        tags = [item["tag"] for item in result["score_pool"]]
+        assert "3-0" in scores and "0-1" in scores
+        assert "[穿盘净胜]" in tags and "[反向爆冷保护]" in tags
+
+    def test_S1加S2双命中基础池已含净胜三不重复追加(self):
+        result = GoalLayerAgent().analyze(
+            _data(expected=3.2, line=2.5, direction="win",
+                  baseline={"win": 0.66, "draw": 0.2, "lose": 0.14}, anchor2=True))
+        scores = [item["score"] for item in result["score_pool"]]
+        assert any(abs(item["net_win"]) >= 3 for item in result["score_pool"])
+        assert scores.count("3-0") == 1
+
+
+class TestN4:
+    def test_升盘深盘触发穿盘预警减仓(self):
+        data = _data(expected=3.2, line=2.5, movement="升盘")
+        data["handicap_line"] = -1.25
+        result = GoalLayerAgent().analyze(data)
+        assert _ou(result)["stake"] == 0.25
+        assert "穿盘预警" in _ou(result)["tag"]
+        assert result["n4_triggered"] is True
+
+    def test_升盘浅盘不触发减仓(self):
+        data = _data(expected=3.2, line=2.5, movement="升盘")
+        data["handicap_line"] = -0.5
+        result = GoalLayerAgent().analyze(data)
+        assert _ou(result)["stake"] == 0.5
+        assert result["n4_triggered"] is False
+
+    def test_深盘未升盘不触发减仓(self):
+        data = _data(expected=3.2, line=2.5, movement="持平")
+        data["handicap_line"] = -1.25
+        result = GoalLayerAgent().analyze(data)
+        assert _ou(result)["stake"] == 0.5

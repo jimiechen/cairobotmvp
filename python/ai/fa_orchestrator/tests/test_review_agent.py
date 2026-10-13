@@ -11,9 +11,10 @@ import pytest
 from fa_orchestrator.agents.review_agent import MAX_REVIEW_RETRIES, ReviewAgent
 
 
-def _unit(form="S", selection="win", legs=None, path=None, tag=None):
+def _unit(form="S", selection="win", legs=None, path=None, tag=None, stars=3):
     """构造推荐单元最小形态（与 SynthesisAgent 输出同构）。"""
-    return {"form": form, "selection": selection, "legs": legs, "path": path, "tag": tag, "stars": 3}
+    return {"form": form, "selection": selection, "legs": legs, "path": path,
+            "tag": tag, "stars": stars}
 
 
 _HHAND_DEFAULT = object()  # 让球单元缺省哨兵：区分"未传参"与显式 None（让球层为空）
@@ -35,12 +36,47 @@ def _synthesis(had=None, hhand=_HHAND_DEFAULT, notes=(), legal=True):
     }
 
 
-def _payload(synthesis=None, line=-0.5, attempt=0):
-    return {"synthesis": synthesis or _synthesis(), "handicap_line": line, "attempt": attempt}
+_GOAL_LAYER_DEFAULT = object()  # 大小球层缺省哨兵：未传参时 payload 不带 goal_layer 键（保持 na 兼容）
+
+
+def _payload(synthesis=None, line=-0.5, attempt=0, goal_layer=_GOAL_LAYER_DEFAULT):
+    payload = {"synthesis": synthesis or _synthesis(), "handicap_line": line,
+               "attempt": attempt}
+    if goal_layer is not _GOAL_LAYER_DEFAULT:
+        payload["goal_layer"] = goal_layer
+    return payload
 
 
 def _check(result, check_id):
     return next(c for c in result["checks"] if c["id"] == check_id)
+
+
+def _ou(direction="over", line=2.5, stake=0.5, tag=None):
+    """构造大小球单元（与 GoalLayerAgent._build_ou_unit 输出同构）。"""
+    return {"direction": direction, "line": line, "stars": 3,
+            "stake": stake, "tag": tag, "note": ""}
+
+
+def _pool_item(score, tag=None):
+    """比分字符串 → 池单元（与 GoalLayerAgent._pool_item 同构）。"""
+    home, away = (int(part) for part in score.split("-"))
+    return {"score": score, "net_win": home - away, "total": home + away, "tag": tag}
+
+
+def _goal_layer(ou=None, pool=None, penetration=None):
+    """构造大小球/比分池层输出（与 GoalLayerAgent.analyze 输出同构，phase 必填）。"""
+    return {
+        "phase": "goal_layer",
+        "expected_total_goals": 2.8,
+        "line": 2.5,
+        "ou_unit": ou,
+        "ou_note": None,
+        "score_pool": pool or [],
+        "pool_note": None,
+        "penetration": penetration or {"S1": False, "S2": False, "S3": False,
+                                       "S4": False, "hits": 0},
+        "n4_triggered": False,
+    }
 
 
 class TestSevenChecks:
@@ -122,3 +158,136 @@ class TestRetryDecision:
     def test_重试2次但全合规判通过(self):
         result = ReviewAgent().review(_payload(synthesis=_synthesis(), attempt=2))
         assert result["decision"] == "pass"
+
+
+class TestGoalLayerChecks:
+    """ISS-FA4 解锁：goal_layer 产出后检查①③④转为实检，缺失/空层保持 na 兼容。"""
+
+    def test_图侧空大小球层视为未产出保持na(self):
+        # 图驱动节点缺失场传 {}，不得误判为已产出层
+        result = ReviewAgent().review(_payload(goal_layer={}))
+        for check_id in ("①", "③", "④"):
+            assert _check(result, check_id)["result"] == "na"
+        assert result["decision"] == "pass"
+
+    # ------------------------------------------------------------ 检查①
+    def test_风险提示幅度词命中而大小球为小命中检查一(self):
+        synthesis = _synthesis(notes=["0.75 盘口被击穿风险"])
+        goal_layer = _goal_layer(ou=_ou(direction="under"))
+        result = ReviewAgent().review(_payload(synthesis=synthesis, goal_layer=goal_layer))
+        assert _check(result, "①")["result"] == "violation"
+        assert result["decision"] == "retry"
+
+    def test_风险提示幅度词命中而大小球为大通过检查一(self):
+        synthesis = _synthesis(notes=["0.75 盘口被击穿风险"])
+        goal_layer = _goal_layer(ou=_ou(direction="over"))
+        result = ReviewAgent().review(_payload(synthesis=synthesis, goal_layer=goal_layer))
+        assert _check(result, "①")["result"] == "pass"
+
+    def test_无风险提示词时检查一通过(self):
+        goal_layer = _goal_layer(ou=_ou(direction="under"))
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "①")["result"] == "pass"
+
+    def test_大小球未配置时检查一注明通过(self):
+        # 观望/缺口场景：ou_unit 为 None，仅记录不校验，note 须注明
+        goal_layer = _goal_layer(ou=None, pool=[_pool_item("1-0"), _pool_item("1-1")])
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        check = _check(result, "①")
+        assert check["result"] == "pass"
+        assert "未配置" in (check["note"] or "")
+
+    # ------------------------------------------------------------ 检查③
+    def test_深盘双穿证据而池无净胜三命中检查三(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("1-0"), _pool_item("2-1")],
+            penetration={"S1": True, "S2": True, "S3": False, "S4": True, "hits": 3},
+        )
+        result = ReviewAgent().review(_payload(line=-1.0, goal_layer=goal_layer))
+        assert _check(result, "③")["result"] == "violation"
+
+    def test_深盘双穿证据且池含净胜三通过检查三(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("3-0", tag="[穿盘净胜]"), _pool_item("1-0")],
+            penetration={"S1": True, "S2": True, "S3": False, "S4": True, "hits": 3},
+        )
+        result = ReviewAgent().review(_payload(line=-1.0, goal_layer=goal_layer))
+        assert _check(result, "③")["result"] == "pass"
+
+    def test_大球方向而池全低进球命中检查三(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("1-0"), _pool_item("0-1")],
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "③")["result"] == "violation"
+
+    def test_小球方向而池含净胜三命中检查三(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="under"),
+            pool=[_pool_item("3-0"), _pool_item("1-0")],
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "③")["result"] == "violation"
+
+    # ------------------------------------------------------------ 检查④
+    def test_双穿证据而池无净胜三命中检查四(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("1-0"), _pool_item("2-1")],
+            penetration={"S1": True, "S2": True, "S3": False, "S4": True, "hits": 3},
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "④")["result"] == "violation"
+
+    def test_双穿证据而大小球为小命中检查四(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="under"),
+            pool=[_pool_item("3-0"), _pool_item("1-0")],
+            penetration={"S1": True, "S2": True, "S3": False, "S4": False, "hits": 2},
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "④")["result"] == "violation"
+
+    def test_S3幅度词而大小球为小命中检查四(self):
+        # 幅度层命中禁止降级配小（CONSISTENCY_CHECKS.md 检查四）
+        goal_layer = _goal_layer(
+            ou=_ou(direction="under"),
+            pool=[_pool_item("1-1"), _pool_item("0-1")],
+            penetration={"S1": False, "S2": False, "S3": True, "S4": False, "hits": 1},
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "④")["result"] == "violation"
+
+    def test_证据命中满三而主推降星命中检查四(self):
+        had = _unit(stars=2)
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("2-1"), _pool_item("3-1")],
+            penetration={"S1": False, "S2": True, "S3": True, "S4": True, "hits": 3},
+        )
+        result = ReviewAgent().review(_payload(synthesis=_synthesis(had=had), goal_layer=goal_layer))
+        assert _check(result, "④")["result"] == "violation"
+
+    def test_证据命中满三主推全额星级通过检查四(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("2-1"), _pool_item("3-1")],
+            penetration={"S1": False, "S2": True, "S3": True, "S4": True, "hits": 3},
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert _check(result, "④")["result"] == "pass"
+
+    # ------------------------------------------------------------ 全链路
+    def test_合法大小球层三项检查全过无na(self):
+        goal_layer = _goal_layer(
+            ou=_ou(direction="over"),
+            pool=[_pool_item("2-1"), _pool_item("3-1"), _pool_item("3-0")],
+        )
+        result = ReviewAgent().review(_payload(goal_layer=goal_layer))
+        assert result["decision"] == "pass"
+        assert result["violations"] == []
+        for check_id in ("①", "③", "④"):
+            assert _check(result, check_id)["result"] == "pass"
