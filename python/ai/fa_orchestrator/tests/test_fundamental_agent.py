@@ -74,6 +74,17 @@ class TestWeights:
 
 
 class TestIntelligence:
+    def test_归属方缺失的利弊条目按缺口忽略不编造计数(self):
+        # 真库场景：立项二语义判读可能产出 party=None + sentiment=favor/against
+        data = _base_match_data(intelligence=_intel([
+            ("home", "favor"), (None, "against"), (None, "favor"),
+        ]))
+        result = FundamentalAgent().analyze(data)["intelligence"]
+        assert result["home_favor"] == 1
+        assert result["home_against"] == 0
+        assert result["away_against"] == 0
+        assert result["away_favor"] == 0
+
     def test_利弊比量化按条目计数输出五向计数(self):
         data = _base_match_data(intelligence=_intel([
             ("home", "favor"), ("home", "favor"), ("home", "favor"),

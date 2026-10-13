@@ -14,6 +14,7 @@
 from fa_orchestrator.agents.data_agent import DataAgent
 from fa_orchestrator.data.data_source import CHANNEL_FIXTURE
 from fa_orchestrator.agents.fundamental_agent import FundamentalAgent
+from fa_orchestrator.agents.goal_layer_agent import GoalLayerAgent
 from fa_orchestrator.analysis.history_deduction import deduce_heat_drift, deduce_trend
 from fa_orchestrator.analysis.odds_math import implied_probabilities
 from fa_orchestrator.agents.odds_verify_agent import OddsVerifyAgent
@@ -32,7 +33,8 @@ class AnalysisRunner:
     """
 
     def __init__(self, data_source, channel: str = CHANNEL_FIXTURE, fundamental_agent=None,
-                 odds_agent=None, sentiment_agent=None, synthesis_agent=None, review_agent=None):
+                 odds_agent=None, sentiment_agent=None, synthesis_agent=None, review_agent=None,
+                 goal_layer_agent=None):
         self.data_source = data_source
         self.channel = channel
         self.fundamental_agent = fundamental_agent or FundamentalAgent()
@@ -40,6 +42,7 @@ class AnalysisRunner:
         self.sentiment_agent = sentiment_agent or SentimentAgent()
         self.synthesis_agent = synthesis_agent or SynthesisAgent()
         self.review_agent = review_agent or ReviewAgent()
+        self.goal_layer_agent = goal_layer_agent or GoalLayerAgent()
 
     def run(self, match_date: str) -> dict:
         """执行日级分析并产出全场次结论（两阶段 + 热度/综合判定/矛盾检查）。
@@ -87,7 +90,7 @@ class AnalysisRunner:
             "euro": odds_data.get("euro") or [],
             "fundamental": fundamental,
         })
-        synthesis, review = self._synthesize_with_review(
+        synthesis, review, goal_layer = self._synthesize_with_review(
             fundamental, odds_verify, sentiment, vote, odds_data
         )
         return {
@@ -102,6 +105,7 @@ class AnalysisRunner:
             "history_deduction": self._deduce_history(fid),
             "sentiment": sentiment,
             "synthesis": synthesis,
+            "goal_layer": goal_layer,
             "review": review,
             "recommendation": synthesis["recommendation"],
         }
@@ -109,10 +113,11 @@ class AnalysisRunner:
     def _synthesize_with_review(self, fundamental: dict, odds_verify: dict,
                                 sentiment: dict, vote: dict | None,
                                 odds_data: dict) -> tuple:
-        """综合判定 + 矛盾检查条件回退环（F-14）。
+        """综合判定 + 大小球/比分池层 + 矛盾检查条件回退环（F-14，ISS-FA4）。
 
-        retry 决策时重跑 SynthesisAgent（attempt 递增），最多 MAX_REVIEW_RETRIES 次；
-        预算耗尽仍不通过 → 转人工裁决（manual），由 run() 登记 manual_review_matches。
+        retry 决策时重跑 SynthesisAgent 与 GoalLayerAgent（attempt 递增），
+        最多 MAX_REVIEW_RETRIES 次；预算耗尽仍不通过 → 转人工裁决（manual），
+        由 run() 登记 manual_review_matches。
         """
         synthesis_input = {
             "fundamental": fundamental,
@@ -121,22 +126,44 @@ class AnalysisRunner:
             "vote": vote,
             "market_direction": self._market_direction(odds_data.get("euro") or []),
         }
+        goal_layer_input = self._goal_layer_input(
+            fundamental, odds_verify, odds_data, synthesis_input["market_direction"]
+        )
         payload = {"handicap_line": self._numeric_handicap(odds_data)}
         attempt = 0
         synthesis = self.synthesis_agent.analyze(synthesis_input, attempt=attempt)
+        goal_layer = self.goal_layer_agent.analyze({**goal_layer_input,
+                                                   "synthesis": synthesis})
         review = self.review_agent.review(
-            {**payload, "synthesis": synthesis, "attempt": attempt}
+            {**payload, "synthesis": synthesis, "goal_layer": goal_layer,
+             "attempt": attempt}
         )
         while review["decision"] == "retry" and attempt < MAX_REVIEW_RETRIES:
             attempt += 1
             synthesis = self.synthesis_agent.analyze(synthesis_input, attempt=attempt)
+            goal_layer = self.goal_layer_agent.analyze({**goal_layer_input,
+                                                       "synthesis": synthesis})
             review = self.review_agent.review(
-                {**payload, "synthesis": synthesis, "attempt": attempt}
+                {**payload, "synthesis": synthesis, "goal_layer": goal_layer,
+                 "attempt": attempt}
             )
         if review["decision"] == "retry":
             # 回退预算耗尽仍不通过：按 F-14 契约转人工裁决
             review = {**review, "decision": "manual"}
-        return synthesis, review
+        return synthesis, review, goal_layer
+
+    def _goal_layer_input(self, fundamental: dict, odds_verify: dict,
+                          odds_data: dict, market_direction) -> dict:
+        """组装大小球/比分池层输入：外推 + 大小球盘 + 初盘定位 movement。"""
+        return {
+            "fundamental": fundamental,
+            "odds_verify": odds_verify,
+            "overunder": odds_data.get("overunder") or [],
+            "market_direction": market_direction,
+            "handicap_line": self._numeric_handicap(odds_data),
+            "handicap_movement": (fundamental.get("initial_position") or {}
+                                  ).get("handicap_movement"),
+        }
 
     @staticmethod
     def _market_direction(euro: list) -> str | None:

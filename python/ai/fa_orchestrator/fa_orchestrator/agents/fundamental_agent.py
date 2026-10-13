@@ -102,15 +102,19 @@ class FundamentalAgent:
 
     @staticmethod
     def _count_intel_item(counts: dict, item: dict) -> None:
-        """按 7M 情报规则归类单条情报：yl→利、wl→弊、null→通用（v7.4）。"""
+        """按 7M 情报规则归类单条情报：yl→利、wl→弊、null→通用（v7.4）。
+
+        party 缺失（真队名匹配失败）时按缺口忽略该条利弊，不编造归属。
+        """
         party = item.get("party")
         sentiment = item.get("sentiment")
         if sentiment == "general":
             counts["general"] += 1
-        elif sentiment == "favor":
-            counts[f"{party}_favor"] += 1
-        elif sentiment == "against":
-            counts[f"{party}_against"] += 1
+        elif party in ("home", "away"):
+            if sentiment == "favor":
+                counts[f"{party}_favor"] += 1
+            elif sentiment == "against":
+                counts[f"{party}_against"] += 1
 
     @staticmethod
     def _dense_direction(counts: dict):

@@ -115,6 +115,26 @@ class TestAnalysisRunner:
         assert euro_asia["strength"]["h2h_suppression"] == "strong"
         assert euro_asia["strength_endorsed"] is True
 
+    def test_每场产出大小球与比分池层_ISS_FA4(self):
+        conclusion = AnalysisRunner(_make_source()).run("2026-09-29")
+        for item in conclusion["matches"]:
+            goal_layer = item["goal_layer"]
+            assert goal_layer["phase"] == "goal_layer"
+            assert "score_pool" in goal_layer and "ou_unit" in goal_layer
+            assert goal_layer["penetration"]["hits"] >= 0
+
+    def test_图驱动与runner结论均携带大小球层(self):
+        from fa_orchestrator.graph.graph_nodes import GraphNodes
+        nodes = GraphNodes(_make_source())
+        state = {"match_date": "2026-09-29"}
+        for node in ("planner_agent", "data_agent", "ready_report",
+                     "fundamental_agent", "odds_verify_agent",
+                     "sentiment_agent", "synthesis_agent", "review_agent"):
+            state.update(nodes.registry()[node](state))
+        by_fid = state.get("goal_layer") or {}
+        assert by_fid, "图驱动 synthesis 节点应产出 goal_layer map"
+        assert all(v["phase"] == "goal_layer" for v in by_fid.values())
+
 
 class TestCliAnalysisOutput:
     def test_run产出两阶段中间结论JSON并落盘(self, tmp_path):

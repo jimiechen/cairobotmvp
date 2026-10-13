@@ -144,7 +144,13 @@ class GraphNodes:
         return {"sentiment": sentiment_map, "vote_availability": vote_available}
 
     def _synthesis(self, state: dict) -> dict:
+        """综合判定节点：synthesis 后即时产出大小球/比分池层（ISS-FA4）。
+
+        goal_layer 依赖 synthesis 结论（S2/S3 证据），retry 回退时随 synthesis
+        一并重算；pass/manual 场保留既有结论不重算。
+        """
         synthesis_map = dict(state.get("synthesis") or {})
+        goal_layer_map = dict(state.get("goal_layer") or {})
         attempts = dict(state.get("synthesis_attempts_by_match") or {})
         review_map = state.get("review") or {}
         for row in state.get("matches") or []:
@@ -158,7 +164,23 @@ class GraphNodes:
                 self._synthesis_input(state, row), attempt=attempt
             )
             attempts[fid] = attempt + 1
-        return {"synthesis": synthesis_map, "synthesis_attempts_by_match": attempts}
+            goal_layer_map[fid] = self._goal_layer(state, row, synthesis_map[fid])
+        return {"synthesis": synthesis_map, "goal_layer": goal_layer_map,
+                "synthesis_attempts_by_match": attempts}
+
+    def _goal_layer(self, state: dict, row: dict, synthesis: dict) -> dict:
+        """组装并执行单场大小球/比分池层（复用 runner 输入组装保证对齐）。"""
+        fid = row["fid"]
+        odds_data = self.data_source.query_match_odds(fid) or {}
+        return self._runner.goal_layer_agent.analyze({
+            **self._runner._goal_layer_input(
+                (state.get("fundamentals") or {}).get(fid) or {},
+                (state.get("odds_verification") or {}).get(fid) or {},
+                odds_data,
+                self._runner._market_direction(odds_data.get("euro") or []),
+            ),
+            "synthesis": synthesis,
+        })
 
     def _review(self, state: dict) -> dict:
         """矛盾检查节点（F-14）：attempt 计入结果回写 state，保证回退环有界。
@@ -175,6 +197,7 @@ class GraphNodes:
             attempt = (prev_review.get(fid) or {}).get("attempt", -1) + 1
             result = self._runner.review_agent.review({
                 "synthesis": (state.get("synthesis") or {}).get(fid) or {},
+                "goal_layer": (state.get("goal_layer") or {}).get(fid) or {},
                 "handicap_line": self._runner._numeric_handicap(odds_data),
                 "attempt": attempt,
             })
@@ -271,6 +294,7 @@ class GraphNodes:
             "history_deduction": (state.get("history_deduction") or {}).get(fid) or {},
             "sentiment": (state.get("sentiment") or {}).get(fid) or {},
             "synthesis": synthesis,
+            "goal_layer": (state.get("goal_layer") or {}).get(fid) or {},
             "review": (state.get("review") or {}).get(fid) or {},
             "recommendation": synthesis.get("recommendation") or {},
             "odds_snapshot": {"euro": odds_data.get("euro") or []},
