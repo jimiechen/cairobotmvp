@@ -134,12 +134,16 @@ WHERE match_id = %s
 ORDER BY snapshot_time, id;
 """
 
-# 情报：仅取已填充行；party 由正文【主队】/【客队】标记解析（sentiment 无库维度）
+# 情报：仅取已填充行；party 由正文【主队】/【客队】/【真队名】标记解析，
+# sentiment 由 parse 层关键词判读（立项二②）；JOIN match 取主客队名供真队名标记匹配
+# （match 表主客列为 home/away，别名对齐 parse 层参数命名）
 SQL_Q9_INTEL = """
-SELECT source, title, content, status, published_at
-FROM intelligence_text
-WHERE match_id = %s AND status = 'filled'
-ORDER BY id;
+SELECT i.source, i.title, i.content, i.status, i.published_at,
+       m.home AS home_team, m.away AS away_team
+FROM intelligence_text i
+JOIN `match` m ON m.id = i.match_id
+WHERE i.match_id = %s AND i.status = 'filled'
+ORDER BY i.id;
 """
 
 # 历史交锋：按日期倒序（近年优先）；result_for_current_home 为当前主队视角

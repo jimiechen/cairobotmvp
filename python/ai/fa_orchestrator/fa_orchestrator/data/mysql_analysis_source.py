@@ -163,10 +163,14 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         }
 
     def _intel_items(self, match_id) -> list:
-        """Q9：intelligence_text → items（parse 层按主客标记切段）。"""
+        """Q9：intelligence_text → items（parse 层按主客/真队名标记切段 + 利弊判读）。"""
         items = []
         for row in self._fetch(SQL_Q9_INTEL.strip(), (match_id,)):
-            items.extend(split_intel_items(row["content"]))
+            items.extend(split_intel_items(
+                row["content"],
+                home_team=row.get("home_team"),
+                away_team=row.get("away_team"),
+            ))
         return items
 
     def _h2h_block(self, match_id) -> dict:

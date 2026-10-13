@@ -61,6 +61,69 @@ class TestStructure:
         assert result["mainstream_missing"] == []
 
 
+class TestStructureMarketDirection:
+    """structure 增强（立项二①）：全市场升降赔家数 + 基准去水概率 + 凯利离群。"""
+
+    def test_主胜升降赔家数统计(self):
+        # skill"30 家全升/29 家降"口径：主胜赔率初→即方向家数
+        euro = [
+            _euro("澳门", 2.10, 2.20),        # 升
+            _euro("立博", 2.10, 2.00),        # 降
+            _euro("威廉希尔", 2.10, 2.10),    # 平
+            _euro("Bet365", 2.10, 2.30),      # 升
+        ]
+        result = _agent().verify(_data(euro, []))["structure"]
+        assert result["market_direction"] == {"win_rise": 2, "win_drop": 1, "win_flat": 1}
+
+    def test_基准去水概率以立博为准(self):
+        euro = [
+            _euro("澳门", 2.10, 2.02, cd=3.30, cl=3.60),
+            _euro("立博", 2.10, 2.00, cd=3.20, cl=3.40),
+        ]
+        result = _agent().verify(_data(euro, []))["structure"]
+        probs = result["baseline_probs"]
+        assert probs["bk"] == "立博"
+        # 立博 current：1/2.00+1/3.20+1/3.40 归一
+        assert probs["win"] == round((1 / 2.00) / (1 / 2.00 + 1 / 3.20 + 1 / 3.40), 3)
+        assert probs["draw"] == round((1 / 3.20) / (1 / 2.00 + 1 / 3.20 + 1 / 3.40), 3)
+        assert probs["lose"] == round((1 / 3.40) / (1 / 2.00 + 1 / 3.20 + 1 / 3.40), 3)
+
+    def test_无立博时基准回退主流公司(self):
+        euro = [_euro("澳门", 2.10, 2.02), _euro("威廉希尔", 2.12, 2.04)]
+        result = _agent().verify(_data(euro, []))["structure"]
+        assert result["baseline_probs"]["bk"] == "威廉希尔"
+
+    def test_凯利离群检测按最大值输出(self):
+        # 立博基准主胜概率 p；澳门主胜 kelly = 2.02×p；构造某公司 >1.0 的引诱形态
+        euro = [
+            _euro("立博", 2.10, 2.00, cd=3.20, cl=3.40),
+            _euro("澳门", 2.10, 2.05, cd=3.30, cl=3.60),
+            _euro("诱盘公司", 2.10, 2.60, cd=3.10, cl=3.20),
+        ]
+        result = _agent().verify(_data(euro, []))["structure"]
+        outlier = result["kelly_outlier"]
+        assert outlier["present"] is True
+        assert outlier["bk"] == "诱盘公司"
+        assert outlier["result"] == "win"
+        assert outlier["count_over"] == 1
+        assert outlier["max"] > 1.0
+
+    def test_无凯利离群时如实输出(self):
+        euro = [_euro("立博", 2.10, 2.00), _euro("澳门", 2.10, 2.02)]
+        result = _agent().verify(_data(euro, []))["structure"]
+        outlier = result["kelly_outlier"]
+        assert outlier["present"] is False
+        assert outlier["count_over"] == 0
+
+    def test_无即时盘时结构降级不崩溃(self):
+        euro = [{"bk": "澳门", "initial": {"win": 2.1, "draw": 3.25, "lose": 3.5},
+                 "current": None, "payout": None, "is_final_snapshot": False}]
+        result = _agent().verify(_data(euro, []))["structure"]
+        assert result["market_direction"] == {"win_rise": 0, "win_drop": 0, "win_flat": 0}
+        assert result["baseline_probs"] is None
+        assert result["kelly_outlier"]["present"] is False
+
+
 class TestRaiseInterpretation:
     def test_拉科场锚点_孤立升盘但低水按真信号处理(self):
         # v7.2 拉科场（2026-08-30）：Bet365 平半 0.770 低水→3-1 主胜；v7.1"孤立升盘=诱盘"已废止

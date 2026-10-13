@@ -22,6 +22,11 @@ FRIENDLY_KEYWORD = "友谊"
 # 情报正文的主客标记（intelligence_text.content 分段解析依据）
 INTEL_MARKERS = {"【主队】": "home", "【客队】": "away"}
 
+# 情报利弊关键词（立项二②：规则判读先行；favor 利多 / against 利空 / 双中或无命中 general）
+# 词表约束：不含"胜/身价"等中性词（避免"近6场4胜2平""身价高于对手"误判利多）
+INTEL_FAVOR_WORDS = ("看好", "有利", "伤愈")
+INTEL_AGAINST_WORDS = ("伤停", "不利")
+
 
 def num(value):
     """Decimal/None → float/None（DB 数值列统一归一，对齐 fixture 数字口径）。"""
@@ -145,20 +150,50 @@ def bf_block(rows) -> dict:
             "large_volume": num(large[-1]["total_volume"]) if large else None}
 
 
-def split_intel_items(content) -> list:
-    """Q9 前瞻正文 → items（按【主队】/【客队】标记切分段落）。
+def split_intel_items(content, home_team=None, away_team=None) -> list:
+    """Q9 前瞻正文 → items（按【主队】/【客队】/【真队名】标记切段 + 关键词利弊判读）。
 
+    输入：content 正文；home_team/away_team 真队名（供【真队名】标记匹配，7M 结构）。
+    输出：[{party: home/away/None, sentiment: favor/against/general, text}]。
     标记后的段落 party 与标记一致；无标记正文 party=None；
-    sentiment 库内无维度不输出（缺口标注）。
+    sentiment 按利多/利空关键词判读，双向命中或无命中均 general（立项二②）。
     """
     items = []
     party = None
     for chunk in re.split(r"(【主队】|【客队】)", str(content or "")):
         if chunk in INTEL_MARKERS:
             party = INTEL_MARKERS[chunk]
-        elif chunk.strip():
-            items.append({"party": party, "text": chunk.strip()})
+            continue
+        text = chunk.strip()
+        if not text:
+            continue
+        named = re.match(r"【(.+?)】", text)
+        if named:
+            party = _party_by_team(named.group(1), home_team, away_team) or party
+        items.append({"party": party,
+                      "sentiment": classify_intel_sentiment(text),
+                      "text": text})
     return items
+
+
+def _party_by_team(name, home_team, away_team):
+    """【真队名】标记 → party：队名完全相等才匹配（防子串误配），不匹配返回 None。"""
+    if home_team and name == home_team:
+        return "home"
+    if away_team and name == away_team:
+        return "away"
+    return None
+
+
+def classify_intel_sentiment(text) -> str:
+    """情报条目利弊判读：利多词命中 favor、利空词命中 against、双中或无命中 general。"""
+    has_favor = any(word in text for word in INTEL_FAVOR_WORDS)
+    has_against = any(word in text for word in INTEL_AGAINST_WORDS)
+    if has_favor and not has_against:
+        return "favor"
+    if has_against and not has_favor:
+        return "against"
+    return "general"
 
 
 def track_changes(kind, field, rows) -> list:

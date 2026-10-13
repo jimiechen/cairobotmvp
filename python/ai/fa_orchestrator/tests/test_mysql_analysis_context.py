@@ -4,7 +4,8 @@
 全部使用 Fake 连接（conftest.patch_mysql_connect），禁止真实连库；
 字段口径以 workbench 真实库为准（R-04 校准）：
 - vote_snapshot 池代码为 HAD（胜平负）/ HHAD（让球胜平负），取最新快照
-- intelligence_text 以【主队】/【客队】分段解析 party；sentiment 库内无维度，不臆造
+- intelligence_text 以【主队】/【客队】/【真队名】分段解析 party；
+  sentiment 由 parse 层利多/利空关键词判读（立项二②，双向命中或无命中 general）
 - team_recent_form 的 scored/conceded 按 is_home 视角解析，友谊赛按赛程名判定
 - D10 赛果 crawler_match_result.site_match_id == fid 直连
 """
@@ -116,26 +117,59 @@ class TestQ5Vote:
 
 INTEL_ROWS = [
     {"source": "qianzhan500", "status": "filled", "title": "500com前瞻",
+     "home_team": "哥伦布机员", "away_team": "圣路易斯城",
      "content": "【主队】\n哥伦布机员全队身价高于对手。", "published_at": None},
     {"source": "zqcf", "status": "empty", "title": "足球财富",
+     "home_team": "哥伦布机员", "away_team": "圣路易斯城",
      "content": None, "published_at": None},
     {"source": "qianzhan500", "status": "filled", "title": "500com前瞻",
+     "home_team": "哥伦布机员", "away_team": "圣路易斯城",
      "content": "【客队】\n圣路易斯城近6场4胜2平。", "published_at": None},
     {"source": "qianzhan500", "status": "filled", "title": "500com前瞻",
+     "home_team": "哥伦布机员", "away_team": "圣路易斯城",
      "content": "综合分析：本场看好主队。", "published_at": None},
 ]
 
 
 class TestQ9Intel:
-    def test_按主客标记分段解析party(self, patch_mysql_connect):
+    def test_按主客标记分段解析party与关键词倾向(self, patch_mysql_connect):
         patch_mysql_connect([INTEL_ROWS])
         result = _make_source({"1398605": 2635}).query_fundamentals("1398605")
         items = result["intelligence"]["items"]
-        assert items[0] == {"party": "home", "text": "哥伦布机员全队身价高于对手。"}
-        assert items[1] == {"party": "away", "text": "圣路易斯城近6场4胜2平。"}
-        # 无主客标记的段落 party 归 None；empty 状态行跳过（第 2 行）
-        assert items[2] == {"party": None, "text": "综合分析：本场看好主队。"}
+        # 【主队】标记定 party；正文无利多/利空关键词 → general
+        assert items[0] == {"party": "home", "sentiment": "general",
+                            "text": "哥伦布机员全队身价高于对手。"}
+        assert items[1] == {"party": "away", "sentiment": "general",
+                            "text": "圣路易斯城近6场4胜2平。"}
+        # 无主客标记段落：正文"看好"命中利多词 → favor；party 仍 None
+        # empty 状态行跳过（第 2 行）
+        assert items[2] == {"party": None, "sentiment": "favor",
+                            "text": "综合分析：本场看好主队。"}
         assert len(items) == 3
+
+    def test_真队名标记段落按队名匹配party(self, patch_mysql_connect):
+        # 7M 结构：正文以【真队名】开头 + 有利/不利情报小节（2026-10-13 真库探查口径）
+        rows = [dict(INTEL_ROWS[0], home_team="亚美尼亚", away_team="黑山",
+                     content="【亚美尼亚】\n有利情报:\n  - 主场7胜2平1负，表现出色。")]
+        patch_mysql_connect([rows])
+        items = _make_source({"1398605": 2635}).query_fundamentals("1398605")["intelligence"]["items"]
+        assert items == [{"party": "home", "sentiment": "favor",
+                          "text": "【亚美尼亚】\n有利情报:\n  - 主场7胜2平1负，表现出色。"}]
+
+    def test_利空关键词判against(self, patch_mysql_connect):
+        rows = [dict(INTEL_ROWS[2],
+                     content="【客队】\n主力前锋伤停，阵容不整。")]
+        patch_mysql_connect([rows])
+        items = _make_source({"1398605": 2635}).query_fundamentals("1398605")["intelligence"]["items"]
+        assert items[0]["party"] == "away"
+        assert items[0]["sentiment"] == "against"
+
+    def test_利多利空同时命中判general(self, patch_mysql_connect):
+        rows = [dict(INTEL_ROWS[0],
+                     content="【主队】伤愈复出但伤停名单仍长。")]
+        patch_mysql_connect([rows])
+        items = _make_source({"1398605": 2635}).query_fundamentals("1398605")["intelligence"]["items"]
+        assert items[0]["sentiment"] == "general"
 
     def test_无情报行时items为空(self, patch_mysql_connect):
         patch_mysql_connect([[]])

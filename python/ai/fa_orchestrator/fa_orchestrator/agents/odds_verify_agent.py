@@ -25,6 +25,8 @@ SINGLE_HOUSE_RAISE_MIN_PCT = 5.0  # 单家主流临场逆势抬升 ≥5% 强制�
 ANTI_COLD_DRAW_DROP_MIN_PCT = 3.0 # 平赔较初赔下调 ≥3% 计"压平"动作
 ANTI_COLD_MIN_COMPANIES = 2       # ≥2 家同向压平才构成压平动作
 STRENGTH_VALUE_RATIO = 2.0        # 身价差 ≥2 倍计实力背书（反大众检查②同源口径）
+BASELINE_BOOKS = ("立博", "威廉希尔")  # 基准去水概率优先公司（立博行业基准，无则回退威廉希尔/主流）
+KELLY_OUTLIER_THRESHOLD = 1.0     # 凯利 = 即时赔率 × 基准概率 >1.0 判离群（引诱形态）
 
 TRUE_SIGNAL = "真信号"
 TRAP_SIGNAL = "诱盘"
@@ -68,14 +70,96 @@ class OddsVerifyAgent:
 
     @staticmethod
     def _verify_structure(euro: list) -> dict:
-        """赔率结构验证：公司数量、主流公司覆盖、返还率均值（v7.0）。"""
+        """赔率结构验证：公司数量、主流公司覆盖、返还率均值（v7.0）。
+
+        立项二① 增强：全市场主胜升降赔家数（market_direction）、基准去水概率
+        （baseline_probs，立博优先）、凯利离群（kelly_outlier，>1.0 引诱形态）。
+        无即时盘时三键降级（全零 / None / present=False），不抛异常、不编造。
+        """
         books = [row.get("bk") for row in euro]
         payouts = [row["payout"] for row in euro if row.get("payout") is not None]
+        baseline_probs = OddsVerifyAgent._baseline_probs(euro)
         return {
             "company_count": len(euro),
             "mainstream_missing": [bk for bk in MAINSTREAM_BOOKS if bk not in books],
             "avg_payout": round(sum(payouts) / len(payouts), 3) if payouts else None,
+            "market_direction": OddsVerifyAgent._market_direction(euro),
+            "baseline_probs": baseline_probs,
+            "kelly_outlier": OddsVerifyAgent._kelly_outlier(euro, baseline_probs),
         }
+
+    @staticmethod
+    def _market_direction(euro: list) -> dict:
+        """主胜方向家数统计：初赔→即时赔率上升/下降/持平家数（skill"30 家全升"口径）。
+
+        输入 euro 行列表；输出 {win_rise, win_drop, win_flat}；缺初赔或即时盘的公司跳过。
+        """
+        direction = {"win_rise": 0, "win_drop": 0, "win_flat": 0}
+        for row in euro:
+            initial_win = (row.get("initial") or {}).get("win")
+            current_win = (row.get("current") or {}).get("win")
+            if initial_win is None or current_win is None:
+                continue
+            if current_win > initial_win:
+                direction["win_rise"] += 1
+            elif current_win < initial_win:
+                direction["win_drop"] += 1
+            else:
+                direction["win_flat"] += 1
+        return direction
+
+    @staticmethod
+    def _baseline_probs(euro: list):
+        """基准去水概率：立博优先，无立博回退威廉希尔/主流公司，按即时赔率隐含概率归一。
+
+        计算 p(result) = (1/odds) / Σ(1/odds)，保留 3 位（去水消除返还率差异）。
+        输出 {"bk": 公司名, "win"/"draw"/"lose": 概率}；无任何即时盘返回 None。
+        """
+        rows = [r for r in euro if (r.get("current") or {}).get("win") is not None]
+        if not rows:
+            return None
+        baseline = None
+        for bk in BASELINE_BOOKS:
+            baseline = next((r for r in rows if r.get("bk") == bk), None)
+            if baseline:
+                break
+        if baseline is None:
+            baseline = next((r for r in rows if r.get("bk") in MAINSTREAM_BOOKS), rows[0])
+        odds = baseline["current"]
+        implied = {k: 1.0 / odds[k] for k in ("win", "draw", "lose") if odds.get(k)}
+        total = sum(implied.values())
+        if not total:
+            return None
+        return {"bk": baseline["bk"],
+                **{k: round(v / total, 3) for k, v in implied.items()}}
+
+    @staticmethod
+    def _kelly_outlier(euro: list, baseline_probs) -> dict:
+        """凯利离群检测：kelly = 即时赔率 × 基准概率，>1.0 判引诱形态（单家背离口径）。
+
+        输出命中家数 count_over 与最大项 {bk, result, max}；无基准概率或无命中时
+        如实输出 present=False（不臆造离群）。
+        """
+        empty = {"present": False, "bk": None, "result": None,
+                 "count_over": 0, "max": None}
+        if not baseline_probs:
+            return empty
+        over = []
+        for row in euro:
+            current = row.get("current") or {}
+            for result in ("win", "draw", "lose"):
+                odds = current.get(result)
+                prob = baseline_probs.get(result)
+                if odds is None or prob is None:
+                    continue
+                kelly = odds * prob
+                if kelly > KELLY_OUTLIER_THRESHOLD:
+                    over.append((row.get("bk"), result, kelly))
+        if not over:
+            return empty
+        bk, result, kelly = max(over, key=lambda item: item[2])
+        return {"present": True, "bk": bk, "result": result,
+                "count_over": len(over), "max": round(kelly, 3)}
 
     def _verify_euro_asia(self, euro: list, asian: list, match_data: dict, strength: dict) -> dict:
         """欧亚转换验证：升盘解读（v7.2/v7.11）+ 两层背离（008 锚点）。"""
@@ -184,7 +268,8 @@ class OddsVerifyAgent:
         """防冷分级（v7.2）：条件齐备才判防冷有效，否则降级为正常利润平衡。"""
         flattened = [
             row for row in euro
-            if row.get("initial", {}).get("draw") and row.get("current", {}).get("draw")
+            if (row.get("initial") or {}).get("draw")
+            and (row.get("current") or {}).get("draw")
             and (row["initial"]["draw"] - row["current"]["draw"])
             / row["initial"]["draw"] * 100 >= ANTI_COLD_DRAW_DROP_MIN_PCT
         ]

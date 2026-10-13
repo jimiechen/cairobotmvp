@@ -127,6 +127,12 @@ class TestAnalysisContractSql:
         assert "`match`" in ANALYSIS_CONTRACTS["Q3_kickoff"]
         assert "`match`" in ANALYSIS_CONTRACTS["Q12_schedule"]
 
+    def test_Q9情报JOIN主客队名供语义判读(self):
+        # 立项二②：intel 正文【真队名】标记需主客队名上下文匹配 party
+        sql = ANALYSIS_CONTRACTS["Q9_intel"]
+        assert "JOIN `match`" in sql
+        assert "home_team" in sql and "away_team" in sql
+
     def test_三盘SQL按公司解名并按快照排序(self):
         for key in ("Q3_europe", "Q3_asian", "Q3_overunder"):
             sql = ANALYSIS_CONTRACTS[key]
