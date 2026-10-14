@@ -112,6 +112,46 @@ class TestBetfairInput:
         assert result["bf"]["bookmaker_pnl"] is None
         assert "庄家pnl" not in result["bf"]["summary"]
 
+    # ---- 立项四收口：口径经主控确认（2026-10-14），交叉验证标注 + 聚集度三档 ----
+
+    def test_pnl为负时标注庄家赔付风险为大众方向赢面信号(self):
+        bf = {"direction": "home", "trend": "falling", "bookmaker_pnl": -123.45}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert "大众方向赢面倾向" in result["bf"]["pnl_note"]
+        assert "庄家pnl -123.45" in result["bf"]["summary"]
+
+    def test_pnl非负时标注庄家风险可控(self):
+        bf = {"direction": "home", "trend": "rising", "bookmaker_pnl": 50.0}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert "庄家风险可控" in result["bf"]["pnl_note"]
+
+    def test_pnl缺失时pnl_note为None(self):
+        result = SentimentAgent().analyze(_make_input(vote=_make_input()["vote"]))
+        assert result["bf"]["pnl_note"] is None
+
+    def test_聚集度达高档阈值标注高聚集(self):
+        bf = {"direction": "home", "trend": "rising",
+              "ladder": {"top_price": 2.0, "top_ratio": 0.6, "levels": 3}}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert "高聚集" in result["bf"]["ladder_note"]
+
+    def test_聚集度中等档标注(self):
+        bf = {"direction": "home", "trend": "rising",
+              "ladder": {"top_price": 2.0, "top_ratio": 0.4, "levels": 3}}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert "中等" in result["bf"]["ladder_note"]
+
+    def test_聚集度分散档标注大众观点不一致(self):
+        bf = {"direction": "home", "trend": "rising",
+              "ladder": {"top_price": 2.0, "top_ratio": 0.29, "levels": 5}}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        assert "分散" in result["bf"]["ladder_note"]
+        assert "大众观点不一致" in result["bf"]["ladder_note"]
+
+    def test_ladder缺失时ladder_note为None(self):
+        result = SentimentAgent().analyze(_make_input(vote=_make_input()["vote"]))
+        assert result["bf"]["ladder_note"] is None
+
 
 class TestOverheatDisposition:
     def test_独立利多情报达标时降星保方向(self):

@@ -26,6 +26,12 @@ H2H_RESULT_HOME_WIN = "W"
 H2H_RESULT_AWAY_WIN = "L"
 # 交锋同向佐证占比门槛：该方向赛果占比过半
 H2H_ALIGNED_RATE = 0.5
+# ---- 立项四收口常量（口径经主控确认 2026-10-14，数值待主控后续调整）----
+# 庄家 pnl 赔付风险阈值：pnl 低于此值视为庄家赔付风险（大众方向赢面倾向信号）
+BOOKMAKER_PNL_RISK_THRESHOLD = 0.0
+# 价位聚集度三档：top 档成交占比达高档为高聚集，达中档为中等，低于中档为分散
+LADDER_CONCENTRATED_RATIO = 0.6
+LADDER_MODERATE_RATIO = 0.4
 
 
 class SentimentAgent:
@@ -93,25 +99,43 @@ class SentimentAgent:
     def _analyze_bf(vote: dict | None) -> dict:
         """必发成交形态输入（F-12）：记录方向与回落形态，缺失时标注降级。
 
-        立项四扩展：透传 bookmaker_pnl（庄家 pnl 指数）与 ladder（价位
-        聚集摘要），仅作输入记录——skill 未定义二者判定口径，语义解读
-        待主控确认，不做臆测性结论；缺失时对应字段 None、summary 不提。
+        立项四扩展（口径经主控确认 2026-10-14）：bookmaker_pnl 交叉验证
+        标注——pnl < BOOKMAKER_PNL_RISK_THRESHOLD 视为庄家赔付风险（大众
+        方向赢面倾向信号），否则庄家风险可控；价位聚集三档标注——
+        top_ratio 达高档阈值高聚集、中档阈值中等、低于中档分散（大众观点
+        不一致）。二者仅进 summary/pnl_note/ladder_note 标注，不参与
+        加减分与推荐结构（skill 未定义分值，最小闭环）；数据结构为契约
+        假设，真值校准待 touzhu 样例。
         """
         bf = (vote or {}).get("bf") or {}
         if not bf:
             return {"available": False, "trend": None, "bookmaker_pnl": None,
-                    "ladder": None,
+                    "ladder": None, "pnl_note": None, "ladder_note": None,
                     "summary": "必发成交数据缺失，形态输入降级"}
         bookmaker_pnl = bf.get("bookmaker_pnl")
         ladder = bf.get("ladder")
         summary = f"必发成交方向 {bf.get('direction')}，形态 {bf.get('trend')}"
+        pnl_note = None
         if bookmaker_pnl is not None:
-            summary += f"，庄家pnl {bookmaker_pnl}"
-        if ladder:
-            summary += (f"，价位聚集 top@{ladder.get('top_price')}"
-                        f"（占比 {ladder.get('top_ratio')}）")
+            if bookmaker_pnl < BOOKMAKER_PNL_RISK_THRESHOLD:
+                pnl_note = (f"庄家pnl {bookmaker_pnl}，庄家赔付风险"
+                            f"（大众方向赢面倾向信号）")
+            else:
+                pnl_note = f"庄家pnl {bookmaker_pnl}，庄家风险可控"
+            summary += f"，{pnl_note}"
+        ladder_note = None
+        if ladder and ladder.get("top_ratio") is not None:
+            ratio = ladder["top_ratio"]
+            if ratio >= LADDER_CONCENTRATED_RATIO:
+                ladder_note = f"价位聚集度 {ratio}（高聚集）"
+            elif ratio >= LADDER_MODERATE_RATIO:
+                ladder_note = f"价位聚集度 {ratio}（中等）"
+            else:
+                ladder_note = f"价位聚集度 {ratio}（分散，大众观点不一致）"
+            summary += f"，{ladder_note}"
         return {"available": True, "trend": bf.get("trend"),
                 "bookmaker_pnl": bookmaker_pnl, "ladder": ladder,
+                "pnl_note": pnl_note, "ladder_note": ladder_note,
                 "summary": summary}
 
     def _judge_overheat(self, had: dict, hhand: dict, fundamental: dict) -> dict:
