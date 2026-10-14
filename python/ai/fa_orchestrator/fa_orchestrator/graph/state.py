@@ -24,6 +24,11 @@ class AnalysisState(TypedDict, total=False):
     - odds_verification：逐场第二阶段赔率验证结论（F-11，{fid: 结论}）
     - phase_conclusion：两阶段中间结论日级汇总（ISS-FA2 交付物）
     - sentiment：逐场热度结论（F-12，{fid: 结论}，ISS-FA3）
+    - greed_fear：逐场贪婪恐惧结论（{fid: 结论}，F-21，ISS-FA5 立项三；
+      必须声明，否则 LangGraph 按 TypedDict schema 过滤节点输出，
+      图通道贪婪恐惧警示无法进入综合判定）
+    - goal_layer：逐场大小球/比分池层结论（{fid: 结论}，ISS-FA5 立项一；
+      声明缺失时图通道矛盾检查①③④恒 na，与 runner 实检不一致）
     - synthesis：逐场综合判定结论（F-13，{fid: 结论}，ISS-FA3）
     - review：逐场矛盾检查结果（F-14，{fid: 结果}，ISS-FA3）
     - review_decision：矛盾检查决策 pass/retry/manual（条件边路由键，ISS-FA3）
@@ -46,6 +51,8 @@ class AnalysisState(TypedDict, total=False):
     odds_verification: dict
     phase_conclusion: dict
     sentiment: dict
+    greed_fear: dict
+    goal_layer: dict
     synthesis: dict
     review: dict
     review_decision: str

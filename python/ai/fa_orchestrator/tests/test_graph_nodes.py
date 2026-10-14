@@ -126,6 +126,37 @@ class TestTraceAndAlignment:
             assert graph_matches[fid]["recommendation"] == by_fid[fid]["recommendation"]
             assert graph_matches[fid]["review"]["decision"] == by_fid[fid]["review"]["decision"]
 
+    def test_图驱动矛盾检查明细与runner逐项对齐(self, tmp_path):
+        """回归（立项三遗留差异根因）：AnalysisState 未声明 goal_layer/
+        greed_fear 时，LangGraph 按 TypedDict schema 过滤节点输出，
+        图通道 goal_layer 恒缺失 → 检查①③④恒 na，与 runner 实检不一致。
+        修复后两通道检查明细必须逐项一致。"""
+        graph = _build(tmp_path)
+        graph.invoke(_initial_state(), _invoke_config())
+        result = graph.invoke(Command(resume={"approved": True}), _invoke_config())
+        source = FixtureDataSource(_FIXTURE, analysis_path=_ANALYSIS)
+        runner_matches = AnalysisRunner(source).run(_DATE)["matches"]
+        by_fid = {m["fid"]: m for m in runner_matches}
+        graph_matches = {m["fid"]: m for m in result["phase_conclusion"]["matches"]}
+        for fid in ("1398594", "1398597"):
+            runner_checks = {c["id"]: c["result"] for c in by_fid[fid]["review"]["checks"]}
+            graph_checks = {c["id"]: c["result"] for c in graph_matches[fid]["review"]["checks"]}
+            assert runner_checks == graph_checks, f"场 {fid} 矛盾检查明细两通道不一致"
+
+    def test_比分池层与贪婪恐惧结论进入图状态(self, tmp_path):
+        """AnalysisState 必须声明 goal_layer/greed_fear 字段，保证立项一/三
+        层结论在图通道不被 schema 过滤而进入综合判定与报告组装。"""
+        graph = _build(tmp_path)
+        graph.invoke(_initial_state(), _invoke_config())
+        result = graph.invoke(Command(resume={"approved": True}), _invoke_config())
+        matches = result["phase_conclusion"]["matches"]
+        assert matches, "应有场次结论"
+        for m in matches:
+            assert (m.get("goal_layer") or {}).get("phase") == "goal_layer", \
+                f"场 {m['fid']} 比分池层结论缺失（被 state schema 过滤）"
+            assert (m.get("greed_fear") or {}).get("phase") == "greed_fear", \
+                f"场 {m['fid']} 贪婪恐惧结论缺失（被 state schema 过滤）"
+
     def test_报告产物含溯源声明与矛盾检查章节(self, tmp_path):
         graph = _build(tmp_path)
         graph.invoke(_initial_state(), _invoke_config())
