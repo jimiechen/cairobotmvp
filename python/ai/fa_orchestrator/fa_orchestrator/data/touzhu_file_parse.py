@@ -8,8 +8,9 @@ MySQL（betfair_trading / betfair_price_ladder）的行结构。
 不负责：文件读取与 JSON 装载（ingest_touzhu CLI）、SQL 语句组装与
 写入、分析层解读（sentiment_agent.py）。
 
-⚠️ 契约假设（宿主未提供 touzhu 文件样例，2026-10-13 主控确认"契约假设
-先行"，样例到手后仅调整本层与测试）：
+⚠️ 契约假设（2026-10-14 宿主定案：touzhu 数据由宿主直接写两表，
+无需物理文件，本解析层降为备用文件通道；若宿主后续提供样例文件，
+假设不符仅调整本层与测试）：
 - bf_trading.summary / bf_large.summary 为三方向占比 {home, draw, away}
 - bf_details 为价位档列表，每档 {price, back_volume, lay_volume}
 

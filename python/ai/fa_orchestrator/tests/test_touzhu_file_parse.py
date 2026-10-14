@@ -4,10 +4,11 @@
 解析 parse/results/{日期}/{match_id}.json 的 data.touzhu 块（SKILL.md 契约：
 bf_trading/bf_large/bf_details）为可直接入库的行结构。
 
-⚠️ 契约假设（宿主未提供 touzhu 文件样例，2026-10-13 主控确认"契约假设先行"）：
+⚠️ 契约假设（2026-10-14 宿主定案：touzhu 数据由宿主直接写两表，无需物理
+文件，本测试随解析层降为备用文件通道的守护测试）：
 - bf_trading.summary 为三方向占比 {home, draw, away}（与 betfair_trading 占比列对齐）
 - bf_details 为价位档列表，每档 {price, back_volume, lay_volume}
-样例到手后假设不符仅调整解析层，测试随契约同步修订。
+若宿主后续提供样例文件，假设不符仅调整解析层，测试随契约同步修订。
 """
 from fa_orchestrator.data.touzhu_file_parse import touzhu_block
 
