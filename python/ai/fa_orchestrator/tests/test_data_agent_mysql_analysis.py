@@ -95,6 +95,20 @@ LADDER_ROWS = [{"price": 2.3, "back_volume": 70.0, "lay_volume": 30.0}]
 TRACK_ASIAN_ROWS = [{"bk": "澳门", "handicap": 0.0, "is_initial": 1},
                     {"bk": "澳门", "handicap": 0.25, "is_initial": 0}]
 TRACK_OU_ROWS = [{"bk": "澳门", "line": 2.5, "is_initial": 1}]
+# 立项四扩展（宿主答复 2026-10-14）：Q5 heat pnl mock（500com 投注倾向
+# 庄家盈亏，side 三方向=队名/平局，含 pnl 列，供 query_vote 消费；与
+# HEAT_ROWS（立项一 D12 heat drift mock，无 pnl 列）分属两个查询槽位）
+HEAT_PNL_ROWS = [
+    {"side": "亚美尼亚", "pnl": -50808.0, "cold_hot": 9,
+     "snapshot_time": datetime(2026, 9, 29, 15, 0, 0),
+     "home": "亚美尼亚", "away": "黑山"},
+    {"side": "平局", "pnl": 33329.0, "cold_hot": -5,
+     "snapshot_time": datetime(2026, 9, 29, 15, 0, 0),
+     "home": "亚美尼亚", "away": "黑山"},
+    {"side": "黑山", "pnl": 3712.0, "cold_hot": 41,
+     "snapshot_time": datetime(2026, 9, 29, 15, 0, 0),
+     "home": "亚美尼亚", "away": "黑山"},
+]
 HEAT_ROWS = [
     {"side": "亚美尼亚", "cold_hot": 9, "snapshot_time": datetime(2026, 9, 28, 12, 0, 0),
      "home": "亚美尼亚", "away": "黑山"},
@@ -191,7 +205,7 @@ class TestMysqlAnalysisE2E:
             + [_module_rows(n) for n in (231, 272, 32, 20, 6, 4)]
             + [KICKOFF_ROWS, EUROPE_ROWS, ASIAN_ROWS, OVERUNDER_ROWS,
                INTEL_ROWS, H2H_ROWS, FORM_ROWS, SCHEDULE_ROWS,
-               VOTE_ROWS, BF_ROWS, BF_PNL_ROWS, LADDER_ROWS,
+               VOTE_ROWS, BF_ROWS, BF_PNL_ROWS, LADDER_ROWS, HEAT_PNL_ROWS,
                TRACK_ASIAN_ROWS, TRACK_OU_ROWS, HEAT_ROWS]
         )
         source = _make_source()
@@ -209,6 +223,11 @@ class TestMysqlAnalysisE2E:
         assert item["vote_available"] is True
         assert item["sentiment"]["bf"]["bookmaker_pnl"] == -88.0  # 立项四端到端透传
         assert item["sentiment"]["bf"]["ladder"]["top_price"] == 2.3
+        # 立项四扩展端到端：heat pnl（500com 投注倾向庄家盈亏）三方向透传
+        # （E2E 场次主=亚美尼亚/客=黑山：side 主方向 pnl 为负=庄家赔付）
+        hp = item["sentiment"]["bf"]["heat_pnl"]
+        assert hp["home"] == -50808.0 and hp["draw"] == 33329.0
+        assert hp["away"] == 3712.0
         assert item["history_deduction"]["trend"]["available"] is True
         assert item["history_deduction"]["trend"]["asian_deepen_count"] == 1
         assert item["history_deduction"]["trend"]["total"] == 1

@@ -179,6 +179,57 @@ class TestQ5BetfairPnlExt:
         assert vote is None
 
 
+# 立项四扩展（宿主答复 2026-10-14）：heat_analysis.pnl 为 500com 投注倾向的
+# 庄家盈亏（side 三方向：主队名/平局/客队名，正=庄家赢），作为庄家 pnl 指数
+# 的现实数据源先行接入；必发 pnl 回填后两源并存。heat_analysis 为宿主既有表，
+# 查询顺序在 pnl/ladder 之后（mock 结果集对位兼容）
+HEAT_ROWS = [
+    {"side": "VPS瓦萨", "pnl": -50808.0, "cold_hot": 51,
+     "snapshot_time": "2026-10-10 10:27:59",
+     "home": "赫尔辛基", "away": "VPS瓦萨"},
+    {"side": "平局", "pnl": 33329.0, "cold_hot": -37,
+     "snapshot_time": "2026-10-10 10:27:59",
+     "home": "赫尔辛基", "away": "VPS瓦萨"},
+    {"side": "赫尔辛基", "pnl": 3712.0, "cold_hot": -2,
+     "snapshot_time": "2026-10-10 10:27:59",
+     "home": "赫尔辛基", "away": "VPS瓦萨"},
+]
+
+
+class TestQ5HeatPnlExt:
+    def test_热度盈亏按side匹配三方向输出(self, patch_mysql_connect):
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS,
+                             BF_PNL_ROWS, LADDER_ROWS, HEAT_ROWS])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        hp = vote["bf"]["heat_pnl"]
+        assert hp["home"] == 3712.0
+        assert hp["draw"] == 33329.0
+        assert hp["away"] == -50808.0
+        assert hp["snapshot_time"] == "2026-10-10 10:27:59"
+
+    def test_热度盈亏表缺失时降级None且原扩展不受影响(self, patch_mysql_connect):
+        # 库内无 heat_analysis 表（或行空）：heat_pnl 降级 None，
+        # 必发 pnl/ladder 原扩展口径不受影响
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS,
+                             BF_PNL_ROWS, LADDER_ROWS])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        assert vote["bf"]["heat_pnl"] is None
+        assert vote["bf"]["bookmaker_pnl"] == -123.45
+        assert vote["bf"]["ladder"]["levels"] == 2
+
+    def test_热度盈亏side与队名不匹配时该方向None(self, patch_mysql_connect):
+        # 库内队名与 match 表不一致（别名/改名场景）：该方向如实 None，不臆造
+        rows = [dict(r, home="赫尔辛基", away="VPS瓦萨") for r in HEAT_ROWS]
+        rows[0]["side"] = "瓦萨VPS"
+        patch_mysql_connect([HAD_ROWS + HHAD_ROWS, BF_ROWS,
+                             BF_PNL_ROWS, LADDER_ROWS, rows])
+        vote = _make_source({"1398605": 2635}).query_vote("1398605")
+        hp = vote["bf"]["heat_pnl"]
+        assert hp["home"] == 3712.0
+        assert hp["away"] is None
+        assert hp["draw"] == 33329.0
+
+
 INTEL_ROWS = [
     {"source": "qianzhan500", "status": "filled", "title": "500com前瞻",
      "home_team": "哥伦布机员", "away_team": "圣路易斯城",

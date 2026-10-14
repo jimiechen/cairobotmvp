@@ -152,6 +152,28 @@ class TestBetfairInput:
         result = SentimentAgent().analyze(_make_input(vote=_make_input()["vote"]))
         assert result["bf"]["ladder_note"] is None
 
+    # ---- 立项四扩展（宿主答复 2026-10-14）：heat pnl（500com 投注倾向
+    # 庄家盈亏，正=庄家赢）作为庄家 pnl 现实数据源先行接入，口径同 pnl_note
+    # 体系（负=赔付风险=大众该方向赢面倾向信号）；仅输入记录，不进加减分 ----
+
+    def test_热度盈亏三方向标注庄家解读与来源(self):
+        bf = {"direction": "home", "trend": "falling",
+              "heat_pnl": {"home": 3712.0, "draw": 33329.0, "away": -50808.0,
+                           "snapshot_time": "2026-10-10 10:27:59"}}
+        result = SentimentAgent().analyze(_make_input(vote={**_make_input()["vote"], "bf": bf}))
+        note = result["bf"]["heat_pnl_note"]
+        assert note is not None
+        assert "500com" in note                      # 来源标注，区分必发 pnl
+        assert "主 3712" in note and "庄家赢" in note
+        assert "客 -50808" in note and "大众该方向赢面倾向" in note
+        assert "平 33329" in note
+        assert "500com" in result["bf"]["summary"]   # summary 追加
+
+    def test_热度盈亏缺失时note为None且summary不含片段(self):
+        result = SentimentAgent().analyze(_make_input(vote=_make_input()["vote"]))
+        assert result["bf"]["heat_pnl_note"] is None
+        assert "500com" not in result["bf"]["summary"]
+
 
 class TestOverheatDisposition:
     def test_独立利多情报达标时降星保方向(self):

@@ -156,6 +156,19 @@ WHERE match_id = %s
 ORDER BY price;
 """
 
+# 立项四扩展（宿主答复 2026-10-14）：500com 投注倾向庄家盈亏——
+# heat_analysis.pnl 为庄家该方向盈亏（正=庄家赢，side 三方向：主队名/
+# 平局/客队名），作为庄家 pnl 指数的现实数据源先行接入（必发 pnl 回填后
+# 两源并存）；side 与 match 表主客队名匹配映射由数据源层完成。
+# 表未建报 ProgrammingError(1146)，与 pnl/ladder 同口径降级 None。
+SQL_Q5_HEAT_PNL = """
+SELECT h.side, h.pnl, h.cold_hot, h.snapshot_time, m.home, m.away
+FROM heat_analysis h
+JOIN `match` m ON m.id = h.match_id
+WHERE h.match_id = %s
+ORDER BY h.snapshot_time, h.id;
+"""
+
 # 情报：仅取已填充行；party 由正文【主队】/【客队】/【真队名】标记解析，
 # sentiment 由 parse 层关键词判读（立项二②）；JOIN match 取主客队名供真队名标记匹配
 # （match 表主客列为 home/away，别名对齐 parse 层参数命名）
@@ -246,6 +259,7 @@ ANALYSIS_CONTRACTS = {
     "Q5_bf": SQL_Q5_BF.strip(),
     "Q5_bf_pnl": SQL_Q5_BF_PNL.strip(),
     "Q5_ladder": SQL_Q5_LADDER.strip(),
+    "Q5_heat_pnl": SQL_Q5_HEAT_PNL.strip(),
     "Q9_intel": SQL_Q9_INTEL.strip(),
     "Q10_h2h": SQL_Q10_H2H.strip(),
     "Q11_recent": SQL_Q11_RECENT.strip(),

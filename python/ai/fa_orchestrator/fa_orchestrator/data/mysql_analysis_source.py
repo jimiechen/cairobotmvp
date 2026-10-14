@@ -55,6 +55,7 @@ from fa_orchestrator.data.sql_contracts import (
     SQL_Q3_OVERUNDER,
     SQL_Q5_BF,
     SQL_Q5_BF_PNL,
+    SQL_Q5_HEAT_PNL,
     SQL_Q5_LADDER,
     SQL_Q5_VOTE,
     SQL_Q9_INTEL,
@@ -69,6 +70,10 @@ DEGRADATION_NOTES = (
     "Q9 情报利弊计数的 sentiment 维度库内缺失，均势判定为缺口兜底",
     "D10 赛果经 site_match_id 直连，让球折算由复盘层完成（review 子命令暂为 fixture 输入）",
 )
+
+
+# heat_analysis.side 的平局方向字面量（宿主库内口径：主/客方向为主客队名）
+SIDE_DRAW = "平局"
 
 
 class MySqlAnalysisDataSource(MySqlDataSource):
@@ -188,7 +193,42 @@ class MySqlAnalysisDataSource(MySqlDataSource):
         except not_ready as exc:
             logger.warning("betfair 价位聚集降级（宿主未入库?）match_id=%s: %s",
                            match_id, exc)
-        return {"bookmaker_pnl": bookmaker_pnl, "ladder": ladder}
+        return {"bookmaker_pnl": bookmaker_pnl, "ladder": ladder,
+                "heat_pnl": self._heat_pnl_ext(match_id)}
+
+    def _heat_pnl_ext(self, match_id) -> dict | None:
+        """立项四扩展（宿主答复 2026-10-14）：heat pnl 现实数据源接入。
+
+        输出：{"home": 主方向庄家盈亏, "draw": 平, "away": 客,
+               "snapshot_time": 最新快照时间}；按 side 与 match 表主客队名
+        匹配映射（side=='平局' 为 draw；队名对不上的方向如实 None，不臆造）。
+        表未建/为空降级 None（与 pnl/ladder 同口径）；其余异常向上抛出不吞。
+        """
+        not_ready = (pymysql.err.OperationalError, pymysql.err.ProgrammingError)
+        try:
+            rows = self._fetch(SQL_Q5_HEAT_PNL.strip(), (match_id,))
+        except not_ready as exc:
+            logger.warning("heat pnl 降级（heat_analysis 未入库?）match_id=%s: %s",
+                           match_id, exc)
+            return None
+        if not rows:
+            return None
+        latest_ts = max(r["snapshot_time"] for r in rows)
+        latest = [r for r in rows if r["snapshot_time"] == latest_ts]
+        home_name = latest[0].get("home")
+        away_name = latest[0].get("away")
+        mapped: dict = {"home": None, "draw": None, "away": None}
+        for row in latest:
+            pnl = num(row["pnl"])
+            side = row["side"]
+            if side == home_name:
+                mapped["home"] = pnl
+            elif side == away_name:
+                mapped["away"] = pnl
+            elif side == SIDE_DRAW:
+                mapped["draw"] = pnl
+        mapped["snapshot_time"] = str(latest_ts)
+        return mapped
 
     def query_fundamentals(self, fid: str) -> dict:
         """Q9~Q12（基本面四块）：情报/历史交锋/近期状态/赛程。

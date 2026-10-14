@@ -29,6 +29,8 @@ H2H_ALIGNED_RATE = 0.5
 # ---- 立项四收口常量（口径经主控确认 2026-10-14，数值待主控后续调整）----
 # 庄家 pnl 赔付风险阈值：pnl 低于此值视为庄家赔付风险（大众方向赢面倾向信号）
 BOOKMAKER_PNL_RISK_THRESHOLD = 0.0
+# 立项四扩展：heat pnl 三方向标签（键与 bf.heat_pnl 的方向键对齐）
+HEAT_PNL_SIDE_LABELS = {"home": "主", "draw": "平", "away": "客"}
 # 价位聚集度三档：top 档成交占比达高档为高聚集，达中档为中等，低于中档为分散
 LADDER_CONCENTRATED_RATIO = 0.6
 LADDER_MODERATE_RATIO = 0.4
@@ -111,6 +113,7 @@ class SentimentAgent:
         if not bf:
             return {"available": False, "trend": None, "bookmaker_pnl": None,
                     "ladder": None, "pnl_note": None, "ladder_note": None,
+                    "heat_pnl_note": None,
                     "summary": "必发成交数据缺失，形态输入降级"}
         bookmaker_pnl = bf.get("bookmaker_pnl")
         ladder = bf.get("ladder")
@@ -133,10 +136,40 @@ class SentimentAgent:
             else:
                 ladder_note = f"价位聚集度 {ratio}（分散，大众观点不一致）"
             summary += f"，{ladder_note}"
+        heat_note = SentimentAgent._heat_pnl_note(bf.get("heat_pnl"))
+        if heat_note:
+            summary += f"，{heat_note}"
         return {"available": True, "trend": bf.get("trend"),
                 "bookmaker_pnl": bookmaker_pnl, "ladder": ladder,
+                "heat_pnl": bf.get("heat_pnl"),
                 "pnl_note": pnl_note, "ladder_note": ladder_note,
+                "heat_pnl_note": heat_note,
                 "summary": summary}
+
+    @staticmethod
+    def _heat_pnl_note(heat_pnl: dict | None) -> str | None:
+        """heat pnl 三方向标注（立项四扩展，宿主答复 2026-10-14）。
+
+        输入：bf.heat_pnl（{"home","draw","away","snapshot_time"}，500com
+        投注倾向庄家盈亏，正=庄家赢）| None。
+        输出：三方向解读字符串（口径同 pnl_note 体系：负=庄家赔付=大众该
+        方向赢面倾向信号；正=庄家赢=大众该方向输面倾向），来源标注
+        "500com"与必发 pnl 区分；None 输入返回 None。
+        约束：仅输入记录标注，不参与加减分与推荐结构（最小闭环）。
+        """
+        if not heat_pnl:
+            return None
+        parts = []
+        for key, label in HEAT_PNL_SIDE_LABELS.items():
+            pnl = heat_pnl.get(key)
+            if pnl is None:
+                parts.append(f"{label} 缺失")
+                continue
+            if pnl < BOOKMAKER_PNL_RISK_THRESHOLD:
+                parts.append(f"{label} {pnl}（大众该方向赢面倾向信号）")
+            else:
+                parts.append(f"{label} {pnl}（庄家赢）")
+        return f"庄家盈亏(500com投注倾向,正=庄家赢)：{' / '.join(parts)}"
 
     def _judge_overheat(self, had: dict, hhand: dict, fundamental: dict) -> dict:
         """过热判定与两档处置（SKILL v7.9）：胜平负 ≥+20pp / 让球 ≥+15pp。"""
